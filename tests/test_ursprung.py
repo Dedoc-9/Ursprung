@@ -22,6 +22,7 @@ from ursprung import pfal_bench as pf
 from ursprung import tcff
 from ursprung import polygon_reconciliation as poly
 from ursprung import fidelity_conservation as fc
+from ursprung import reality_debt as rd
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -302,6 +303,25 @@ def test_objective_swap_min_discontinuity_beats_max_detail():
     check(fc.is_conserved(a_local, 600) and fc.is_conserved(a_mind, 600), "both objectives conserve the budget")
     check(fc.consequential_discontinuity(regions, a_mind) < fc.consequential_discontinuity(regions, a_local),
           "minimizing consequential discontinuity beats maximizing local detail at equal budget")
+
+
+# --- Reality Debt Law -------------------------------------------------------------------------------
+
+def test_debt_is_product_and_borrow_vs_genuine():
+    check(rd.debt(8, 3, 10) == 240, "Debt = Approximation × Persistence × Consequence")
+    check(rd.debt(0, 5, 9) == 0, "a zero-approximation (genuine) optimization incurs no debt")
+    check(rd.DebtRecord("x", 5, 4, 10, borrowed=False).debt == 0, "a genuine cost reduction incurs no debt")
+    check(rd.DebtRecord("y", 5, 4, 10, borrowed=True).debt == 200, "a borrowing optimization incurs debt")
+
+
+def test_debt_placement_and_repayment_follow_consequence():
+    order = rd.recommend_debt_placement({"sky": 1, "enemy": 10, "crosshair": 9, "far": 2})
+    check(order[0] == "sky" and order[-1] == "enemy", "debt accumulates where future consequence is lowest")
+    lawful, naive = rd.demo()
+    check(lawful.total_debt() < naive.total_debt(),
+          "placing the same approximation on low-consequence regions accrues less consequential debt")
+    L = rd.DebtLedger(); L.incur("a", 5, 2, 3); L.incur("b", 5, 2, 9)
+    check(L.repayment_priority()[0].consequence == 9, "repay highest-consequence debt first")
 
 
 def main():

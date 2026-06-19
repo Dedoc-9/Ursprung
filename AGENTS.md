@@ -120,6 +120,28 @@ WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → RASTERIZATION → 
                                  (the strategic layer)   (transport)
 ```
 
+### Reality Debt Law (the law underneath the other four)
+
+> Every approximation incurs reality debt. The role of predictive allocation is not to eliminate debt, but
+> to ensure debt accumulates where future consequence is lowest and repayment cost is smallest.
+>
+> **Debt = Approximation × Persistence × Consequence**
+
+The reframing: **fidelity is conserved, but debt is accumulated** — so PFAL/TCFF allocate *debt repayment*,
+and the renderer is a financial system for approximation (`ursprung/reality_debt.py`). Every optimization is
+either **borrowing** (reduces cost now by taking fidelity from the future — incurs debt that comes due as an
+artifact: LOD→pop-in, temporal reconstruction→ghosting, culling→visibility error, quantization→precision
+error, prediction→mis-prediction) or **genuine** (no future fidelity loss — no debt). A traditional optimizer
+asks "save 0.5 ms?"; Ursprung asks "save 0.5 ms — borrowed or genuine?" Dini-style observation becomes
+anticipatory: not "artifact detected" but "which approximation will create the *next* artifact?"
+
+The hierarchy gains a debt-management layer (rasterization stays transport):
+
+```
+WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT → RASTERIZATION → IMAGE
+        truth  →  prediction  →  fidelity  →  debt  →  image   (compactly)
+```
+
 The one-line philosophy Ursprung is built to be known for: **arbitrary boundaries require deterministic
 handling, and finite fidelity should be allocated by expected future failure cost, not present visual
 complexity.**

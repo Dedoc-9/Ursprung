@@ -12,11 +12,36 @@ authoritative world state → deterministic snapshot → visual interpretation �
 **Author:** Daniel J. Dillberg · **Contact:** [bigdilly95@gmail.com](mailto:bigdilly95@gmail.com)
 **License:** [AGPL-3.0-only](LICENSE)
 
+The renderer never discovers truth; it manages where its approximations fail. Its one-line philosophy:
+**arbitrary boundaries require deterministic handling, and finite fidelity should be allocated by expected
+future failure cost, not present visual complexity.**
+
+## The five laws (the philosophy layer)
+
+1. **Reality Debt Law** *(underneath)* — every approximation incurs debt: `Debt = Approximation ×
+   Persistence × Consequence`. Fidelity is conserved, but debt is accumulated; allocation places debt where
+   future consequence is lowest. (`reality_debt.py`)
+2. **Arbitrary-Boundary Law** — representation choices (pixel coverage, float format, LOD threshold, tick
+   rate, polygons) are deterministic *conventions*, never truth claims. (`conventions.py`)
+3. **Predictive Fidelity Law (PFAL / TCFF)** — spend computation where future failure cost is highest:
+   `R = U × C × P × S × τ`. (`prediction.py`, `temporal_membrane.py`, `pfal_bench.py`, `tcff.py`)
+4. **Polygon Reconciliation Law** — keep polygons iff abandoning them costs more than their approximation
+   error; rasterization is transport, allocation is strategy. (`polygon_reconciliation.py`)
+5. **Temporal Fidelity Conservation Law** — fidelity is transferred, not created; the objective is *minimum
+   consequential discontinuity under a fixed budget*, not maximum detail. (`fidelity_conservation.py`)
+
+```
+WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT → RASTERIZATION → IMAGE
+```
+
+See [`docs/GENEALOGY.md`](docs/GENEALOGY.md) for the full genealogy & checklist of what is built, verified,
+and not yet built.
+
 ## Run it
 
 ```bash
-PYTHONHASHSEED=0 python3 loop.py             # minimal world loop + milestone-1 verification
-PYTHONHASHSEED=0 python3 tests/test_ursprung.py   # 10 tests / 18 checks
+PYTHONHASHSEED=0 python3 loop.py                  # live loop: milestone + prediction/membrane/PFAL/TCFF/PCJ
+PYTHONHASHSEED=0 python3 tests/test_ursprung.py   # unit suite (stdlib asserts)
 ```
 
 If the engine is not at `~/Desktop/Reality_Engine`, set `URSPRUNG_WORKBENCH=/path/to/Reality_Engine`.
@@ -51,6 +76,7 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 | `ursprung/tcff.py` | **ALLOCATOR** | TCFF `F=U×C×P×S×τ` proactive pre-warming + Perceptual Continuity per Joule bench |
 | `ursprung/polygon_reconciliation.py` | **OBSERVER** | Polygon Reconciliation Law: polygons as deterministic convention; `reconcile()` not replace |
 | `ursprung/fidelity_conservation.py` | **OBSERVER** | Temporal Fidelity Conservation Law: fidelity is transferred, not created; minimize consequential discontinuity |
+| `ursprung/reality_debt.py` | **OBSERVER** | Reality Debt Law: `Debt = Approximation × Persistence × Consequence`; place debt where consequence is lowest |
 | `loop.py` | — | smallest executable world loop, end to end |
 | `AGENTS.md` | — | the renderer contract (the rules every change obeys) |
 
