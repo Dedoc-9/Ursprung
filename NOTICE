@@ -1,0 +1,19 @@
+Ursprung — a deterministic high-fidelity renderer
+Copyright (C) 2026 Daniel J. Dillberg <bigdilly95@gmail.com>
+
+This program is free software: you can redistribute it and/or modify it under the
+terms of the GNU Affero General Public License v3.0 only (AGPL-3.0-only) as published
+by the Free Software Foundation. See the LICENSE file for the full text.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+License track: AGPL-3.0-only (Track A / open).
+
+Relationship to Reality_Engine
+------------------------------
+Ursprung is a standalone downstream consumer of the Reality_Engine (Chronicle/Dentatus)
+workbench. Per the workbench's "Sibling Law", Ursprung imports the workbench read-only
+(see ursprung/_workbench.py) and never edits, vendors, or relicenses any workbench file.
+The workbench is the verification substrate; Ursprung is the renderer. integrity != truth.
