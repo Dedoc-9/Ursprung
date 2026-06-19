@@ -276,6 +276,94 @@ ALLOCATOR to weigh, not a bug to "fix."
 
 ---
 
+---
+
+## Ursprung renderer application rules (the lifecycle bridge)
+
+The LLM is a **design accelerator, not an authority layer.** Every renderer change follows the loop:
+
+```
+observe → hypothesize → implement → verify → record
+```
+
+The workbench protects against the four failure modes an LLM reliably introduces: **silent architectural
+drift, accidental authority leakage, unreplayable behavior, and unmeasured optimization claims.**
+
+**Per-system rules:**
+
+- **LOCKSTEP.** The simulation tick is authoritative. Frame rate, interpolation, and presentation timing are
+  *observations*. A frame budget is a resource *measurement*, not a simulation constraint.
+- **LOD / CULLING.** Visibility systems decide *what to render*; they do not decide *what exists*.
+  Optimization must not convert missing information into hidden truth.
+- **SALIENCE / ALLOCATION.** Compute allocation may prioritize perception, consequence, uncertainty, and
+  future relevance. It may **not** redefine world state, causality, or simulation importance.
+- **AI GENERATION LOOP.** Generated code must pass determinism, replay, boundary, and
+  performance-comparison checks. *A faster renderer with altered world semantics is a regression.*
+- **PERFORMANCE CLAIMS.** Never report "better" / "faster" / "more realistic" without baseline, test
+  conditions, measurement method, and comparison. A benchmark measures the benchmark's world; it does not
+  prove universal superiority.
+
+**Every new renderer feature declares four things** (enforced by the render Verification Record —
+`ursprung/render_record.py`, template in `docs/RENDER_VERIFICATION_RECORD.md`):
+
+```
+TYPE:        CORE / VIEW / ALLOCATOR / OBSERVER
+EFFECT:      what changes
+NON-EFFECT:  what must remain unchanged
+EVIDENCE:    how it was verified
+```
+
+This turns "Nanite-like triangle allocation", "AI upscaling", "ray tracing", "foveated rendering" into
+**experiments rather than architectural invasions.**
+
+## The Arbitrary-Boundary Law (the renderer's `integrity ≠ truth`)
+
+> **Arbitrary boundaries require deterministic handling, not claims of truth.**
+
+Wherever the renderer must make an arbitrary choice because perfect symmetry is unavailable, the choice is
+made **explicit, reproducible, and bound by deterministic rules** — never mistaken for a discovery about
+reality.
+
+```
+determinism → integrity of PROCESS    (the same convention yields the same result)
+determinism ↛ correctness of OUTCOME  (the convention is a choice, not a law of nature)
+```
+
+Worked examples, all declared as data in `ursprung/conventions.py` (each carries its rejected alternatives
+and `not_a_truth_claim = True`):
+
+- **Rasterization** — a triangle edge falls between samples; the pixel-coverage rule is a *convention*.
+  Different conventions yield slightly different images; the property that matters is *same convention → same
+  result*.
+- **Floating point** — GPU/parallel reductions associate differently. The answer is not "find the one true
+  float ordering"; it is *define the representation and accept its bounded behavior* (committed state stays
+  integer; VIEW floats canonicalize to 12 sig-figs).
+- **LOD transitions** — the exact swap distance is a human/model choice, not a law of nature. Make the
+  threshold deterministic and *test its artifacts* (the pop).
+- **Physics discretization** — sampling a continuous system at ticks creates artificial boundaries. The tick
+  rate is not reality; it is a reproducible approximation layer.
+
+**Boundary footprints vs. errors.** An artifact (aliasing seam, LOD pop, float jitter, tick stutter) is
+often the visible footprint of a boundary choice, not a defect:
+
+```
+continuous world  →  discrete model  →  observable artifact
+```
+
+The mistake: *"the artifact exists, therefore the model is wrong."* The right question: *"what assumption
+created the artifact, and is it acceptable for the intended purpose?"* `conventions.boundary_ghost()` tags an
+artifact with the convention that produced it (origin `boundary_choice`) so the question is answerable —
+the ghost allocates investigation, it does not certify an error.
+
+## The center-of-gravity risk (why this file exists)
+
+The project is past the point where the risk is lack of capability. The risk now is **too many interesting
+capabilities trying to become the center of gravity** — the same drift the workbench's `UNIFIED_ROADMAP`
+guards against (`observability → instrument panel` KEEP, `→ the product` REJECT). This file is the
+counterweight. Success may turn out to be **more than one result in a pool** — a set of composable
+features that each stay on their side of the membrane — not a single dominant technique. The layer law, the
+cardinal invariant, the render record, and the Arbitrary-Boundary Law exist so the pool stays coherent.
+
 ## Verification Record template (paste alongside each Ursprung change)
 
 ```markdown

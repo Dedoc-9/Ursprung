@@ -13,6 +13,13 @@ from ursprung import world_core as core
 from ursprung import view_layer as view
 from ursprung import ghost_report as gr
 from ursprung import verify
+from ursprung import render_record as rr
+from ursprung import conventions as conv
+from ursprung import divergence as dv
+from ursprung import prediction as pred
+from ursprung import temporal_membrane as tm
+from ursprung import pfal_bench as pf
+from ursprung import tcff
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -122,6 +129,140 @@ def test_milestone_renderer_is_observer_only():
           "CORE trajectory must be byte-identical with VIEW active+corrupted")
     check(res.checks["ordering_invariance"], "input ordering must not change the trajectory")
     check(res.passed(), "milestone 1 must pass overall")
+
+
+# --- render verification record (experiments, not invasions) ----------------------------------------
+
+def test_render_record_admits_observer_only_feature():
+    def feat(snap, cfg):
+        return view.interpret(snap, view.Camera(), client_seed=cfg.get("seed", 0))
+    rec = rr.evaluate_feature("view_interpret", VIEW, feat, config={"seed": 3}, ticks=20,
+                              measured={"hardware": "test", "resolution": "320x200", "scene": "demo"})
+    check(rec.core_trajectory_changed is False, "an observer-only VIEW feature must not change CORE")
+    check(rec.admissible(), "observer-only VIEW feature must be admissible")
+    check(len(rec.output_artifact_hash) == 64, "record carries a SHA-256 of the output artifact")
+    check("frame_budget_ms" in rec.measured, "record measures a frame budget (observable)")
+
+
+def test_render_record_rejects_authority_leak():
+    rec = rr.RenderVerificationRecord("bad_feature", VIEW, "a" * 64, "b" * 64, "c" * 64,
+                                      core_trajectory_changed=True, view_divergence="unexpected",
+                                      measured={}, known_ghosts=[])
+    check(not rec.admissible(), "a non-CORE feature that changed the CORE trajectory must be REJECTED")
+
+
+def test_render_record_hash_is_deterministic():
+    def feat(snap, cfg):
+        return view.interpret(snap, view.Camera(), client_seed=cfg.get("seed", 0))
+    a = rr.evaluate_feature("f", VIEW, feat, config={"seed": 1}, ticks=15)
+    b = rr.evaluate_feature("f", VIEW, feat, config={"seed": 1}, ticks=15)
+    check(a.output_artifact_hash == b.output_artifact_hash, "identical experiment must hash identically")
+    check(a.renderer_config_hash == b.renderer_config_hash, "config hash must be stable")
+
+
+# --- the Arbitrary-Boundary Law (conventions as data) -----------------------------------------------
+
+def test_conventions_are_deterministic_and_not_truth():
+    L = conv.default_ledger()
+    check(L.digest() == conv.default_ledger().digest(), "the convention set must have a stable content id")
+    for c in L.all():
+        check(c.not_a_truth_claim is True, "a convention must never be a truth claim")
+        check(c.hash() == L.get(c.name).hash(), "a convention's identity is its content hash")
+    check(len(L.by_domain(conv.RASTERIZATION)) >= 1, "rasterization boundary choice is declared")
+
+
+def test_convention_rule_change_changes_identity():
+    L = conv.ConventionLedger()
+    a = L.declare("x", conv.LOD, rule="bands at 10/50/200")
+    h1 = a.hash()
+    b = conv.ConventionLedger().declare("x", conv.LOD, rule="bands at 10/40/200")  # different rule
+    check(h1 != b.hash(), "changing the chosen rule must change the convention's identity (a version bump)")
+
+
+def test_boundary_ghost_is_not_an_error():
+    c = conv.default_ledger().get("pixel_coverage")
+    g = conv.boundary_ghost(c, "edge seam between two triangles", magnitude=3)
+    check(g.origin == conv.BOUNDARY_CHOICE, "a boundary footprint has origin boundary_choice, not error")
+    check(g.category == gr.SPATIAL, "rasterization boundary maps to a spatial ghost category")
+
+
+# --- conventions enrichment (Boundary Ledger) -------------------------------------------------------
+
+def test_convention_explains_by_convention_not_reality():
+    pc = conv.default_ledger().get("pixel_coverage")
+    check(pc.truth_claim is False, "a convention is never a truth claim")
+    check(bool(pc.purpose and pc.selected_reason and pc.deterministic_rule), "Boundary Ledger fields present")
+    exp = pc.explain("this pixel", "this triangle")
+    check("convention" in exp and "not a claim about reality" in exp,
+          "explain() answers by convention, never by reality")
+
+
+# --- divergence classes -----------------------------------------------------------------------------
+
+def test_divergence_three_classes():
+    check(dv.classify(True, layer="VIEW").kind == dv.WORLD and not dv.classify(True, layer="VIEW").valid,
+          "CORE change from a VIEW system is an invalid WORLD divergence")
+    check(dv.classify(False, representation_changed=True).kind == dv.REPRESENTATION, "same CORE, diff lens")
+    check(dv.classify(False, False, observation_changed=True).kind == dv.OBSERVATION, "diff measured behavior")
+    check(dv.classify_artifact_source("boundary_convention")["is_bug"] is False, "convention artifact not a bug")
+    check(dv.classify_artifact_source("implementation_error")["is_bug"] is True, "impl error is a bug")
+
+
+# --- Dini-style prediction observer -----------------------------------------------------------------
+
+def test_prediction_surprise_feeds_attention_not_importance():
+    w = core.demo_world()
+    frames = []
+    for _ in range(30):
+        frames.append(view.interpret(view.snapshot(w)))
+        w = core.tick(w)
+    peak = 0.0
+    for i in range(2, len(frames)):
+        rep = pred.observe(frames[i - 2], frames[i - 1], frames[i])
+        peak = max([peak] + list(rep.attention_hint.values()))
+    check(peak > 0.0, "a non-linear motion (collision) must surprise the predictor somewhere")
+    rep = pred.observe(frames[3], frames[4], frames[5])
+    check("nothing about importance" in rep.note, "prediction is an attention hint, never importance")
+
+
+# --- temporal membrane + PFAL bench -----------------------------------------------------------------
+
+def test_membrane_budget_is_exact_and_lawful():
+    for kind in (tm.TEMPORAL, tm.SPATIAL, tm.NUMERICAL, tm.CAUSAL):
+        info = tm.classify_render_ghost(kind)
+        check(bool(info["response"] and info["never"]), "ghost class %s maps to response + forbidden" % kind)
+    budget = tm.TemporalRealityBudget().allocate(
+        {"a": {"uncertainty": 3.0, "consequence": 5}, "b": {"uncertainty": 0.1, "consequence": 1}}, 100)
+    check(sum(budget.values()) == 100, "Temporal Reality Budget is exact (sums to budget)")
+    check(budget["a"] > budget["b"], "higher uncertainty×consequence earns more budget")
+
+
+def test_pfal_beats_distance_and_control_falsifies():
+    res = pf.run(seed=1, budget=600)
+    check(res["pfal (U×C×P×S)"] > res["distance_visibility"],
+          "PFAL covers more failure-cost than distance/visibility at equal budget")
+    check(res["drifted_pfal (control)"] < res["uniform"],
+          "negative control must lose to the uniform floor (the bench can falsify)")
+
+
+# --- TCFF (temporal proximity τ) + PCJ ---------------------------------------------------------------
+
+def test_tau_is_proactive():
+    check(tcff.temporal_proximity(1) > tcff.temporal_proximity(8), "an imminent event has higher τ")
+    check(tcff.temporal_proximity(None) == 1, "no predicted event ⇒ τ = 1")
+    soon = {"uncertainty": 2.0, "consequence": 5, "persistence": 3, "sensitivity": 4, "frames_to_event": 1}
+    late = dict(soon); late["frames_to_event"] = 10
+    check(tcff.tcff_score(soon) > tcff.tcff_score(late), "τ makes the imminent region score higher")
+
+
+def test_pcj_tcff_beats_reactive_and_control_does_not_win():
+    res = tcff.run(seed=1, budget=600)
+    check(res["tcff (U×C×P×S×τ)"]["pcj"] > res["reactive (visibility)"]["pcj"],
+          "TCFF achieves higher Perceptual Continuity per Joule than a reactive visibility budget")
+    check(res["tcff (U×C×P×S×τ)"]["pcj"] >= res["pfal (U×C×P×S)"]["pcj"],
+          "τ (proactive) does at least as well as τ-blind PFAL on PCJ")
+    check(res["drifted (control)"]["pcj"] <= res["tcff (U×C×P×S×τ)"]["pcj"],
+          "the negative control must not beat TCFF")
 
 
 def main():

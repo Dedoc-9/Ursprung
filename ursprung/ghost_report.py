@@ -43,6 +43,7 @@ TIMING = "timing"
 DATA_LOSS = "data_loss"
 MODEL_LIMIT = "model_limit"
 IMPLEMENTATION_ERROR = "implementation_error"
+BOUNDARY_CHOICE = "boundary_choice"   # the footprint of a declared convention — NOT an error (see conventions.py)
 UNCLASSIFIED = "unclassified"
 
 

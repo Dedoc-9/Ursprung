@@ -10,7 +10,11 @@ ALLOCATOR layers (LOD/culling/quality) come in a later milestone.
 
 The workbench is the VERIFICATION SUBSTRATE, not the renderer. Only CORE may move committed state.
 """
-from . import world_core, view_layer, ghost_report, verify, registry  # noqa: F401
+from . import (world_core, view_layer, ghost_report, verify, registry,  # noqa: F401
+               render_record, conventions, divergence, prediction, temporal_membrane,
+               pfal_bench, tcff)
 
-__all__ = ["world_core", "view_layer", "ghost_report", "verify", "registry"]
+__all__ = ["world_core", "view_layer", "ghost_report", "verify", "registry",
+           "render_record", "conventions", "divergence", "prediction",
+           "temporal_membrane", "pfal_bench", "tcff"]
 __version__ = "0.1.0-milestone1"

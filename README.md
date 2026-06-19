@@ -40,8 +40,15 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 | `ursprung/world_core.py` | **CORE** | authoritative trajectory (wraps the AetherPulse kernel): tick · hash · replay · compare |
 | `ursprung/view_layer.py` | **VIEW** | read-only snapshot → camera → VisualFrame; no write-back |
 | `ursprung/registry.py` | — | system-classification register; enforces "only CORE may mutate the trajectory" |
-| `ursprung/ghost_report.py` | **OBSERVER** | ghost capture & classification (6 categories × 7 origins) |
+| `ursprung/ghost_report.py` | **OBSERVER** | ghost capture & classification (6 categories × origins) |
 | `ursprung/verify.py` | **OBSERVER** | the milestone verification harness |
+| `ursprung/render_record.py` | **OBSERVER** | emits a render Verification Record (features as experiments) |
+| `ursprung/conventions.py` | **OBSERVER** | the Arbitrary-Boundary Law / Boundary Ledger (declared, hashed, never truth) |
+| `ursprung/divergence.py` | **OBSERVER** | the 3 divergence classes (world / representation / observation) |
+| `ursprung/prediction.py` | **OBSERVER** | Dini-style predict→observe→ghost (surprise → attention, never authority) |
+| `ursprung/temporal_membrane.py` | **ALLOCATOR** | Temporal Prediction Membrane + Temporal Reality Budget (uncertainty × consequence) |
+| `ursprung/pfal_bench.py` | **OBSERVER** | PFAL `R=U×C×P×S` + falsification bench (uniform / distance-vis / PFAL, negative control) |
+| `ursprung/tcff.py` | **ALLOCATOR** | TCFF `F=U×C×P×S×τ` proactive pre-warming + Perceptual Continuity per Joule bench |
 | `loop.py` | — | smallest executable world loop, end to end |
 | `AGENTS.md` | — | the renderer contract (the rules every change obeys) |
 
@@ -53,7 +60,12 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
    *same trajectory, different allocation* under a baseline→benchmark→compare experiment.
 
 See [`docs/LLM_ON_TRACK.md`](docs/LLM_ON_TRACK.md) for how the workbench mechanisms keep an LLM coding partner
-on the renderer track, and [`AGENTS.md`](AGENTS.md) for the contract every change obeys.
+on the renderer track (incl. the renderer application rules and the **Arbitrary-Boundary Law** —
+*arbitrary boundaries require deterministic handling, not claims of truth*),
+[`docs/RENDER_VERIFICATION_RECORD.md`](docs/RENDER_VERIFICATION_RECORD.md) for the per-feature record that
+turns new capabilities into experiments, [`docs/PREDICTIVE_FIDELITY.md`](docs/PREDICTIVE_FIDELITY.md) for the
+prediction → membrane → PFAL chain (spend compute where the approximation is weakest under the cost of being
+wrong), and [`AGENTS.md`](AGENTS.md) for the contract every change obeys.
 
 ## License
 

@@ -47,6 +47,72 @@ classify it on two axes (`ursprung/ghost_report.py`):
 A ghost allocates investigation. It never certifies a cause and never gates the committed trajectory
 (`telemetry ≠ control`). A persistent ghost earns *more* investigation, not a conclusion.
 
+## Renderer application rules
+
+The LLM is a **design accelerator, not an authority layer.** Every renderer change follows
+`observe → hypothesize → implement → verify → record`, and guards the four LLM failure modes: silent
+architectural drift, accidental authority leakage, unreplayable behavior, unmeasured optimization claims.
+
+- **LOCKSTEP** — the simulation tick is authoritative; frame rate / interpolation / presentation timing are
+  observations; a frame budget is a measurement, not a simulation constraint.
+- **LOD / CULLING** — visibility decides what to *render*, not what *exists*; never convert missing
+  information into hidden truth.
+- **SALIENCE / ALLOCATION** — may prioritize perception, consequence, uncertainty, future relevance; may not
+  redefine world state, causality, or simulation importance.
+- **AI GENERATION LOOP** — generated code must pass determinism, replay, boundary, and performance-comparison
+  checks. *A faster renderer with altered world semantics is a regression.*
+- **PERFORMANCE CLAIMS** — never "better/faster/more realistic" without baseline, test conditions,
+  measurement method, and comparison. A benchmark measures the benchmark's world, not universal superiority.
+
+Every new feature declares `TYPE` (CORE/VIEW/ALLOCATOR/OBSERVER), `EFFECT` (what changes), `NON-EFFECT` (what
+must remain unchanged), and `EVIDENCE` (how verified) — via the render Verification Record
+(`ursprung/render_record.py`; template `docs/RENDER_VERIFICATION_RECORD.md`). This makes Nanite-like
+allocation, AI upscaling, ray tracing, foveated rendering *experiments*, not architectural invasions.
+
+## The Arbitrary-Boundary Law
+
+> **Arbitrary boundaries require deterministic handling, not claims of truth.** (The renderer's `integrity ≠ truth`.)
+
+```
+determinism → integrity of PROCESS    (same convention → same result)
+determinism ↛ correctness of OUTCOME  (the convention is a choice, not a law of nature)
+```
+
+Wherever the renderer makes an arbitrary choice (pixel coverage, float representation, LOD threshold, tick
+rate), the choice is declared explicit, deterministic, and content-addressed in `ursprung/conventions.py`,
+carrying its rejected alternatives and `not_a_truth_claim = True`. An artifact is often the **footprint of a
+boundary choice**, not an error: ask *"what assumption created this, and is it acceptable for the purpose?"*
+— not *"the artifact exists, therefore the model is wrong."* Tag such artifacts with
+`conventions.boundary_ghost()` (origin `boundary_choice`); they allocate investigation, never certify error.
+
+The standing risk: too many interesting capabilities competing to become the center of gravity. Success may
+be **more than one result in a pool** of composable features that each stay on their side of the membrane —
+not a single dominant technique. `docs/LLM_ON_TRACK.md` is the counterweight.
+
+## Predictive fidelity (the pioneering direction)
+
+A renderer that spends computation where its **approximation is most likely to fail, weighted by the cost of
+being wrong** — never where it merely "looks important." The chain (full treatment in
+`docs/PREDICTIVE_FIDELITY.md`):
+
+- A frame is a *prediction*; `ghost = max(0, observed − predicted)`, and **ghost ≠ error** — it means the
+  representation failed to predict this region (`ursprung/prediction.py`, OBSERVER).
+- Classify render ghosts into **temporal / spatial / numerical / causal**; each maps to an allocation
+  response, never a world change (`ursprung/temporal_membrane.py`, ALLOCATOR).
+- The **Temporal Reality Budget** allocates a fixed budget by `uncertainty × consequence` (consequence is an
+  input from `causal_runtime`), not by visible complexity.
+- **PFAL**: `R = U × C × P × S` (uncertainty · consequence · persistence · sensitivity). Carefully worded
+  claim: *the renderer spends computation where its current approximation has the highest expected failure
+  cost* — not "knows what matters." A measurable hypothesis, with a comparative bench + negative control
+  (`ursprung/pfal_bench.py`); constructed-world numbers that **expire on real silicon**.
+
+Three classes of difference gate every artifact before it is called a bug (`ursprung/divergence.py`): WORLD
+(CORE changed — invalid for non-CORE), REPRESENTATION (same CORE, different lens — expected, measure),
+OBSERVATION (same lens, different measured behavior — investigate the ghost). The laws that never bend:
+`ghost → change world` FORBIDDEN; `observation → allocation` ALLOWED; `observation → truth` FORBIDDEN.
+Because allocation never touches truth, one committed world can feed many renderers (cinematic, competitive,
+VR, handheld, debug) — each a lens, none redefining the world.
+
 ## Performance work
 
 Prefer measurable experiments: **baseline → change → replay → benchmark → compare**. Preserve failed
