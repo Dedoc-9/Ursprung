@@ -98,6 +98,18 @@ WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT �
     multi-horizon is the open frontier. (Answers: what happens when the equation is right but the world
     changes faster than the allocator adapts.)
 
+- [x] **Milestone 6 — the shader cache as validated representation memory (the industrial bridge).**
+  - [x] `resistance_tensor.py` — multi-dimensional Representation Resistance (7 dims) replacing the scalar
+    perimeter proxy (closes the cliff); `miss_cost` (which paths are expensive to miss) + the **fidelity
+    derivative** `∂Fidelity/∂Budget` (marginal utility — the waste-detection signal).
+  - [x] `shader_cache.py` — a PSO/shader cache reframed as *validated representation decisions* keyed by the
+    conditions that made each safe (material family, geometry class, lighting regime, hardware path, temporal
+    stability), content-addressed + replayable. Multi-horizon transition model + fidelity-derivative gate
+    drive **prewarm** (where future discontinuity × miss-cost is highest); fallback tiers (impostor / particle
+    proxy / procedural) give graceful degradation. Never touches world truth.
+  - [x] Bench: predictive 405 vs reactive 559 (−27%); predictive+fallback 315 (−44%); random control 2305.
+    PSO hitches become a temporal fidelity-allocation problem, not a reactive hitch source.
+
 ### Milestone-3 finding (the failure is the result)
 
 The Causal Continuity Hypothesis as *stated* (allocate ∝ U·C·P) **failed** the equal-budget bench. Diagnosis

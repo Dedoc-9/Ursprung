@@ -33,6 +33,8 @@ from ursprung import policy_arena as arena
 from ursprung import stress
 from ursprung import transition_debt as td
 from ursprung import adversarial_scenes as adv
+from ursprung import resistance_tensor as rt
+from ursprung import shader_cache as sc
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -464,6 +466,28 @@ def test_adversarial_scenes_expose_adaptation_tension():
     check(h["priority_hoard_%"] > h["realized_hoard_%"], "FALSE FUTURE: a priority allocator hoards fidelity")
     c = adv.probe_cliff(adv.representation_cliff())
     check(c["perimeter_resistance_error"] > c["cliff_aware_error"], "CLIFF: scalar resistance misses the threshold")
+
+
+# --- Milestone 6: resistance tensor + shader cache (the industrial bridge) ---------------------------
+
+def test_resistance_tensor_and_fidelity_derivative():
+    t = rt.resistance_tensor({"lighting_sensitivity": 9})
+    check(set(t) == set(rt.DIMENSIONS), "the resistance tensor carries all 7 dimensions")
+    check(rt.miss_cost({"lighting_sensitivity": 9, "reconstruction_sensitivity": 8}) >
+          rt.miss_cost({"lighting_sensitivity": 2}), "miss_cost is higher for a high-sensitivity region")
+    check(rt.fidelity_derivative(lambda b: min(100, b * 10), 0) >
+          rt.fidelity_derivative(lambda b: min(100, b * 10), 50),
+          "marginal utility (∂Fidelity/∂Budget) falls as quality saturates")
+
+
+def test_shader_cache_turns_hitches_into_allocation():
+    c = {"material_family": "m", "geometry_class": "g", "lighting_regime": "l",
+         "hardware_path": "rdna", "temporal_stability": "s"}
+    check(sc.condition_key(c) == sc.condition_key(dict(c)), "condition key is deterministic / replayable")
+    res = sc.run(seed=1, frames=48)
+    check(res["predictive"] < res["reactive"], "predictive prewarm beats reactive compile-on-miss")
+    check(res["predictive+fallback"] <= res["predictive"] + 1, "fallback tiers bound the worst-case hitch")
+    check(res["random (control)"] >= res["predictive"], "random prewarm control does not beat predictive")
 
 
 def main():

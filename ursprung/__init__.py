@@ -14,12 +14,13 @@ from . import (world_core, view_layer, ghost_report, verify, registry,  # noqa: 
                render_record, conventions, divergence, prediction, temporal_membrane,
                pfal_bench, tcff, polygon_reconciliation, fidelity_conservation, reality_debt,
                causal_continuity, raster, raster_bench, representation, allocation,
-               perceptual, policy_arena, stress, transition_debt, adversarial_scenes)
+               perceptual, policy_arena, stress, transition_debt, adversarial_scenes,
+               resistance_tensor, shader_cache)
 
 __all__ = ["world_core", "view_layer", "ghost_report", "verify", "registry",
            "render_record", "conventions", "divergence", "prediction",
            "temporal_membrane", "pfal_bench", "tcff", "polygon_reconciliation",
            "fidelity_conservation", "reality_debt", "causal_continuity", "raster", "raster_bench",
            "representation", "allocation", "perceptual", "policy_arena", "stress",
-           "transition_debt", "adversarial_scenes"]
+           "transition_debt", "adversarial_scenes", "resistance_tensor", "shader_cache"]
 __version__ = "0.1.0-milestone1"
