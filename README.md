@@ -117,6 +117,9 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 | `ursprung/raster_bench.py` | **OBSERVER** | equal-budget allocation bench + promotion gate (the hypothesis *failed* as stated — recorded with diagnosis) |
 | `ursprung/representation.py` | **OBSERVER** | Representation Resistance (difficulty to represent) + `DebtPressure = RealityDebt × RepresentationResistance` |
 | `ursprung/allocation.py` | **ALLOCATOR** | the ranking/allocation split: `rank(priority)` then `waterfill(priority, resistance)` — *PFAL ranks, water-filling allocates* |
+| `ursprung/perceptual.py` | **OBSERVER** | Perceptual Continuity Loss (reallocation churn × sensitivity) — the measurable *success* axis |
+| `ursprung/policy_arena.py` | **OBSERVER** | dual-axis arena (causal residual × perceptual continuity); Pareto front; hardened `damped_waterfill` |
+| `ursprung/stress.py` | **OBSERVER** | adversarial weakness extraction (Goodhart mutation guard + WRONG/GAMEABLE), after the workbench's `mutate`/`adversary` |
 | `loop.py` | — | smallest executable world loop, end to end |
 | `AGENTS.md` | — | the renderer contract (the rules every change obeys) |
 

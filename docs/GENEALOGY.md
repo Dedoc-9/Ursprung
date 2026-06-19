@@ -74,6 +74,16 @@ WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT �
   - Result statement: *importance metrics and allocation functions cannot be conflated; causal importance ranks,
     constrained optimization distributes.*
 
+- [x] **Milestone 4 — stressors + the perceptual axis (extract weaknesses; harden).**
+  - [x] `perceptual.py` — Perceptual Continuity Loss (reallocation churn × sensitivity): the measurable
+    *success* axis (liability → priority → difficulty → allocation → **continuity**).
+  - [x] `policy_arena.py` — dual-axis (causal residual × perceptual continuity) over drifting frames; Pareto
+    front. **Mismatch confirmed:** min-causal (ranked_waterfill) ≠ min-perceptual (uniform). Hardening:
+    `damped_waterfill` cuts perceptual loss ~5× (22,016→4,228) for ~9% more causal residual.
+  - [x] `stress.py` — workbench-style weakness extraction: Goodhart mutation guard (4/4 noticed), WRONG
+    adversary (raw consequence broke → expected value), GAMEABLE adversary (self-report captured 68% → repair:
+    independent evidence). See [`STRESSORS.md`](STRESSORS.md).
+
 ### Milestone-3 finding (the failure is the result)
 
 The Causal Continuity Hypothesis as *stated* (allocate ∝ U·C·P) **failed** the equal-budget bench. Diagnosis

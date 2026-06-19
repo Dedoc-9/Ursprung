@@ -28,6 +28,9 @@ from ursprung import raster
 from ursprung import raster_bench as rb
 from ursprung import representation as rep
 from ursprung import allocation as al
+from ursprung import perceptual as pc
+from ursprung import policy_arena as arena
+from ursprung import stress
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -403,6 +406,38 @@ def test_ranking_is_not_allocation():
           "two-stage ranked_waterfill strictly beats every other policy on the future-causal residual")
     check(res["proportional_causal (∝U·C·P)"] > rw,
           "proportional allocation (conflated) is worse than two-stage — ranking ≠ allocation")
+
+
+# --- Milestone 4: dual-axis arena + stressors -------------------------------------------------------
+
+def test_perceptual_continuity_loss():
+    check(pc.perceptual_continuity_loss({"a": 5}, {"a": 5}, {"a": 3}) == 0,
+          "no reallocation between frames means zero perceptual continuity loss")
+    check(pc.perceptual_continuity_loss({"a": 5}, {"a": 9}, {"a": 3}) == 12,
+          "PCL = sensitivity × |Δ samples| (3 × 4)")
+
+
+def test_arena_exposes_causal_vs_perceptual_mismatch():
+    res = arena.run(seed=1, budget=400, frames=24)
+    check(res["uniform"][1] == 0, "uniform is perfectly steady (zero perceptual loss)")
+    check(res["ranked_waterfill"][0] < res["uniform"][0], "ranked_waterfill wins the causal residual axis")
+    check(res["ranked_waterfill"][1] > res["uniform"][1], "ranked_waterfill loses the perceptual axis (churn)")
+    bc = min(res, key=lambda k: res[k][0]); bp = min(res, key=lambda k: res[k][1])
+    check(bc != bp, "MISMATCH: minimizing causal residual ≠ maximizing perceptual continuity")
+    check(len(arena.pareto_front(res)) >= 2, "a genuine trade-off: multiple non-dominated policies")
+
+
+def test_hardening_damped_waterfill_cuts_perceptual_loss():
+    res = arena.run(seed=1, budget=400, frames=24)
+    check(res["damped_waterfill (hardened)"][1] < res["ranked_waterfill"][1],
+          "the hardened damped allocator cuts perceptual loss vs the churny optimum")
+
+
+def test_stressors_extract_weaknesses():
+    check(any(d for _, d, _ in stress.mutation_guard(seed=1)),
+          "the Goodhart mutation guard notices at least one degraded allocator (metric is not decoration)")
+    check(stress.adversary_wrong()["broke"], "raw-consequence allocator breaks on improbable futures")
+    check(stress.adversary_gameable()["broke"], "self-report allocator is gameable (a region inflates its budget)")
 
 
 def main():
