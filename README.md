@@ -16,6 +16,11 @@ The renderer never discovers truth; it manages where its approximations fail. It
 **arbitrary boundaries require deterministic handling, and finite fidelity should be allocated by expected
 future failure cost, not present visual complexity.**
 
+What began as a renderer *philosophy* has, under benchmarking, become a set of measurable **rendering
+economics**: finite fidelity is a budget, every approximation is debt, and the bench — not the manifesto —
+decides which allocation policy wins. The central result so far came from a *failed* hypothesis (see below):
+**priority and allocation are different mathematical objects.**
+
 ## The five laws (the philosophy layer)
 
 1. **Reality Debt Law** *(underneath)* — every approximation incurs debt: `Debt = Approximation ×
@@ -34,13 +39,38 @@ future failure cost, not present visual complexity.**
 WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT → RASTERIZATION → IMAGE
 ```
 
-A sixth idea — the **Causal Continuity Hypothesis** (allocate fidelity ∝ expected future causal loss) — is
-deliberately held as a *provisional hypothesis*, not a law: it must survive implementation, replay, a negative
-control, and equal-budget benchmarking before promotion. As stated, it *failed* the first test (the failure
-and its diagnosis are recorded — see [`docs/GENEALOGY.md`](docs/GENEALOGY.md)).
+## Rendering economics — priority ≠ allocation (the discovered hierarchy)
+
+The benchmark that *failed* the naive Causal Continuity Hypothesis (allocate ∝ U·C·P) exposed a missing
+hierarchy and a result more useful than any single law: **what matters**, **what is expensive to represent**,
+and **how to distribute finite budget** are three separate objects.
+
+```
+Truth layer        →  Consequence layer  →  Priority layer  →  Allocation layer  →  Rasterization layer
+(the Weltlinie)       (Reality Debt)         (PFAL ranks)       (water-filling)       (executes)
+```
+
+| Quantity | Answers | Form | Module |
+|---|---|---|---|
+| **Reality Debt** | future liability | `A × P × C` | `reality_debt.py` |
+| **Priority (PFAL)** | *what matters?* | `U × C × P × S × τ` | `pfal_bench.py`, `tcff.py` |
+| **Representation Resistance** | *what is expensive to represent?* | `Rr` (perimeter today; composite later) | `representation.py` |
+| **Allocation (water-filling)** | *how to distribute budget?* | `WaterFill(Priority, Resistance) ∝ √(Priority·Rr)` | `allocation.py` |
+| **Rasterization** | executes the allocation | conventions | `raster.py` |
+
+**The measured result.** Proportional allocation (∝ priority) *over-concentrates* on a convex error metric;
+two-stage `ranked_waterfill` (rank by priority, then water-fill under representation resistance) **strictly
+beat** uniform, distance, visibility, proportional-causal, and a negative control on the future-causal
+residual metric. The proportional allocator *knew what mattered*; the water-filling allocator *knew what
+mattered and where representation actually breaks.* (Constructed-world; expires on real silicon.)
+
+The **Causal Continuity Hypothesis** therefore remains explicitly *provisional* — the naive (proportional)
+form failed; the re-specified two-stage form is *supported on the constructed bench, pending real silicon*.
+Nothing is promoted to a law by a benchmark on a model world.
 
 See [`docs/GENEALOGY.md`](docs/GENEALOGY.md) for the full genealogy & checklist of what is built, verified,
-and not yet built.
+and not yet built, and [`docs/PREDICTIVE_FIDELITY.md`](docs/PREDICTIVE_FIDELITY.md) for the prediction →
+membrane → PFAL → TCFF chain.
 
 ## Run it
 
@@ -90,20 +120,55 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 | `loop.py` | — | smallest executable world loop, end to end |
 | `AGENTS.md` | — | the renderer contract (the rules every change obeys) |
 
-## Roadmap
+## Status
 
-1. **Milestone 1 — done.** Foundation + invariant harness (this).
-2. VIEW vertical slice: camera · geometry · basic raster path · lighting · frame presentation.
-3. ALLOCATOR experiments: LOD · visibility · adaptive quality · salience · compute budgets — each proven by
-   *same trajectory, different allocation* under a baseline→benchmark→compare experiment.
+- **Milestone 1 — done.** Foundation + invariant harness; the renderer is proven observer-only.
+- **Milestone 2 — done.** Predictive-fidelity architecture + the five laws (debt · boundary · PFAL ·
+  reconciliation · conservation), each encoded as data/rule with a verified demo and an honest bound.
+- **Milestone 3 — done.** VIEW vertical slice (deterministic projection→coverage→sampling→raster) + the
+  Causal Continuity Hypothesis. The naive hypothesis **failed** the equal-budget bench (recorded, not hidden).
+- **Milestone 3.1 — done.** The failure became a refinement: the ranking/allocation split + Representation
+  Resistance. `ranked_waterfill` strictly beat every control.
 
-See [`docs/LLM_ON_TRACK.md`](docs/LLM_ON_TRACK.md) for how the workbench mechanisms keep an LLM coding partner
-on the renderer track (incl. the renderer application rules and the **Arbitrary-Boundary Law** —
-*arbitrary boundaries require deterministic handling, not claims of truth*),
-[`docs/RENDER_VERIFICATION_RECORD.md`](docs/RENDER_VERIFICATION_RECORD.md) for the per-feature record that
-turns new capabilities into experiments, [`docs/PREDICTIVE_FIDELITY.md`](docs/PREDICTIVE_FIDELITY.md) for the
-prediction → membrane → PFAL chain (spend compute where the approximation is weakest under the cost of being
-wrong), and [`AGENTS.md`](AGENTS.md) for the contract every change obeys.
+**Open work (bench-defined, not more laws):**
+- A **real-silicon benchmark** — every constructed-world number above expires there (equal GPU time;
+  temporal artifacts, input-to-photon latency, reconstruction error, motion stability).
+- A **richer Representation Resistance** than perimeter: geometric, temporal, shading, reconstruction,
+  perceptual, and causal resistance fields composed into one `CompositeResistance`.
+
+## Toward a fidelity operating system (direction, not built)
+
+The strongest thing Ursprung has is not any single law — it is the separation between what is **invariant**
+and what is **replaceable**. The aim is a model where entire *reasoning systems about rendering* are
+pluggable over one verified world:
+
+```
+WORLD                 invariant        OBSERVATION PROVIDERS   pluggable
+SNAPSHOT              invariant        PREDICTION PROVIDERS    pluggable
+                                       RESISTANCE PROVIDERS    pluggable
+verification substrate INVARIANT       FIDELITY POLICIES       pluggable
+(snapshot contract,                    ALLOCATION SOLVERS      pluggable
+ ghost taxonomy,                       RASTERIZATION BACKENDS  pluggable
+ verification record,                  PRESENTATION BACKENDS   pluggable
+ replay harness,
+ determinism rules)
+```
+
+The hard line: the **verification substrate is immutable.** The moment integrity itself becomes pluggable,
+integrity becomes subjective and the whole discipline dissolves. Everything above it — observation,
+prediction, resistance, policy, allocation, raster/presentation backends, even a hardware-abstraction layer
+that lowers one allocation graph onto different GPUs — may evolve. (Open forks worth keeping distinct:
+*causal weight vs perceptual weight* as separate scores; *fidelity derivatives* `d(FailureCost)/dt` for
+anticipatory rather than reactive allocation.) None of this is built; it is the debate the architecture is
+being kept open for.
+
+## Further reading
+
+[`docs/LLM_ON_TRACK.md`](docs/LLM_ON_TRACK.md) — how the workbench mechanisms keep an LLM coding partner on
+the renderer track. [`docs/PREDICTIVE_FIDELITY.md`](docs/PREDICTIVE_FIDELITY.md) — the prediction → membrane →
+PFAL → TCFF chain. [`docs/RENDER_VERIFICATION_RECORD.md`](docs/RENDER_VERIFICATION_RECORD.md) — features as
+experiments. [`docs/GENEALOGY.md`](docs/GENEALOGY.md) — the full genealogy & checklist. [`AGENTS.md`](AGENTS.md)
+— the contract every change obeys.
 
 ## License
 
