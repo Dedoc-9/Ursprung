@@ -63,6 +63,17 @@ WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT �
   - [x] **Result (recorded, not rigged): the hypothesis is NOT promoted.** Proportional causal loses even to
     uniform — the failure, and its diagnosis, are the deliverable.
 
+- [x] **Milestone 3.1 — the failure becomes a refinement (ranking ≠ allocation).**
+  - [x] `representation.py` — RepresentationResistance (the hidden variable: how hard a region is to represent;
+    perimeter proxy) and `DebtPressure = RealityDebt × RepresentationResistance`.
+  - [x] `allocation.py` — the ranking/allocation split: `rank(priority)` then `waterfill(priority, resistance)`.
+    **PFAL ranks · water-filling allocates · Reality Debt constrains.**
+  - [x] Re-specified bench: on the future-causal residual metric, two-stage `ranked_waterfill` (756,247,772)
+    **strictly beats** uniform (1,063,453,324), distance, visibility, proportional-causal (844,974,909), and the
+    drifted control — a **supported** hypothesis on the constructed bench (pending real silicon).
+  - Result statement: *importance metrics and allocation functions cannot be conflated; causal importance ranks,
+    constrained optimization distributes.*
+
 ### Milestone-3 finding (the failure is the result)
 
 The Causal Continuity Hypothesis as *stated* (allocate ∝ U·C·P) **failed** the equal-budget bench. Diagnosis

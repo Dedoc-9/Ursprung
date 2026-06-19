@@ -26,6 +26,8 @@ from ursprung import reality_debt as rd
 from ursprung import causal_continuity as cc
 from ursprung import raster
 from ursprung import raster_bench as rb
+from ursprung import representation as rep
+from ursprung import allocation as al
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -374,6 +376,33 @@ def test_view_slice_records_honest_failure():
     check(res["causal (U×C×P)"] > res["uniform"], "proportional causal over-concentrates and loses to uniform")
     check(res["optimal_waterfill (√C×perim)"] < res["uniform"],
           "the diagnosis holds: size-aware water-filling beats uniform")
+
+
+# --- ranking/allocation split + Representation Resistance (Milestone 3.1) ---------------------------
+
+def test_representation_resistance_and_debt_pressure():
+    check(rep.representation_resistance({"size": 10}) > rep.representation_resistance({"size": 2}),
+          "a bigger region has more representation resistance (more edge)")
+    check(rep.debt_pressure(200, 80) == 16000, "DebtPressure = RealityDebt × RepresentationResistance")
+
+
+def test_two_stage_allocation_is_exact_and_deterministic():
+    regions = {"a": {"uncertainty": 3.0, "consequence": 9, "persistence": 4, "size": 10},
+               "b": {"uncertainty": 0.5, "consequence": 1, "persistence": 1, "size": 2}}
+    a1 = al.two_stage_allocate(regions, 100, al._causal_priority)
+    a2 = al.two_stage_allocate(regions, 100, al._causal_priority)
+    check(sum(a1.values()) == 100, "two-stage allocation is exact (sums to budget)")
+    check(a1 == a2, "two-stage allocation is deterministic")
+    check(a1["a"] > a1["b"], "the high-priority, high-resistance region receives more budget")
+
+
+def test_ranking_is_not_allocation():
+    res = al.run(seed=1, budget=400)
+    rw = res["ranked_waterfill (√(prio·RR))"]
+    check(all(rw < res[k] for k in res if not k.startswith("ranked")),
+          "two-stage ranked_waterfill strictly beats every other policy on the future-causal residual")
+    check(res["proportional_causal (∝U·C·P)"] > rw,
+          "proportional allocation (conflated) is worse than two-stage — ranking ≠ allocation")
 
 
 def main():

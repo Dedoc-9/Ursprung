@@ -51,6 +51,17 @@ PROMOTION_CRITERIA = (
     "information."
 )
 
+# Re-specification (Milestone 3.1): the failure split one object into two. See allocation.py / representation.py.
+RESPECIFICATION = (
+    "The bench did not falsify causal allocation — it falsified one allocation FUNCTION. Importance and "
+    "allocation are different objects: Priority = U·C·P·S·τ RANKS regions; Allocation = "
+    "WaterFill(Priority, RepresentationResistance) DISTRIBUTES the budget. 'PFAL ranks · water-filling "
+    "allocates · Reality Debt constrains.' On the future-causal residual metric the two-stage allocator "
+    "(rank by U·C·P, water-fill under perimeter resistance) STRICTLY BEATS uniform, distance, visibility, "
+    "proportional-causal, and the drifted control (allocation.run, seed=1). This is a SUPPORTED hypothesis on "
+    "the constructed bench — still pending real-silicon validation before promotion to a law."
+)
+
 # Milestone-3 result (raster_bench, seed=1) — recorded, NOT promoted. The stated (proportional) form FAILS.
 FINDINGS = (
     "STATUS stays 'hypothesis': the STATED form (allocate ∝ U·C·P) loses even to uniform on the VIEW slice "
