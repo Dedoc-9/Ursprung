@@ -84,6 +84,20 @@ WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT �
     adversary (raw consequence broke → expected value), GAMEABLE adversary (self-report captured 68% → repair:
     independent evidence). See [`STRESSORS.md`](STRESSORS.md).
 
+- [x] **Milestone 5 — Transition Debt + adversarial scene generation (the adaptation frontier).**
+  - [x] `transition_debt.py` — Total Cost = Representation + λ·Transition (+ Latency). The winner is a
+    *function of the exchange rate λ*: ranked (λ<82k) → damped (82k–591k) → uniform (λ>591k); modes are λ
+    choices over one world (cinematic→ranked, competitive→damped, vr→uniform). Explains *why* damping works:
+    it pays less Transition Debt.
+  - [x] `adversarial_scenes.py` — flicker trap / false future / delayed consequence / representation cliff +
+    probes. Measured: greedy thrashes flicker (9361 vs 901); priority hoards the false future (15% vs 0%);
+    damped LAGS the delayed consequence (26/49 vs 49/49); scalar perimeter resistance MISSES the cliff
+    (5.06e6 vs 61,883).
+  - **Meta-finding:** damping fixes flicker but causes lag on delayed consequence — *no single damping
+    constant wins all.* The right adaptation speed depends on the world's rate of change → adaptive damping /
+    multi-horizon is the open frontier. (Answers: what happens when the equation is right but the world
+    changes faster than the allocator adapts.)
+
 ### Milestone-3 finding (the failure is the result)
 
 The Causal Continuity Hypothesis as *stated* (allocate ∝ U·C·P) **failed** the equal-budget bench. Diagnosis

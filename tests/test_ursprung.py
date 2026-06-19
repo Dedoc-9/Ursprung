@@ -31,6 +31,8 @@ from ursprung import allocation as al
 from ursprung import perceptual as pc
 from ursprung import policy_arena as arena
 from ursprung import stress
+from ursprung import transition_debt as td
+from ursprung import adversarial_scenes as adv
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -438,6 +440,30 @@ def test_stressors_extract_weaknesses():
           "the Goodhart mutation guard notices at least one degraded allocator (metric is not decoration)")
     check(stress.adversary_wrong()["broke"], "raw-consequence allocator breaks on improbable futures")
     check(stress.adversary_gameable()["broke"], "self-report allocator is gameable (a region inflates its budget)")
+
+
+# --- Milestone 5: transition debt + adversarial scenes ----------------------------------------------
+
+def test_transition_debt_frontier_is_lambda_parameterized():
+    check(td.transition_debt({"a": 5}, {"a": 9}, {"a": 3}) == 12, "transition debt = sensitivity × |Δ|")
+    check(td.total_cost(100, 10, exchange_rate=5) == 150, "Total Cost = Representation + λ·Transition")
+    res = arena.run(seed=1, budget=400, frames=24)
+    check(td.best_policy(res, 0) == "ranked_waterfill", "λ=0 → chase the causal residual")
+    check(td.best_policy(res, 10_000_000) == "uniform", "huge λ → never move (uniform)")
+    check(len(td.crossovers(res)) >= 3, "the frontier has ≥3 regimes (ranked → damped → uniform)")
+
+
+def test_adversarial_scenes_expose_adaptation_tension():
+    check(adv.probe_thrash(adv.flicker_trap(seed=1), adv.greedy) >
+          adv.probe_thrash(adv.flicker_trap(seed=1), adv.Damped()),
+          "FLICKER: greedy thrashes more than damped")
+    gg, _ = adv.probe_lag(adv.delayed_consequence(delay=12, seed=1), adv.greedy, 12)
+    dg, _ = adv.probe_lag(adv.delayed_consequence(delay=12, seed=1), adv.Damped(), 12)
+    check(dg < gg, "DELAYED CONSEQUENCE: damped lags (less budget at the critical frame) — no free damping")
+    h = adv.probe_hoard(adv.false_future())
+    check(h["priority_hoard_%"] > h["realized_hoard_%"], "FALSE FUTURE: a priority allocator hoards fidelity")
+    c = adv.probe_cliff(adv.representation_cliff())
+    check(c["perimeter_resistance_error"] > c["cliff_aware_error"], "CLIFF: scalar resistance misses the threshold")
 
 
 def main():
