@@ -53,6 +53,31 @@ WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT �
   - [x] Live loop wiring (prediction → membrane budget → PFAL → TCFF/PCJ → render record) — `loop.py`
   - [x] Docs: `LLM_ON_TRACK.md`, `PREDICTIVE_FIDELITY.md`, `RENDER_VERIFICATION_RECORD.md`, this file.
 
+- [x] **Milestone 3 — VIEW vertical slice + Causal Continuity Hypothesis (provisional).**
+  - [x] Causal Continuity *Hypothesis* (NOT a law): allocate ∝ expected future causal loss `U×C×P`; encodes
+    the PFAL⇄Reality-Debt duality; promotion gate — `causal_continuity.py`
+  - [x] Deterministic reference rasterizer: projection → coverage → sampling → rasterization, each a declared
+    convention with a named ghost; content-hashable framebuffer — `raster.py`
+  - [x] Cardinal invariant holds under rendering: CORE byte-identical with the rasterizer running every tick.
+  - [x] Equal-budget bench + promotion gate (uniform / distance / visibility / PFAL / causal + control) — `raster_bench.py`
+  - [x] **Result (recorded, not rigged): the hypothesis is NOT promoted.** Proportional causal loses even to
+    uniform — the failure, and its diagnosis, are the deliverable.
+
+### Milestone-3 finding (the failure is the result)
+
+The Causal Continuity Hypothesis as *stated* (allocate ∝ U·C·P) **failed** the equal-budget bench. Diagnosis
+(itself falsifiable, and verified by the diagnostic allocators in `raster_bench.py`):
+
+1. The consequential edge-error metric (`Σ C·perimeter/samples`) is **convex** in samples, so *proportional*
+   allocation over-concentrates and loses to uniform.
+2. The optimal weight must include the **error's own structural term** (size/perimeter), which `U·C·P` (and
+   PFAL's `U·C·P·S`) omit.
+
+Measured (seed=1, budget=400): proportional causal **2,147,735** > uniform **1,684,339**; water-filling causal
+`√(U·C·P)` **1,641,016** (marginal win); size-aware optimum `√(C·perimeter)` **1,427,556** (clear win). The
+re-specification — *water-filling form + include the error's structural term* — is the next hypothesis to test
+before any promotion. Failure kept as architectural information.
+
 ## Measured (constructed-world; honest bounds)
 
 | Result | Number | Status |
@@ -69,9 +94,8 @@ benchmark measures the benchmark's world; it does not prove universal superiorit
 
 ## Not yet built (honest)
 
-- [ ] **VIEW vertical slice** — projection → coverage → sampling → rasterization, each step a declared
-  convention (hash + rejected alternatives + known ghosts). The first test of whether the five laws survive
-  contact with an actual rasterizer.
+- [ ] **Re-specified Causal Continuity** — water-filling form (∝ √weight) + a weight that includes the error's
+  structural term (size/perimeter); re-run the gate. Only then is promotion on the table.
 - [ ] Real-silicon benchmark: PFAL/TCFF at equal GPU time, measuring temporal artifacts, input-to-photon
   latency, reconstruction error, and motion stability (the numbers above expire here).
 - [ ] Native (C++/Rust) port validated against the Python reference via conformance vectors.

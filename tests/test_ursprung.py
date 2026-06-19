@@ -23,6 +23,9 @@ from ursprung import tcff
 from ursprung import polygon_reconciliation as poly
 from ursprung import fidelity_conservation as fc
 from ursprung import reality_debt as rd
+from ursprung import causal_continuity as cc
+from ursprung import raster
+from ursprung import raster_bench as rb
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -322,6 +325,55 @@ def test_debt_placement_and_repayment_follow_consequence():
           "placing the same approximation on low-consequence regions accrues less consequential debt")
     L = rd.DebtLedger(); L.incur("a", 5, 2, 3); L.incur("b", 5, 2, 9)
     check(L.repayment_priority()[0].consequence == 9, "repay highest-consequence debt first")
+
+
+# --- VIEW vertical slice: rasterizer + Causal Continuity Hypothesis ---------------------------------
+
+def _frame_at(w, W=64, H=40):
+    return view.interpret(view.snapshot(w), view.Camera(eye=(0.0, 20.0, 80.0), focal=60.0, screen=(W, H)))
+
+
+def test_rasterizer_is_deterministic_and_covers():
+    w = core.demo_world()
+    for _ in range(5):
+        w = core.tick(w)
+    fb1 = raster.rasterize(_frame_at(w), 64, 40)
+    fb2 = raster.rasterize(_frame_at(w), 64, 40)
+    check(fb1.content_hash() == fb2.content_hash(), "same frame must rasterize to the same image hash")
+    check(sum(fb1.coverage_counts().values()) > 0, "the rasterizer must actually cover pixels")
+    check(set(raster.CONVENTIONS) == {"projection", "coverage", "sampling", "rasterization"},
+          "each pipeline stage declares its convention")
+    check(raster.aliasing_error(10, 1) > raster.aliasing_error(10, 8), "more samples reduces aliasing error")
+
+
+def test_rasterizer_is_observer_only():
+    baseline = core.trajectory(core.demo_world(), 40)
+    w = core.demo_world()
+    obs = [core.state_hash(w)]
+    for _ in range(40):
+        _ = raster.rasterize(_frame_at(w), 48, 30)     # full VIEW raster work each tick
+        w = core.tick(w)
+        obs.append(core.state_hash(w))
+    check(core.trajectories_identical(baseline, obs),
+          "CORE trajectory must be byte-identical with the rasterizer running (cardinal invariant)")
+
+
+def test_causal_continuity_is_provisional_and_gate_is_honest():
+    check(cc.STATUS == "hypothesis", "Causal Continuity must stay provisional in source (never a hard-coded law)")
+    # the gate promotes only on a strict win over all controls + control loses
+    win = {"causal (U×C×P)": 1, "uniform": 2, "distance": 2, "visibility": 2, "pfal (U×C×P×S)": 2,
+           "drifted (control)": 3}
+    lose = dict(win); lose["uniform"] = 0
+    check(cc.earns_promotion(win)[0] is True, "a strict win over all controls earns promotion")
+    check(cc.earns_promotion(lose)[0] is False, "losing to any control blocks promotion")
+
+
+def test_view_slice_records_honest_failure():
+    res, promote, reason = rb.evaluate(seed=1, budget=400)
+    check(promote is False, "the STATED (proportional) causal hypothesis does not earn promotion (recorded)")
+    check(res["causal (U×C×P)"] > res["uniform"], "proportional causal over-concentrates and loses to uniform")
+    check(res["optimal_waterfill (√C×perim)"] < res["uniform"],
+          "the diagnosis holds: size-aware water-filling beats uniform")
 
 
 def main():

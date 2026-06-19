@@ -12,10 +12,11 @@ The workbench is the VERIFICATION SUBSTRATE, not the renderer. Only CORE may mov
 """
 from . import (world_core, view_layer, ghost_report, verify, registry,  # noqa: F401
                render_record, conventions, divergence, prediction, temporal_membrane,
-               pfal_bench, tcff, polygon_reconciliation, fidelity_conservation, reality_debt)
+               pfal_bench, tcff, polygon_reconciliation, fidelity_conservation, reality_debt,
+               causal_continuity, raster, raster_bench)
 
 __all__ = ["world_core", "view_layer", "ghost_report", "verify", "registry",
            "render_record", "conventions", "divergence", "prediction",
            "temporal_membrane", "pfal_bench", "tcff", "polygon_reconciliation",
-           "fidelity_conservation", "reality_debt"]
+           "fidelity_conservation", "reality_debt", "causal_continuity", "raster", "raster_bench"]
 __version__ = "0.1.0-milestone1"
