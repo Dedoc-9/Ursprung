@@ -20,6 +20,7 @@ from ursprung import prediction as pred
 from ursprung import temporal_membrane as tm
 from ursprung import pfal_bench as pf
 from ursprung import tcff
+from ursprung import polygon_reconciliation as poly
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -263,6 +264,22 @@ def test_pcj_tcff_beats_reactive_and_control_does_not_win():
           "τ (proactive) does at least as well as τ-blind PFAL on PCJ")
     check(res["drifted (control)"]["pcj"] <= res["tcff (U×C×P×S×τ)"]["pcj"],
           "the negative control must not beat TCFF")
+
+
+# --- Polygon Reconciliation Law ---------------------------------------------------------------------
+
+def test_polygon_reconciliation_is_cost_based_not_truth():
+    check(poly.reconcile(100, 10)["keep_polygons"] is True,
+          "keep polygons when abandoning them costs more than their approximation error")
+    check(poly.reconcile(5, 50)["keep_polygons"] is False,
+          "a replacement may be justified only when approximation error exceeds abandonment cost")
+    check(poly.reconcile(10, 10)["keep_polygons"] is True, "a tie keeps polygons (>=)")
+    check(poly.reconcile(1, 1)["truth_claim"] is False, "reconciliation is a cost choice, never a truth claim")
+    check(abs(poly.FRAME_BUDGET_MS - 4.13) < 1e-9, "the 4.13 ms reconciliation budget is recorded")
+    L = poly.RECONCILED_LEDGER
+    ps = L.get("polygon_substrate")
+    check(ps.truth_claim is False and len(ps.alternatives_rejected) >= 5,
+          "polygon_substrate records rejected replacements and is not a truth claim")
 
 
 def main():

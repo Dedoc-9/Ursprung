@@ -85,6 +85,22 @@ boundary choice**, not an error: ask *"what assumption created this, and is it a
 — not *"the artifact exists, therefore the model is wrong."* Tag such artifacts with
 `conventions.boundary_ghost()` (origin `boundary_choice`); they allocate investigation, never certify error.
 
+### Polygon Reconciliation Law
+
+> Polygons are not preserved because they are correct. Polygons are preserved because abandoning them imposes
+> greater practical cost than their approximation error. The optimization target is **reconciliation under a
+> fixed 4.13 ms budget, not replacement.** Polygons cannot be marginalized.
+
+The Arbitrary-Boundary Law applied to representation itself (`ursprung/polygon_reconciliation.py`). Polygons
+are a deterministic **convention** and the **industrial compatibility layer** (hardware, APIs, content tools,
+engines, assets), not an ontological commitment. The triple: **polygons = compatibility layer · rasterization
+= execution mechanism · predictive allocation (PFAL/TCFF) = fidelity multiplier.** The engineering task is not
+to prove polygons correct nor to replace them with a "purer" representation (voxels, point clouds, neural
+fields, Gaussian splats, SDFs, hybrid scene graphs — all recorded as rejected *replacements*), but to manage
+where their approximations fail. The decision is a deterministic rule over declared costs —
+`reconcile(abandonment_cost, approximation_error)` keeps polygons iff `abandonment_cost ≥ approximation_error`
+— never a truth claim about representation.
+
 The standing risk: too many interesting capabilities competing to become the center of gravity. Success may
 be **more than one result in a pool** of composable features that each stay on their side of the membrane —
 not a single dominant technique. `docs/LLM_ON_TRACK.md` is the counterweight.
