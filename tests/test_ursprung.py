@@ -35,6 +35,8 @@ from ursprung import transition_debt as td
 from ursprung import adversarial_scenes as adv
 from ursprung import resistance_tensor as rt
 from ursprung import shader_cache as sc
+from ursprung import causal_surface as cs
+from ursprung import readiness as rd
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -488,6 +490,37 @@ def test_shader_cache_turns_hitches_into_allocation():
     check(res["predictive"] < res["reactive"], "predictive prewarm beats reactive compile-on-miss")
     check(res["predictive+fallback"] <= res["predictive"] + 1, "fallback tiers bound the worst-case hitch")
     check(res["random (control)"] >= res["predictive"], "random prewarm control does not beat predictive")
+
+
+# --- Milestone 7: Causal Surface Area + Representation Readiness -------------------------------------
+
+def test_causal_surface_area_and_prophecy_guard():
+    shared = {"agents_can_affect": 4, "expected_divergence": 8, "lighting_sensitivity": 9,
+              "reconstruction_sensitivity": 8}
+    solo = {"agents_can_affect": 1, "expected_divergence": 1, "lighting_sensitivity": 2}
+    check(cs.causal_surface_area(shared) > cs.causal_surface_area(solo) * 5,
+          "a shared/contested object has far higher Causal Surface Area")
+    check(cs.representation_forecast("wall", "destruction_assets").admissible(),
+          "preparing a representation is an admissible forecast")
+    check(not cs.reality_forecast("wall", "destroyed").admissible(), "asserting an outcome is not admissible")
+    try:
+        cs.assert_prepared(cs.reality_forecast("wall", "destroyed"))
+        check(False, "a reality forecast must raise ProphecyViolation")
+    except cs.ProphecyViolation:
+        check(True, "the renderer may prepare representations, never decide outcomes (prepare ≠ decide)")
+    check(cs.classify_multiplayer_artifact("incorrect_hit")[0] == "core_network",
+          "a bad hit result is a CORE/network issue, not a renderer concern")
+
+
+def test_causal_surface_beats_proximity_for_shared_objects():
+    res = cs.run(seed=1, budget=400)
+    check(res["causal_surface_area"] < res["proximity"] and res["causal_surface_area"] < res["visibility"],
+          "CSA-driven readiness leaves less unprepared debt where futures converged than proximity/visibility")
+
+
+def test_readiness_layer_prepares_shared_resources():
+    prepared, shared_ids = rd.demo(seed=1, budget=400)
+    check(len(prepared & shared_ids) >= 1, "the readiness layer prepares shared high-CSA resources")
 
 
 def main():

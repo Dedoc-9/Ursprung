@@ -110,6 +110,20 @@ WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT �
   - [x] Bench: predictive 405 vs reactive 559 (−27%); predictive+fallback 315 (−44%); random control 2305.
     PSO hitches become a temporal fidelity-allocation problem, not a reactive hitch source.
 
+- [x] **Milestone 7 — Causal Surface Area + the Representation Readiness Layer (the multiplayer axis).**
+  - [x] `causal_surface.py` — **Causal Surface Area** = agents × expected_divergence × representation_cost:
+    how many *futures* depend on an object, not how complex it is. The moat, made mechanical: a
+    **representation forecast** (prepare destruction assets) is ALLOWED; a **reality forecast** (assert the
+    wall breaks) raises `ProphecyViolation`. Multiplayer artifacts route to the right layer (visual snap →
+    perceptual ghost; bad hit → CORE/network; missing shader → representation debt). Bench: CSA leaves **0**
+    unprepared debt where futures converged vs proximity 287 / visibility 290.
+  - [x] `readiness.py` — the **Representation Readiness Layer**: shader cache / geometry streaming / texture
+    residency / neural reconstruction / particle fallback / animation decompression / RT structures are one
+    problem — *what must already exist before the future arrives?* `readiness = P(needed) × CSA`, gated by the
+    fidelity derivative; every preparation routed through `assert_prepared` (prepare ≠ decide). The shader
+    cache is one instance.
+  - Principle: **the renderer should never become prophetic; it should become better prepared.**
+
 ### Milestone-3 finding (the failure is the result)
 
 The Causal Continuity Hypothesis as *stated* (allocate ∝ U·C·P) **failed** the equal-budget bench. Diagnosis

@@ -124,6 +124,8 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 | `ursprung/adversarial_scenes.py` | **OBSERVER** | flicker / false-future / delayed-consequence / cliff traps; greedy thrashes vs damped lags — no universal damping |
 | `ursprung/resistance_tensor.py` | **OBSERVER** | multi-dimensional Representation Resistance (7 dims) + `miss_cost` + fidelity derivative `∂Fidelity/∂Budget` |
 | `ursprung/shader_cache.py` | **ALLOCATOR** | shader/PSO cache as validated representation memory; multi-horizon prewarm + fallback tiers (turns hitches into allocation) |
+| `ursprung/causal_surface.py` | **OBSERVER** | Causal Surface Area = agents × divergence × representation cost (how many futures depend on it); prepare ≠ decide guard |
+| `ursprung/readiness.py` | **ALLOCATOR** | Representation Readiness Layer — shader/stream/residency/neural/particles as one prewarm problem (`P(needed) × CSA`) |
 | `loop.py` | — | smallest executable world loop, end to end |
 | `AGENTS.md` | — | the renderer contract (the rules every change obeys) |
 
