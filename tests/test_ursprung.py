@@ -21,6 +21,7 @@ from ursprung import temporal_membrane as tm
 from ursprung import pfal_bench as pf
 from ursprung import tcff
 from ursprung import polygon_reconciliation as poly
+from ursprung import fidelity_conservation as fc
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -280,6 +281,27 @@ def test_polygon_reconciliation_is_cost_based_not_truth():
     ps = L.get("polygon_substrate")
     check(ps.truth_claim is False and len(ps.alternatives_rejected) >= 5,
           "polygon_substrate records rejected replacements and is not a truth claim")
+
+
+# --- Temporal Fidelity Conservation Law -------------------------------------------------------------
+
+def test_fidelity_is_conserved_and_transfer_is_zero_sum():
+    a = {"x": 300, "y": 300}
+    check(fc.is_conserved(a, 600) and not fc.is_conserved(a, 500), "conservation means Σ allocation == budget")
+    b = fc.transfer(a, "x", "y", 100)
+    check(fc.total(b) == 600 and b["x"] == 200 and b["y"] == 400, "a transfer is zero-sum")
+    try:
+        fc.transfer(a, "x", "y", 9999)
+        check(False, "an over-draw transfer must fail closed")
+    except fc.ConservationError:
+        check(True, "cannot transfer fidelity you do not have")
+
+
+def test_objective_swap_min_discontinuity_beats_max_detail():
+    regions, a_local, a_mind = fc.demo(budget=600)
+    check(fc.is_conserved(a_local, 600) and fc.is_conserved(a_mind, 600), "both objectives conserve the budget")
+    check(fc.consequential_discontinuity(regions, a_mind) < fc.consequential_discontinuity(regions, a_local),
+          "minimizing consequential discontinuity beats maximizing local detail at equal budget")
 
 
 def main():

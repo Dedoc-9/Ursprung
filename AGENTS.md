@@ -101,6 +101,29 @@ where their approximations fail. The decision is a deterministic rule over decla
 `reconcile(abandonment_cost, approximation_error)` keeps polygons iff `abandonment_cost ≥ approximation_error`
 — never a truth claim about representation.
 
+### Temporal Fidelity Conservation Law (the synthesis)
+
+> A renderer does not create fidelity. It distributes finite fidelity across competing uncertainties.
+> Therefore the objective is not maximum detail — it is **minimum consequential discontinuity under a fixed
+> budget.**
+
+Fidelity is **transferred**, never created: more here = less elsewhere; more now = less later; more spatial =
+less temporal; more shading = less geometry. Every optimization is a zero-sum transfer on a fixed (~4.13 ms)
+budget (`ursprung/fidelity_conservation.py`): `is_conserved(alloc, budget)` (Σ = budget), `transfer()` (zero-
+sum, fail-closed), and the quantity to minimize, `consequential_discontinuity(regions, alloc)`. This bridges
+the other three laws — the Arbitrary-Boundary Law makes the boundaries fidelity flows across deterministic;
+PFAL/TCFF decide where/when to move it; the Polygon Reconciliation Law makes rasterization the *transport*,
+not the strategy. The hierarchy re-centers on allocation:
+
+```
+WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → RASTERIZATION → IMAGE
+                                 (the strategic layer)   (transport)
+```
+
+The one-line philosophy Ursprung is built to be known for: **arbitrary boundaries require deterministic
+handling, and finite fidelity should be allocated by expected future failure cost, not present visual
+complexity.**
+
 The standing risk: too many interesting capabilities competing to become the center of gravity. Success may
 be **more than one result in a pool** of composable features that each stay on their side of the membrane —
 not a single dominant technique. `docs/LLM_ON_TRACK.md` is the counterweight.
