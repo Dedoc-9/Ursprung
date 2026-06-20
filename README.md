@@ -157,6 +157,33 @@ The full epistemic boundary — including the separators (`measured ≠ guarante
 `simulation ≠ physics`, `bounded observer ≠ all observers`, `zero MI on trace ≠ zero MI on hardware`) — is in
 [`docs/MEASUREMENT_DISCIPLINE.md`](docs/MEASUREMENT_DISCIPLINE.md).
 
+## What category is this? — Intent-Aware Information Mediation
+
+Ursprung is not, at root, a rendering technology, a security framework, or an AI-safety system — each is too
+narrow. It is **composition, not invention**: it applies *quantitative information flow* and *information
+design* as a **closed-loop architecture** for interactive systems, in which the representation itself becomes a
+**controlled interface rather than a passive output.** It anchors to existing research rather than replacing it:
+
+- **Quantitative Information Flow (QIF)** supplies the *measurement* — how many bits escaped, under which
+  observer class, through which channel (`channel_discovery.py`, `adversary_capacity.py`).
+- **Declassification** supplies the *permission model* — what is intentionally released (`disclosure.py`).
+- **Information design / Bayesian persuasion** supplies the *purpose model* — *why* it is released and what
+  decision it should enable.
+- The **measurement discipline** supplies the operational loop most systems lack:
+
+```
+policy → implementation → observable behavior → measurement → policy revision
+```
+
+Most stacks stop at `policy → implementation`; the closed loop — *prove the realized system matched the
+intended disclosure* — is the differentiator. The control point moves from access control's "**may** this
+observer receive this object?" to "**what representation lets this observer accomplish the task while minimizing
+unintended inference?**" The defensible one-line: *a QIF-backed, closed-loop information-mediation architecture
+for interactive systems, in which the representation is a controlled interface — of which a renderer is one
+backend* (game engines, agent environments, robotics, collaborative software, simulation, medical/scientific
+viz, adaptive interfaces). Full taxonomy and the honest "composition, not invention" caveat:
+[`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md) §9.
+
 ## Run it
 
 ```bash
