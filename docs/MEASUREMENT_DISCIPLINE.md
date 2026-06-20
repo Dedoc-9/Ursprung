@@ -158,6 +158,11 @@ fitted rule         ≠ causal source   (the generator is what stays INVARIANT w
                                         context all change; identifying it requires varying the confounder)
 ghost               ≠ hidden truth    (a residual G = Z − Π(Z) may be a projection artifact — the observer's
                                         shadow — not a generator component; test invariance across Π + necessity)
+stable              ≠ causal          (invariance across projections is necessary but NOT sufficient; a stable
+                                        artifact is invariant yet unnecessary — attribution needs invariance ∧ necessity)
+integrity           = reproducibility, not causal validity   (a hash binds same-state→same-hash; it cannot tell
+                                        a generator component from a confounder — a replayable system can replay
+                                        the wrong explanation)
 ```
 
 ## The one absolute, and everything else

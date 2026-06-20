@@ -380,6 +380,17 @@ never a new invariant:
     projection artifact. **Generator = invariant necessity; confounder = invariant-looking contingency.** (And a
     hashed confounder is still a confounder — `integrity ≠ truth`.) New separator: `ghost ≠ hidden truth`.
 
+19. **Attribution — DONE; the ghost is a candidate set, not a truth.** `ursprung/perception/attribution.py`
+    names the missing layer of the old pipeline (call it `V`): the ghost decomposes `G = G_F + G_C` (generator
+    residue + confounder/projection residue), and the split comes from tests against the *other* operators, not
+    the residual itself. Two tests, **both required**: invariance across projections, and **necessity**
+    (intervene, run `F`). The decisive case: a component `b` invariant across *every* projection but *not*
+    necessary is a **stable artifact** — invariance alone would mis-attribute it to the generator; necessity
+    assigns it to `G_C`. So `G_F = invariant ∧ necessary`, and `stable ≠ causal`. And the hash binds
+    *reproducibility*, not causal validity — it cannot tell `G_F` from `G_C` (`integrity = reproducibility ≠
+    causal validity`). The ghost stopped being a hidden-state container and became a causal-separation problem.
+    New separators: `stable ≠ causal`, `integrity = reproducibility ≠ causal validity`.
+
 The remaining honest gaps (so this is not over-read): the compiler is still a *lookup / greedy channel select*,
 not a continuous funnel *solve*; the world, the learner, and the leakage estimator are constructed; the utility
 models are declared conventions; the capacity axis is a memory-horizon *proxy*, not real model capacity; the

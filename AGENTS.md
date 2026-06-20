@@ -287,7 +287,7 @@ Weltlinie + monitored invariants intact. It does **not** mean the renderer is co
 
 ## Status
 
-The conceptual arc is **complete** (424-check suite). M1 foundation + invariant harness → M2 the five laws →
+The conceptual arc is **complete** (434-check suite). M1 foundation + invariant harness → M2 the five laws →
 M3/3.1 the VIEW raster slice and the *ranking ≠ allocation* result (from a recorded **failed** hypothesis) →
 M4–M9 fidelity-as-economy (resistance tensor, shader cache, readiness, providers, dependency integrity,
 compiler) → M10–M21 the information-firewall arc (see the section above) → Channel Discovery + the

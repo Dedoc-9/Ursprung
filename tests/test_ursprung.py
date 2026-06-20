@@ -1171,6 +1171,22 @@ def test_perception_ghost_invariance_ghost_is_not_truth():
     check(r["artifact_neither_necessary_nor_invariant"], "the artifact is neither — a ghost is not automatically a hidden truth")
 
 
+def test_perception_attribution_ghost_is_a_candidate_set():
+    r = perc.attribution.crucible()
+    # the ghost decomposes into G_F (generator) and G_C (confounder/artifact) — a partition, not a truth
+    check(r["ghost_is_candidate_set"], "the ghost is a candidate set of multiple components, not a single hidden truth")
+    check(r["decomposition_partitions"], "the ghost decomposes into G_F and G_C — a clean partition")
+    check(r["G_F_is_generator_only"], "G_F (invariant ∧ necessary) is the generator component alone")
+    # the decisive case: invariance alone over-attributes; a stable artifact is invariant yet lands in G_C
+    check(r["stable_artifact_is_invariant"], "a stable artifact is invariant across every projection")
+    check(r["stable_artifact_attributed_to_GC"], "yet the stable artifact is attributed to G_C (it is not necessary)")
+    check(r["invariance_alone_overattributes"], "invariance alone over-attributes — it would keep the stable artifact")
+    check(r["both_tests_required"], "G_F = invariant ∧ necessary; both tests are required, neither alone — stable ≠ causal")
+    # projection-relative artifact, and the hash limitation
+    check(r["projection_artifact_is_variant"], "a projection-relative component is the variant artifact in G_C")
+    check(r["integrity_is_reproducibility_not_validity"], "the hash binds reproducibility, not causal validity — it cannot tell G_F from G_C")
+
+
 def main():
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):
