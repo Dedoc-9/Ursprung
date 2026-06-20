@@ -270,7 +270,7 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 
 ## Status
 
-The full suite is **410 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
+The full suite is **417 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
 control, and an explicit "expires on real silicon" bound.
 
 - **M1 — foundation.** Invariant harness; the renderer is proven observer-only (`integrity ≠ truth`).
@@ -327,7 +327,12 @@ control, and an explicit "expires on real silicon" bound.
   the spine the whole arc instantiates: **leakage `= L(F, M, Π, A_C)`** — dynamics, memory, projection, observer
   reconstruction — four *independent knobs* (the projection and the observer class move leakage separately; the
   dynamics `F` is independent of the projection, CORE ⟂ VIEW in operator form). *The useful artifact is the
-  separation, not a final equation.* World-side direction: [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
+  separation, not a final equation.* And `confounder.py` adds the slot the diagram needed —
+  `F, M → Π → O ← C ← A_C`: the observer sees `O`, never `F`, so `P(F|O)` is identifiable only by **varying the
+  confounder**. Within one context a generator and a confounder are indistinguishable; across contexts only the
+  generator survives — *the generator is what stays invariant when observer, projection, and context all change*
+  (and a higher-capacity observer **overfits** the confounder). `mechanism ≠ correlation`; `fitted rule ≠ causal
+  source`. World-side direction: [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
 
 **The conceptual arc is complete; the remaining work is empirical, not more laws.** It lives behind the
 intentionally-unbuilt seams — `reality_harness.NetworkChannel` (point it at a real socket),

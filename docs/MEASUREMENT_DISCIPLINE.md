@@ -152,6 +152,10 @@ response            ≠ learning
 personalization     ≠ self-change
 observer-relative   ≠ observer-controlled  (the observer selects which projection it receives; it never
                                              becomes the author of the underlying policy)
+mechanism           ≠ correlation     (a recoverable pattern can be a confounder, constraint, residue, or
+                                        temporary equilibrium — not the generator)
+fitted rule         ≠ causal source   (the generator is what stays INVARIANT when observer, projection, and
+                                        context all change; identifying it requires varying the confounder)
 ```
 
 ## The one absolute, and everything else

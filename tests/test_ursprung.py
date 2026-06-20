@@ -1141,6 +1141,21 @@ def test_perception_operators_separation_is_the_artifact():
     check(r["raw_full"] == 3.0 and r["coarse_marginal"] == 2.0, "the operators reproduce the expected per-configuration leakage")
 
 
+def test_perception_confounder_generator_is_the_invariant():
+    r = perc.confounder.crucible()
+    # within one context the generator and a confounder are indistinguishable
+    check(r["single_context_ambiguous"], "in one context the generator and a confounder both fit perfectly — indistinguishable")
+    # across contexts only the generator survives — it is the cross-context invariant
+    check(r["context_variation_identifies_generator"], "across contexts only the causal rule (the generator) stays consistent")
+    check(r["generator_is_the_invariant"], "the generator is the invariant across context — everything else dissolves")
+    # the confounder fits in-context and fails across; higher capacity overfits it
+    check(r["confounder_fits_in_context"], "the confounder predicts perfectly in its own context")
+    check(r["confounder_fails_across"], "the confounder's accuracy collapses across contexts")
+    check(r["capacity_overfits_confounder"], "a higher-capacity observer overfits the confounder — better in-context, worse cross-context (high capacity, low causal identifiability)")
+    # separation requires context variation
+    check(r["separation_requires_context_variation"], "separating generator from confounder requires >=2 contexts — one cannot do it")
+
+
 def main():
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):

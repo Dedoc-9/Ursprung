@@ -358,6 +358,19 @@ never a new invariant:
     separators are all statements that two slots are distinct (`truth (F) ≠ projection (Π)`; `observer-relative
     (Π) ≠ observer-controlled (F)`; `secure-against-class (one A_C) ≠ secure (all A_C)`).
 
+17. **Confounder separation — DONE; the generator is the invariant.** `ursprung/perception/confounder.py` adds
+    the slot the operator diagram needed: `F, M → Π → O ← C ← A_C`. The observer sees `O`, never `F`, so
+    `P(F|O)` is identifiable only if the confounder `C` is constrained. The bench: a causal rule (the generator)
+    and a spurious rule (a confounder predictive only within one context). Within one context they are
+    **indistinguishable** (both fit perfectly); across contexts only the generator survives (cross-env accuracy
+    1.0 vs the confounder's 0.667); and a **higher-capacity observer overfits the confounder** — better
+    in-context, worse cross-context (*high capacity, low causal identifiability*, the ML-generalization danger).
+    The mature criterion is not "find the rule that fits" but **find what stays invariant when observer,
+    projection, and context all change** — that invariant is the closest thing to a real generator (Invariant
+    Causal Prediction, in the project's terms). A recoverable pattern is not an identity; it can be a generator,
+    constraint, residue, artifact, or temporary equilibrium. New separators: `mechanism ≠ correlation`,
+    `fitted rule ≠ causal source`.
+
 The remaining honest gaps (so this is not over-read): the compiler is still a *lookup / greedy channel select*,
 not a continuous funnel *solve*; the world, the learner, and the leakage estimator are constructed; the utility
 models are declared conventions; the capacity axis is a memory-horizon *proxy*, not real model capacity; the
