@@ -292,6 +292,70 @@ Mediation Layer / IML)** is a reasonable proposal, presented as *"composes IFC/Q
 information design,"* never as a freshly-invented discipline. (Analogy: an API gateway controls service
 *access*; an IML controls meaningful *disclosure*.)
 
+## 10. A Perception Operating System — the long-horizon vision (not built)
+
+*This is the north star, not a roadmap and not a claim. It is recorded so the ambition is on the record,
+bounded by the same separators as everything else: `vision ≠ built`, `simulation ≠ physics`, and the prize
+below is real only with its boundary attached.*
+
+Taken as one trajectory — Reality Engine (*what is true*) → Ursprung (*what this observer should perceive*) →
+the LLM (the observer that finally forces the question) — the destination is not a game engine, a database, a
+simulator, or an AI framework; those are special cases. It is a new computing layer that sits between reality
+and every observer (human, agent, organization, robot, analyst) and computes:
+
+> *What is the minimum representation this observer needs to achieve its purpose, while preventing unintended
+> inference?*
+
+```
+Reality Engine → committed world state → DisclosurePolicy → Perception Compiler → observer-specific reality → human / agent / org
+```
+
+**The breakthrough is making truth and perception separate first-class objects.** Almost every system today
+conflates them (`truth = what gets sent`); this architecture asserts `truth ≠ perception; perception is compiled
+from truth`. An operating system is the apt analogy: an OS allocates memory, CPU, storage — this allocates
+something deeper, **access to truth** (not truth itself — *access* to it). In an LLM-native world that may
+become as fundamental as memory management was in the early computer era.
+
+**Why the LLM forces it.** Before LLMs, observers were mostly human — noisy, slow, inconsistent. An LLM agent
+remembers, probes, accumulates, builds latent models, and coordinates, so *every LLM is born an adaptive
+adversary* (M20/M21) — not malicious, just epistemically aggressive. The question every API, dashboard, game,
+robot feed, and workflow now inherits: **what can a learning observer infer after 10,000 interactions?** Most
+systems have no answer. This is the load-bearing, fully-defensible part of the vision.
+
+**The prize: computable epistemics** — a system that can answer, per interaction: *what is true? what did this
+observer see? what could it infer? what remains unknowable? what leakage budget was consumed? what utility was
+gained?* — for every observer at once.
+
+**The boundary that keeps the prize honest** (the repo's `secure-against-class ≠ secure`): of those six, only
+*"what remains unknowable"* is answerable **absolutely**, and only via the one absolute the project proved — the
+secret severed from every channel. *"What could it infer / what escaped"* is answerable **quantitatively but
+class-relatively** (QIF under a stated estimator). So the true capability is **bound-and-attribute**, never
+**prove-omnisciently**. Still foundational — almost no system answers any of the six today — but the *true*
+version carries its observer class with it.
+
+**Where it would reshape things** (truth stays singular; perception becomes contextual): AI agents get a
+purpose-compiled observation with a measured leakage bound instead of the whole database; multiplayer anti-cheat
+becomes *information architecture* (compile observations that preserve play while minimizing inference) rather
+than detect-and-ban; enterprise access shifts from "may Alice view row X?" to "what representation of row X is
+sufficient for Alice's task?"; robots get actionable state (navigable corridor, obstacle confidence, goal
+affordances) instead of raw sensor streams; one scientific simulation serves researchers, students,
+policymakers, and agents different views of a single committed reality.
+
+**Still composition, not invention.** The pieces exist and are fragmented — quantitative information flow,
+information design, differential privacy, active perception, world models, multi-agent systems, access control.
+The synthesis is: *treat observer-specific perception as a **compilable artifact over a committed world model**,
+then **measure what can be inferred** from it.* That combination has no settled industry category;
+"Perception Operating System" / "Computational Epistemics Infrastructure" / "Intent-Aware Information Mediation"
+are candidate names.
+
+**Three things that are unsolved, not merely unbuilt** (so this stays honest direction): (1) defining
+*participation utility / value of information* for real tasks — the §6 variable-choice recursion; (2) solving the
+privacy-funnel objective *at runtime, per observer, at scale* — minimal disclosure for thousands of simultaneous
+agents is a hard systems/optimization problem; (3) the estimator-is-a-hypothesis-class recursion means "prove
+what escaped" is forever class-relative. None is closed by another invariant; all three are empirical. The
+smallest *true* cell of this vision is buildable now — one agent, one task, one `DisclosurePolicy`, a measured
+leakage bound (§7 step 4) — and that cell, not the platform, is the honest next step.
+
 ---
 
 ## References (grounding; current as of June 2026)
