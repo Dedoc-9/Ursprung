@@ -270,7 +270,7 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 
 ## Status
 
-The full suite is **357 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
+The full suite is **362 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
 control, and an explicit "expires on real silicon" bound.
 
 - **M1 — foundation.** Invariant harness; the renderer is proven observer-only (`integrity ≠ truth`).
@@ -299,7 +299,11 @@ control, and an explicit "expires on real silicon" bound.
   does not), **tradeoff** (non-separable — a real frontier), and **cascade-collapse** (a session of weak signals
   reconstructs the secret). The condition reports *which regime a given `(task, policy, observer-class)` falls
   in* — a **behavioral forecast, not a safety certificate.** A general classifier (a "Denjoy–Young–Saks for
-  perception") is the open target, not a claim. World-side direction: [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
+  perception") is the open target, not a claim. And `observer_capacity.py` makes the dependence a curve —
+  **`Leakage(C)`**: the *same* representation leaks 0.39 bits to a memoryless observer and the *whole* secret to
+  an accumulating one, so "low leakage" is undefined until the observer class is named. That curve only *defines
+  the axis*; scaling `C` to a real model on a non-toy world is the genuine next frontier, deliberately not faked
+  here. World-side direction: [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
 
 **The conceptual arc is complete; the remaining work is empirical, not more laws.** It lives behind the
 intentionally-unbuilt seams — `reality_harness.NetworkChannel` (point it at a real socket),

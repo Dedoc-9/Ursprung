@@ -284,9 +284,17 @@ never a new invariant:
    echoes **Denjoy–Saks–Young**'s almost-everywhere classification — a "DSY for perception" is the honest,
    theorem-shaped target, not proved here. Sufficient, not necessary; under the modeled observer class.
 
+10. **Leakage(C) — DONE; the capacity axis made explicit.** `ursprung/perception/observer_capacity.py` turns
+    M21's class-relativity into a *curve*: against one FIXED representation, recovery rises monotonically with
+    observer capacity (memory horizon W) — 0.39 bits at W=1 (memoryless) up to the full 6 bits once the observer
+    can accumulate the session. The same disclosure leaks differently to different observers, so leakage is
+    `Leakage(C)`, never a scalar — the VC-dimension bridge as a measurable curve. It only **defines the axis**;
+    scaling `C` to a real model on a non-toy world is the genuine frontier (a different *kind* of build), not
+    attempted here.
+
 The remaining honest gaps (so this is not over-read): the compiler is still a *lookup / greedy channel select*,
 not a continuous funnel *solve*; the world, the learner, and the leakage estimator are constructed; the utility
-models are declared conventions. The "participation *rarely* needs full knowledge" claim is now a *per-task
+models are declared conventions; the capacity axis is a memory-horizon *proxy*, not real model capacity. The "participation *rarely* needs full knowledge" claim is now a *per-task
 empirical question* (separable → free lunch; non-separable → an irreducible measured frontier), not a settled
 thesis. The next increments are empirical — a real learner class, a real trace — not another conceptual layer.
 

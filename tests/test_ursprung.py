@@ -1031,6 +1031,17 @@ def test_perception_fidelity_condition_distinguishes_feasible_from_irreducible()
     check(r["condition_distinguishes"], "the Perception Fidelity Condition holds for the separable task and is infeasible for the non-separable one")
 
 
+def test_perception_leakage_is_a_function_of_observer_capacity():
+    r = perc.observer_capacity.crucible()
+    # against ONE fixed representation, recovery rises monotonically with observer capacity (memory horizon)
+    check(r["monotone_in_capacity"], "recovery is monotone non-decreasing in observer capacity")
+    check(r["rises_overall"], "recovery strictly rises from the lowest to the highest capacity")
+    check(r["memoryless_recovers_little"], "a memoryless observer (W=1) recovers almost nothing")
+    check(r["full_capacity_recovers_secret"], "a full-capacity (accumulating) observer recovers the exact secret")
+    # the point: the same disclosure leaks differently to different observers → Leakage(C), never a scalar
+    check(r["leakage_undefined_without_observer_class"], "the same fixed representation has capacity-dependent leakage — 'leakage' is undefined without naming the observer class")
+
+
 def main():
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):
