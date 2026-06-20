@@ -264,10 +264,21 @@ never a new invariant:
    Honest bound: holds against the *modeled* observer class and only because the task channel is *separable*
    from the leak channel; a richer class or a non-separable task changes it (`secure-against-class ≠ secure`).
 
+8. **The non-separable frontier — DONE; the free lunch removed.** `ursprung/perception/frontier.py` tests the
+   hidden assumption session accounting rested on (*task information and secret are separable*) by violating it:
+   an **exact-interception** task where utility *is* the secret. Disclosing `k` of 6 bits → `2^(6−k)` candidates
+   → centroid aim → exact-hit utility. The result is a genuine **privacy–utility frontier**: utility ≈
+   `2^(leakage−6)`, **doubling per disclosed bit** (0.016 → 0.031 → … → 1.00), and **full utility strictly
+   requires full leakage**. The separable session win (U=1.0 at <1 bit) was a *special case*, not the rule. When
+   the task needs the secret, the framework's job is not to *eliminate* the tradeoff but to **measure** it — to
+   publish *the cost of knowledge* so the policy author's choice (more utility / less leakage) is explicit and
+   contestable. *That* visibility is the contribution, not a free lunch.
+
 The remaining honest gaps (so this is not over-read): the compiler is still a *lookup / greedy channel select*,
-not a continuous funnel *solve*; the world, the learner, and the leakage estimator are constructed; and the
-separable-task assumption is doing real work. The next increments are empirical — a real learner class, a real
-trace, a non-separable task — not another conceptual layer.
+not a continuous funnel *solve*; the world, the learner, and the leakage estimator are constructed; the utility
+models are declared conventions. The "participation *rarely* needs full knowledge" claim is now a *per-task
+empirical question* (separable → free lunch; non-separable → an irreducible measured frontier), not a settled
+thesis. The next increments are empirical — a real learner class, a real trace — not another conceptual layer.
 
 ## 8. The one-line shift
 

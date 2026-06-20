@@ -1002,6 +1002,21 @@ def test_session_accounting_is_purpose_preserving_under_accumulation():
     check(r["purpose_preserving_under_accumulation"], "purpose-preserving disclosure under an accumulating observer: utility 1.0, exploitability collapsed, exact hidden")
 
 
+def test_perception_frontier_is_the_measurable_cost_of_knowledge():
+    r = perc.frontier.crucible()
+    # it is a genuine frontier: both axes strictly increase together — a tradeoff curve, no dominating point
+    check(r["leakage_monotone"] and r["utility_monotone"], "leakage and utility rise together — a real tradeoff curve")
+    check(r["leakage_equals_bits"], "leakage equals the bits disclosed (measured by the QIF estimator)")
+    # NON-separable: full utility strictly requires full leakage (the opposite of the separable session win)
+    check(r["full_utility_requires_full_leakage"], "exact-interception utility of 1.0 requires the full 6 bits of leakage — no free lunch")
+    check(r["no_high_utility_at_low_leakage"], "no policy achieves high utility at low leakage — the channels are inseparable")
+    check(r["each_bit_buys_utility"], "every disclosed bit buys utility — the measurable value of knowledge")
+    check(r["utility_floor"] < 0.05, "with near-zero leakage, exact interception is near-hopeless")
+    check(r["min_leakage_for_half_utility"] == 5.0, "even half the interception rate costs 5 of 6 bits")
+    # the benchmark's point: the separable session result was a special case, not the general rule
+    check(r["separable_was_a_special_case"], "the separable session win does not generalize — when the task needs the secret, the tradeoff is irreducible")
+
+
 def main():
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):
