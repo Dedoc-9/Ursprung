@@ -23,8 +23,13 @@ allocation are different mathematical objects.**
 
 It then grew a **second arc**. Because a renderer of a partially-hidden world is also a *potential leak* of
 hidden state, rendering became an **information firewall** and finally a **measurement discipline** — a system
-that reports what it can and cannot see rather than declaring itself safe. The broadest framing (research, not
-built) is that this fidelity engine is *one backend* of a committed, leakage-bounded **perception compiler**
+that reports what it can and cannot see rather than declaring itself safe. Pushed further, that discipline
+turned into a question of **causes, not channels**: a residual outside the observer's projection is not hidden
+truth but a *candidate set*, and the renderer learns to separate a real generator from a projection artifact (a
+stable, reproducible, hash-identical residue that is nonetheless not causal) by what survives changing the
+observer, intervening on the dynamics, and changing the model. *Generator = invariant necessity; integrity ≠
+truth; stable ≠ causal.* The broadest framing (research, not built) is that this fidelity engine is *one
+backend* of a committed, leakage-bounded **perception compiler**
 ([`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md)).
 
 ## The five laws (the philosophy layer)
@@ -134,6 +139,31 @@ backward into a *hidden* thing, and the boundary that forbids it. This is the th
 The last row is the recursive one: even the defender's *own measurement* is an observable that must not be
 mistaken for the truth about the system — which is why a result names its estimator class and coverage
 boundary rather than declaring "safe."
+
+### The novel part: the ghost is a candidate set, not a truth
+
+The arc's deepest turn is in `ursprung/perception/`, where the inversion is applied to the project's *own*
+founding object. Milestone 1 already produced a **ghost** — the residual `G = Z − Π(Z)`, what the observer
+cannot see. The naive reading is `ghost ≈ hidden mechanism`. The attribution layer shows that is too strong: a
+residual is **candidate explanations**, and the system must separate *causes* from *artifacts* by tests against
+the other operators — not from the residual itself.
+
+| Question | Test | Module |
+|---|---|---|
+| was it ever hidden? | membership in the ghost under *some* projection | `attribution.py` |
+| is it observer-independent? | **invariance** — ghosted under *every* projection `Π` | `ghost_invariance.py`, `attribution.py` |
+| is it causal? | **necessity** — remove it, run `F`; does the trajectory change? | `attribution.py` |
+| causal *to which model?* | necessity is **model-relative**; take `⋂ G_F(F)` over the admissible model class | `model_relativity.py` |
+
+The result decomposes the ghost as `G = G_F + G_C` (generator residue + confounder/projection residue). The
+decisive, counter-intuitive case is a component that is **invariant, reproducible, observer-independent, and
+hash-identical — yet not causal** (the system is the same system without it): a *stable artifact*. Invariance
+alone would promote it; only intervention demotes it. So **`stable ≠ causal`**, the hash certifies a
+trajectory's *identity* not its *explanation* (**`integrity = reproducibility ≠ causal validity`**), and
+necessity itself is only as trustworthy as the model class it is tested against (**`causal-under-a-model ≠
+causal-across-models`**). The compact statement of the whole arc: **`Generator = invariant necessity`** — what
+survives changing the observer, intervening on the dynamics, *and* changing the model; everything else is a
+candidate artifact, however deep it looks. This is what prevents the system turning ignorance into ontology.
 
 ### What it actually proves (the measurement discipline)
 
@@ -270,7 +300,7 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 
 ## Status
 
-The full suite is **435 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
+The full suite is **443 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
 control, and an explicit "expires on real silicon" bound.
 
 - **M1 — foundation.** Invariant harness; the renderer is proven observer-only (`integrity ≠ truth`).
@@ -335,7 +365,18 @@ control, and an explicit "expires on real silicon" bound.
   source`. And `ghost_invariance.py` closes the loop to M1's `ghost_report`: the residual `G = Z − Π(Z)` is a
   generator component only if it is **invariant** across projections *and* **necessary** (removing it changes
   `F`); otherwise it is a **projection artifact — the observer's shadow**. *Generator = invariant necessity;
-  `ghost ≠ hidden truth`.* World-side direction: [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
+  `ghost ≠ hidden truth`.* Then `attribution.py` makes that the spine: the residual is a **candidate set, not a
+  truth** — it decomposes `G = G_F + G_C` (generator residue + confounder/projection residue), split by two
+  questions kept apart (*was it ever hidden?* vs *was it causal?*). The decisive case is a component that is
+  invariant across *every* projection yet **not necessary** — a *stable artifact*: invariance alone
+  over-attributes it, so both tests are required (`stable ≠ causal`). The hash sits *below* attribution — it
+  certifies a trajectory's identity, not its explanation (`integrity = reproducibility ≠ causal validity`), so
+  the old 7-stage stack becomes a 9-stage **attribution** stack (`… Projection · Attribution · Integrity`).
+  Finally `model_relativity.py` turns the principle on the causal test itself: necessity is **model-relative**
+  (`G_F(F₁) ≠ G_F(F₂)`) — a component can be necessary under a restricted model and redundant under a richer one
+  that fits the same data, so the robust generator is what survives the *admissible model class* (`⋂ G_F(F)`).
+  *Causal-under-a-model ≠ causal-across-models* — the `A_C` loop, one layer deeper. World-side direction:
+  [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
 
 **The conceptual arc is complete; the remaining work is empirical, not more laws.** It lives behind the
 intentionally-unbuilt seams — `reality_harness.NetworkChannel` (point it at a real socket),

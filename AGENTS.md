@@ -211,6 +211,17 @@ new VIEW/ALLOCATOR/OBSERVER system as something an adversary will read, and obey
   default question from *"what mechanism blocks this?"* to *"what does this mechanism make observable, and
   what observer class are we bounding?"*
 
+- **the ghost is a candidate set, not a truth.** When a system surfaces a residual it cannot explain — a
+  divergence, a reconstruction mismatch, a persistent ghost — do not treat it as a hidden mechanism. It is
+  `G = G_F + G_C` (real generator residue vs projection/confounder artifact), separated by **invariance**
+  (persists across observers/projections?), **necessity** (removing it changes `F` under intervention?), and
+  **model-robustness** (necessary across the admissible model class, not just one model?). A residual can be
+  stable, reproducible, observer-independent, and hash-identical and *still* be a non-causal artifact:
+  `stable ≠ causal`, `integrity = reproducibility ≠ causal validity`, `causal-under-a-model ≠
+  causal-across-models`. Keep only the invariant necessity (`perception/ghost_invariance.py`,
+  `attribution.py`, `model_relativity.py`). `Generator = invariant necessity`; the hash certifies a
+  trajectory's identity, never its explanation.
+
 Every such system is an **OBSERVER** (it measures, ranks, attributes; it never mutates the trajectory and
 never asserts truth). The cardinal invariant and the four-layer law above still bind it.
 
@@ -225,7 +236,7 @@ never by correctness.
 
 Ursprung is a **specification + reference + measurement discipline**, not a turnkey product. Hold that framing
 before adopting any of it: `integrity ≠ truth`, `tested ≠ safe`, `simulation ≠ physics`, and every bench number
-is constructed and **expires on real silicon**. With that in mind, there are four robust ways an engineer — or
+is constructed and **expires on real silicon**. With that in mind, there are five robust ways an engineer — or
 an LLM acting as one — can produce real value from this repo today, followed by an honest statement of the
 adoption gap.
 
@@ -257,7 +268,22 @@ the intended behavior* — not the most accurate one. (It needs an estimator for
 bundled one is discrete/symbolic. The `MeasurementResult` boundary discipline and the adversary-class sweep
 (`adversary_capacity`) are already here.) Report "found by estimator E over trace D against class A," never "safe."
 
-**4. As an LLM-on-track methodology (for any systems project).** The `observe → hypothesize → implement →
+**4. As a causal-attribution discipline for residuals / anomalies / ghosts (the deepest transferable idea).**
+Any system that produces an *unexplained residual* — a divergence, a reconstruction mismatch, a persistent
+anomaly, a "ghost" — faces the same trap: treating the residual as evidence of a hidden mechanism. The
+`ursprung/perception/` attribution layer is a portable procedure for *not* doing that. A residual is a
+**candidate set**, decomposed `G = G_F + G_C` (real generator vs projection/confounder artifact) by three
+tests, none of which read the residual itself: **invariance** (does it persist when you change the observer /
+projection?), **necessity** (does removing it change the dynamics under intervention?), and **model-robustness**
+(is it still necessary across the admissible *model class*, or only under one model?). The decisive lesson is
+the counter-intuitive one: a residual can be stable, reproducible, observer-independent, and hash-identical and
+*still* be a non-causal artifact — `stable ≠ causal`, `integrity = reproducibility ≠ causal validity`,
+`causal-under-a-model ≠ causal-across-models`. This is directly reusable for anomaly triage, model debugging,
+A/B-result attribution, and any "is this signal real or an artifact of how we looked?" question — symbolic/toy
+in the repo, but the *procedure* (vary the projection, intervene, vary the model; keep only the invariant
+necessity) transfers unchanged. *Generator = invariant necessity.*
+
+**5. As an LLM-on-track methodology (for any systems project).** The `observe → hypothesize → implement →
 verify → record` loop, the four LLM failure-mode guards (silent architectural drift, accidental authority
 leakage, unreplayable behavior, unmeasured optimization claims), and *preserve failed branches* keep an LLM
 coding partner disciplined on work that has nothing to do with rendering (`docs/LLM_ON_TRACK.md`).
@@ -287,7 +313,7 @@ Weltlinie + monitored invariants intact. It does **not** mean the renderer is co
 
 ## Status
 
-The conceptual arc is **complete** (435-check suite). M1 foundation + invariant harness → M2 the five laws →
+The conceptual arc is **complete** (443-check suite). M1 foundation + invariant harness → M2 the five laws →
 M3/3.1 the VIEW raster slice and the *ranking ≠ allocation* result (from a recorded **failed** hypothesis) →
 M4–M9 fidelity-as-economy (resistance tensor, shader cache, readiness, providers, dependency integrity,
 compiler) → M10–M21 the information-firewall arc (see the section above) → Channel Discovery + the

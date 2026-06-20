@@ -163,6 +163,10 @@ stable              ≠ causal          (invariance across projections is necess
 integrity           = reproducibility, not causal validity   (a hash binds same-state→same-hash; it cannot tell
                                         a generator component from a confounder — a replayable system can replay
                                         the wrong explanation)
+causal-under-a-model ≠ causal-across-models   (necessity is model-relative: G_F(F_model_1) ≠ G_F(F_model_2);
+                                        a component can be necessary under a restricted model and redundant under
+                                        a richer one that fits the same data — the robust generator is what
+                                        survives the whole admissible model class. "necessary to WHICH F?")
 ```
 
 ## The one absolute, and everything else

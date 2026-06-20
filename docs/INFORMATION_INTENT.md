@@ -396,6 +396,20 @@ never a new invariant:
     from G_C) · L9 Integrity (hash/replay)`. The hash moved *downward*: it certifies the identity of a trajectory,
     not the correctness of its explanation — it binds what attribution decided, it does not decide it.
 
+20. **Model relativity — DONE; necessity is relative to the assumed dynamics.** `ursprung/perception/
+    model_relativity.py` finds the assumption the attribution layer smuggled in: it intervened on a *single*
+    fixed `F`. The necessity verdict depends on which `F` — `G_F(F_model_1) ≠ G_F(F_model_2)`. A component can
+    be necessary under a restricted model and redundant under a richer one that reproduces the same observed
+    trajectory. So the same invariance principle applies one layer deeper, now to the *causal test itself*: the
+    robust generator is `⋂` of `G_F(F)` over the admissible model class. The bench: a world advances `visible`
+    by `g + c`; `F1` treats `c` as a live input (so `c` reads necessary), `F2` has folded `c`'s constant
+    contribution into a parameter and never reads it (so `c` reads redundant) — both fit the data, `G_F(F1) =
+    {g,c}`, `G_F(F2) = {g}`, robust `= {g}`. `c` was *causal under a model, not across models*. A single model
+    cannot separate generator from model-relative artifact; a model *class* can (the same lesson as ≥2 contexts
+    in `confounder.py`). This is the `A_C` loop made concrete — "necessary to which `F`?" is the next boundary,
+    and the honest open hardness is that `⋂` over a richer model class can shrink the recovered generator toward
+    nothing. New separator: `causal-under-a-model ≠ causal-across-models`.
+
 The remaining honest gaps (so this is not over-read): the compiler is still a *lookup / greedy channel select*,
 not a continuous funnel *solve*; the world, the learner, and the leakage estimator are constructed; the utility
 models are declared conventions; the capacity axis is a memory-horizon *proxy*, not real model capacity; the

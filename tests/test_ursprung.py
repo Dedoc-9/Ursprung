@@ -1188,6 +1188,21 @@ def test_perception_attribution_ghost_is_a_candidate_set():
     check(r["integrity_is_reproducibility_not_validity"], "the hash binds reproducibility, not causal validity — it cannot tell G_F from G_C")
 
 
+def test_perception_model_relativity_necessity_is_model_relative():
+    r = perc.model_relativity.crucible()
+    # necessity is only meaningful among models that reproduce the data
+    check(r["both_models_fit_observed"], "both models reproduce the observed trajectory — both are admissible")
+    # the same component reads necessary under one model and redundant under another
+    check(r["c_necessary_under_F1"], "c reads as necessary under the restricted model F1")
+    check(r["c_not_necessary_under_F2"], "c reads as NOT necessary under the richer model F2")
+    check(r["g_necessary_under_both"], "g is necessary under both models")
+    check(r["G_F_differs_by_model"], "therefore the generator set is model-relative: G_F(F1) ≠ G_F(F2)")
+    # the robust generator survives the whole model class
+    check(r["robust_generator_is_g"], "the robust generator = ⋂ over admissible models = {g}")
+    check(r["c_causal_under_model_not_across"], "c is causal under a model but not across models — a model-relative artifact")
+    check(r["single_model_insufficient"], "a single model cannot separate causal from artifact; the model class can")
+
+
 def main():
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):
