@@ -37,6 +37,8 @@ from ursprung import resistance_tensor as rt
 from ursprung import shader_cache as sc
 from ursprung import causal_surface as cs
 from ursprung import readiness as rd
+from ursprung import causal_contract as cc
+from ursprung import representation_futures as rf
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -521,6 +523,45 @@ def test_causal_surface_beats_proximity_for_shared_objects():
 def test_readiness_layer_prepares_shared_resources():
     prepared, shared_ids = rd.demo(seed=1, budget=400)
     check(len(prepared & shared_ids) >= 1, "the readiness layer prepares shared high-CSA resources")
+
+
+# --- Milestone 8: Causal Contract + Representation Futures Graph -------------------------------------
+
+def test_causal_contract_maps_causality_not_outcomes():
+    con = cc.make_contract("door", ["collision", "explosion", "net_authority"], ["intact", "cracked", "debris"])
+    check(con.admissible(), "a relationship-map contract (affected_by + possible representations) is admissible")
+    try:
+        cc.reject_outcome("door", "destroyed", at_tick=400)
+        check(False, "a contract asserting an outcome must be rejected")
+    except cc.CausalAuthorityLeak:
+        check(True, "an outcome assertion raises CausalAuthorityLeak (a contract maps causality, never predicts)")
+
+
+def test_csa_temporal_decay_fixes_the_leak():
+    obj = {"agents_can_affect": 4, "expected_divergence": 6, "lighting_sensitivity": 8}
+    check(cc.decayed_csa(obj, dt=0) > cc.decayed_csa(obj, dt=120) * 3,
+          "Causal Surface Area decays with temporal distance — no readiness memory leak")
+    check(cc.temporal_relevance(0) == 100 and cc.temporal_relevance(10 ** 6) <= 1,
+          "temporal relevance is 100 now and decays toward 0 far out")
+
+
+def test_futures_graph_prepares_breadth_never_selects():
+    g = (rf.FuturesGraph()
+         .add_transition("intact", "damaged", 60, "shaderA+debris", cost=20)
+         .add_transition("intact", "destroyed", 30, "fracture+dust", cost=20))
+    from ursprung import causal_surface as _cs
+    csa = _cs.causal_surface_area({"agents_can_affect": 4, "expected_divergence": 6, "lighting_sensitivity": 8})
+    prepared = rf.prepare_branches(g, "intact", csa, budget=100)
+    check(len(prepared) >= 2, "the futures graph prepares MULTIPLE branches (breadth preserved)")
+    check(rf.survive_truth_correction(prepared, "damaged")[0] == "ready",
+          "a prepared branch survives a CORE truth correction with no hitch")
+    check(rf.survive_truth_correction(prepared, "gone")[0] == "fallback",
+          "an unprepared outcome degrades to a graceful fallback, never a lie")
+    try:
+        rf.select_future("intact", "destroyed")
+        check(False, "select_future must be forbidden")
+    except cc.CausalAuthorityLeak:
+        check(True, "select_future is forbidden — the renderer prepares futures, only CORE selects one")
 
 
 def main():

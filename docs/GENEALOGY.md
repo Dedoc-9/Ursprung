@@ -124,6 +124,18 @@ WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT �
     cache is one instance.
   - Principle: **the renderer should never become prophetic; it should become better prepared.**
 
+- [x] **Milestone 8 — Causal Contract + Representation Futures Graph (stress-testing the membrane).**
+  - [x] `causal_contract.py` — a **map of possible causality** (`affected_by` + `possible_representations`),
+    never an outcome. Asserting an outcome (`door will break at tick 400`) raises `CausalAuthorityLeak`. Adds
+    **CSA temporal decay** (`temporal_relevance`, `decayed_csa`) — near-future causality expensive, distant
+    cheap — fixing the readiness memory-leak (a stale convergence point cools off instead of leaking budget).
+  - [x] `representation_futures.py` — the futures graph: state → possible transitions → {representation,
+    fallback, readiness cost}. `prepare_branches` prepares **breadth** (several possibilities) by
+    `P(transition) × CSA`; `select_future()` is **forbidden** (collapsing to one branch is causal authority
+    leakage — only CORE selects). `survive_truth_correction` reframes rollback: a prepared branch survives a
+    CORE truth correction with no hitch; otherwise the particle continuity buffer bridges.
+  - The moat, mechanical: **the renderer may prepare for possible futures; it may never select the future.**
+
 ### Milestone-3 finding (the failure is the result)
 
 The Causal Continuity Hypothesis as *stated* (allocate ∝ U·C·P) **failed** the equal-budget bench. Diagnosis
