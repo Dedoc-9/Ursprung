@@ -270,7 +270,7 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 
 ## Status
 
-The full suite is **417 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
+The full suite is **424 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
 control, and an explicit "expires on real silicon" bound.
 
 - **M1 — foundation.** Invariant harness; the renderer is proven observer-only (`integrity ≠ truth`).
@@ -332,7 +332,10 @@ control, and an explicit "expires on real silicon" bound.
   confounder**. Within one context a generator and a confounder are indistinguishable; across contexts only the
   generator survives — *the generator is what stays invariant when observer, projection, and context all change*
   (and a higher-capacity observer **overfits** the confounder). `mechanism ≠ correlation`; `fitted rule ≠ causal
-  source`. World-side direction: [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
+  source`. And `ghost_invariance.py` closes the loop to M1's `ghost_report`: the residual `G = Z − Π(Z)` is a
+  generator component only if it is **invariant** across projections *and* **necessary** (removing it changes
+  `F`); otherwise it is a **projection artifact — the observer's shadow**. *Generator = invariant necessity;
+  `ghost ≠ hidden truth`.* World-side direction: [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
 
 **The conceptual arc is complete; the remaining work is empirical, not more laws.** It lives behind the
 intentionally-unbuilt seams — `reality_harness.NetworkChannel` (point it at a real socket),

@@ -156,6 +156,8 @@ mechanism           ≠ correlation     (a recoverable pattern can be a confound
                                         temporary equilibrium — not the generator)
 fitted rule         ≠ causal source   (the generator is what stays INVARIANT when observer, projection, and
                                         context all change; identifying it requires varying the confounder)
+ghost               ≠ hidden truth    (a residual G = Z − Π(Z) may be a projection artifact — the observer's
+                                        shadow — not a generator component; test invariance across Π + necessity)
 ```
 
 ## The one absolute, and everything else

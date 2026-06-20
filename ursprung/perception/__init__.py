@@ -17,7 +17,8 @@ from __future__ import annotations
 
 from . import (toy_task, disclosure_policy, observation_compiler, utility,  # noqa: F401
                adversary, session_accounting, frontier, fidelity, observer_capacity, response, intent,
-               consistency, identifiability, substrate, adaptation, operators, confounder)
+               consistency, identifiability, substrate, adaptation, operators, confounder,
+               ghost_invariance)
 from .disclosure_policy import DisclosurePolicy, POLICIES
 from .observation_compiler import compile_observation
 from .utility import (participation_utility, leakage_bits, evaluate, funnel_frontier,
@@ -26,7 +27,7 @@ from .utility import (participation_utility, leakage_bits, evaluate, funnel_fron
 __all__ = ["toy_task", "disclosure_policy", "observation_compiler", "utility", "adversary",
            "session_accounting", "frontier", "fidelity", "observer_capacity", "response", "intent",
            "consistency", "identifiability", "substrate", "adaptation", "operators", "confounder",
-           "DisclosurePolicy", "POLICIES", "compile_observation",
+           "ghost_invariance", "DisclosurePolicy", "POLICIES", "compile_observation",
            "participation_utility", "leakage_bits", "evaluate", "funnel_frontier",
            "crucible", "demo", "MeasurementResult"]
 

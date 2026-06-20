@@ -371,6 +371,15 @@ never a new invariant:
     constraint, residue, artifact, or temporary equilibrium. New separators: `mechanism ≠ correlation`,
     `fitted rule ≠ causal source`.
 
+18. **Ghost invariance — DONE; the DVSM↔perception merge.** `ursprung/perception/ghost_invariance.py` reinterprets
+    the project's original ghost (`G = Z − Π(Z)`, M1's `ghost_report`) through the confounder slot: the old
+    framing assumed the residual is *hidden truth*; it may be a **projection artifact — the observer's shadow.**
+    A ghost component is a generator candidate only if it is **invariant** (in the ghost under every projection)
+    AND **necessary** (removing it changes `F`'s trajectory). Bench: `g` (in both projections' ghosts, removing
+    it changes behaviour) is the generator; `a` (in one projection's ghost only, removable with no effect) is a
+    projection artifact. **Generator = invariant necessity; confounder = invariant-looking contingency.** (And a
+    hashed confounder is still a confounder — `integrity ≠ truth`.) New separator: `ghost ≠ hidden truth`.
+
 The remaining honest gaps (so this is not over-read): the compiler is still a *lookup / greedy channel select*,
 not a continuous funnel *solve*; the world, the learner, and the leakage estimator are constructed; the utility
 models are declared conventions; the capacity axis is a memory-horizon *proxy*, not real model capacity; the

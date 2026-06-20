@@ -1156,6 +1156,21 @@ def test_perception_confounder_generator_is_the_invariant():
     check(r["separation_requires_context_variation"], "separating generator from confounder requires >=2 contexts — one cannot do it")
 
 
+def test_perception_ghost_invariance_ghost_is_not_truth():
+    r = perc.ghost_invariance.crucible()
+    # the ghost contains more than the generator
+    check(r["ghost_has_nongenerator"], "the ghost contains a non-generator component")
+    # the invariant ghost component (survives the projection change) is the generator candidate
+    check(r["invariant_ghost_is_generator"], "the ghost component present under every projection is the generator candidate")
+    check(r["variant_is_projection_artifact"], "the ghost component whose presence depends on the projection is an artifact — the observer's shadow")
+    # necessity: g is necessary, a is contingent
+    check(r["g_necessary"], "removing the generator component changes the F trajectory (necessary)")
+    check(r["a_contingent"], "removing the artifact component changes nothing (contingent)")
+    # Generator = invariant necessity; confounder = invariant-looking contingency
+    check(r["generator_invariant_and_necessary"], "the generator is both invariant-in-ghost and necessary")
+    check(r["artifact_neither_necessary_nor_invariant"], "the artifact is neither — a ghost is not automatically a hidden truth")
+
+
 def main():
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):
