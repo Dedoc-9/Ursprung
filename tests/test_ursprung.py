@@ -39,6 +39,9 @@ from ursprung import causal_surface as cs
 from ursprung import readiness as rdy
 from ursprung import causal_contract as ccon
 from ursprung import representation_futures as rf
+from ursprung import causal_mutation as cm
+from ursprung import provider_contract as pcon
+from ursprung import dependency_surface as dep
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -562,6 +565,44 @@ def test_futures_graph_prepares_breadth_never_selects():
         check(False, "select_future must be forbidden")
     except ccon.CausalAuthorityLeak:
         check(True, "select_future is forbidden — the renderer prepares futures, only CORE selects one")
+
+
+# --- Milestone 9: causal mutation surface + provider contracts + dependency access ------------------
+
+def test_causal_mutation_surface_wins_the_crucible():
+    shared = {"authority_distance": 8, "affected_agents": 6, "rollback_cost": 9,
+              "lighting_sensitivity": 8, "reconstruction_sensitivity": 7}
+    solo = {"authority_distance": 1, "affected_agents": 1, "rollback_cost": 1, "lighting_sensitivity": 2}
+    check(cm.mutation_cost(shared) > cm.mutation_cost(solo) * 20, "a shared contested object has far higher mutation cost")
+    check(cm.object_facets(shared)["physical"] == "CORE", "only the physical facet is CORE-authoritative")
+    res = cm.crucible(seed=1, budget=240)
+    best = min(res, key=lambda k: res[k])
+    check(best == "causal_mutation_surface", "mutation surface loses least when reality disagrees (rollback-aware)")
+    check(res["causal_mutation_surface"] <= res["causal_surface_area"], "mutation surface ≤ CSA under contention")
+
+
+def test_provider_contracts_select_by_capability():
+    P = pcon.default_providers()
+    check(pcon.select_provider(P, {"material", "lighting", "geometry", "history", "motion"}, 40)[0] == "ray_tracer",
+          "ample budget + full conditions → highest-quality admissible provider")
+    check(pcon.select_provider(P, {"material", "lighting"}, 1)[0] in ("impostor", "particle_fallback"),
+          "a very tight latency budget degrades to a cheap provider / fallback")
+    check(pcon.select_provider(P, {"geometry"}, 6)[0] in ("meshlet", "impostor", "particle_fallback"),
+          "missing inputs excludes providers that require them")
+
+
+def test_dependency_access_is_the_hidden_resource():
+    check(dep.dependency_surface_area({"dependencies": ["material", "lighting", "animation", "destruction",
+                                                        "sound", "occlusion"]}) >= 6, "DSA counts coupled dependencies")
+    hi = dep.preparation_value({"affected_agents": 4, "expected_divergence": 5, "lighting_sensitivity": 8, "dependency_access": 100})
+    lo = dep.preparation_value({"affected_agents": 4, "expected_divergence": 5, "lighting_sensitivity": 8, "dependency_access": 10})
+    check(hi > lo, "Preparation Value = Causal Surface Area × Dependency Access (rises with access)")
+    objs = dep._scene(seed=1)
+    check(dep.access_debt(objs, 10) > dep.access_debt(objs, 100),
+          "fidelity is downstream of dependency visibility (more access → less unprepared debt)")
+    vr = dep.value_ranked_debt(objs, exposure_budget=60)
+    check(vr["value_ranked"] <= vr["uniform"] and vr["value_ranked"] <= vr["random"],
+          "spending dependency access by Preparation Value beats uniform/random")
 
 
 def main():

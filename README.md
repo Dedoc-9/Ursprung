@@ -128,6 +128,9 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 | `ursprung/readiness.py` | **ALLOCATOR** | Representation Readiness Layer — shader/stream/residency/neural/particles as one prewarm problem (`P(needed) × CSA`) |
 | `ursprung/causal_contract.py` | **OBSERVER** | Causal Contract: a map of possible causality (never an outcome) + CSA temporal decay (`CausalAuthorityLeak` guard) |
 | `ursprung/representation_futures.py` | **ALLOCATOR** | Representation Futures Graph: prepare branches by `P(transition)×CSA`; `select_future()` forbidden; rollback = representation survives truth |
+| `ursprung/causal_mutation.py` | **OBSERVER** | Causal Mutation Surface = `authority_distance × agents × rollback × rep`; Shared Object Crucible (loses least when reality disagrees) |
+| `ursprung/provider_contract.py` | **OBSERVER** | representation providers declare `{inputs, cost, failure_mode}`; readiness selects by contract, degrades gracefully |
+| `ursprung/dependency_surface.py` | **OBSERVER** | Dependency Surface Area + `Preparation Value = CSA × Dependency Access` (the hidden resource is dependency access) |
 | `loop.py` | — | smallest executable world loop, end to end |
 | `AGENTS.md` | — | the renderer contract (the rules every change obeys) |
 

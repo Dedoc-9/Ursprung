@@ -136,6 +136,19 @@ WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT �
     CORE truth correction with no hitch; otherwise the particle continuity buffer bridges.
   - The moat, mechanical: **the renderer may prepare for possible futures; it may never select the future.**
 
+- [x] **Milestone 9 — shared worlds + dependency access (the fidelity OS for uncertain shared worlds).**
+  - [x] `causal_mutation.py` — **Causal Mutation Surface** = authority_distance × affected_agents ×
+    rollback_cost × representation_cost. The **Shared Object Crucible** (8-player destructible bridge): winner
+    LOSES LEAST when reality disagrees, not best predictor. Under contention, mutation-surface (rollback-aware)
+    beats CSA/proximity/visibility (loss 0 vs 3/3/4). Names the four object facets; only `physical` is CORE.
+  - [x] `provider_contract.py` — representation providers declare capabilities `{inputs, cost, failure_mode}`;
+    `select_provider` picks by contract under a latency budget and degrades along failure-mode chains. Shaders/
+    neural/RT/impostor/particles/meshlets become one category (the dependency-contract plugability layer).
+  - [x] `dependency_surface.py` — **Dependency Surface Area** (systems coupled to an object's *mutation*) and
+    **Preparation Value = Causal Surface Area × Dependency Access**. The hidden resource is dependency access:
+    access debt falls 99→62→28→0 as visibility rises; spending access by Preparation Value (5) beats uniform/
+    random (50/42). The limit is information topology, not GPU throughput.
+
 ### Milestone-3 finding (the failure is the result)
 
 The Causal Continuity Hypothesis as *stated* (allocate ∝ U·C·P) **failed** the equal-budget bench. Diagnosis
