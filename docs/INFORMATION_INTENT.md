@@ -418,6 +418,18 @@ never a new invariant:
     compact closing form: `generator = invariant ∧ necessary ∧ model-robust`. New separator:
     `causal-under-a-model ≠ causal-across-models`.
 
+    **The boundary this lands on (not another layer).** Once the model class is itself an object of attribution,
+    there is no purely *internal* certificate: a system can prove a residue is stable, necessary under a model,
+    and observer-class-robust, but the final question — *why is THIS the right space of models `𝓕`?* — is
+    epistemology, not code. The "all possible F" limit is already visible in the bench: it collapses to ∅
+    (`causal-across-chosen-𝓕 ≠ causal-across-all-possible-F`). The failure modes are symmetric — under-modeling
+    lets confounders survive, over-modeling makes every mechanism optional. So the successor object is **not a
+    generator-finder but an attribution system with an explicit uncertainty boundary around its admissible
+    explanation space**, and the remaining hard problem is specifying the rules for `𝓕` without smuggling the
+    answer in — the boundary where scientific explanation, causal discovery, and formal verification meet. *The
+    separator needs its own separator.* This is named, not built: encoding a `𝓕`-justifier would be precisely
+    the overclaim the project guards against.
+
 The remaining honest gaps (so this is not over-read): the compiler is still a *lookup / greedy channel select*,
 not a continuous funnel *solve*; the world, the learner, and the leakage estimator are constructed; the utility
 models are declared conventions; the capacity axis is a memory-horizon *proxy*, not real model capacity; the

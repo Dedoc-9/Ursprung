@@ -31,11 +31,27 @@ So `G_F(F1) = {g, c}`, `G_F(F2) = {g}`, and the robust generator `⋂ = {g}`. `c
 causal across models* — a model-relative artifact that the single-model necessity test would have promoted.
 `g` is necessary under both → it survives the model class.
 
-CLASSIFICATION: OBSERVER (mutates_core=False). HONEST BOUND: toy — two hand-written admissible models, discrete
+The knife edge (`knife_edge()`): `⋂ G_F(F)` is only as good as the admissible class `𝓕` you chose. Add a third,
+over-rich model `F3` (autoregressive on the observable alone — reads neither latent, yet fits) and the robust
+set collapses monotonically: `{g,c}` (𝓕 too narrow → the confounder survives) ⊋ `{g}` (well-chosen) ⊋ `{}` (𝓕
+too broad → the generator is *erased*). The failure modes are symmetric — under-modeling lets confounders
+survive, over-modeling makes every mechanism optional — so `causal-across-chosen-𝓕 ≠ causal-across-all-possible-F`.
+
+THE BOUNDARY (where this lands, and deliberately NOT another module): there is **no purely internal
+certificate**. A system can prove a residue is stable, necessary under a model, and survives an observer class,
+but the final question — *why is THIS the right space of models `𝓕` to quantify over?* — is epistemology, not a
+pipeline layer. Specifying the rules for `𝓕` without smuggling the answer in is the open hard problem, the same
+boundary where scientific explanation, causal discovery, and formal verification meet. The successor object is
+not a generator-finder but **an attribution system with an explicit uncertainty boundary around its admissible
+explanation space**. The "all possible F" limit is already visible here: it collapses to ∅. The separator needs
+its own separator.
+
+CLASSIFICATION: OBSERVER (mutates_core=False). HONEST BOUND: toy — hand-written admissible models, discrete
 state, "richer/restricted" is illustrative (the load-bearing claim is only that necessity is model-relative,
 not which model is better). The real version is open and hard: enumerating or learning the admissible model
-class, and the fact that `⋂ over models` can shrink the recovered generator toward nothing as the class grows
-richer. Separators: causal-under-a-model ≠ causal-across-models; necessity is model-relative; stable ≠ causal.
+class `𝓕`, and the fact that `⋂ over models` can shrink the recovered generator toward nothing as the class
+grows richer. Separators: causal-under-a-model ≠ causal-across-models; causal-across-chosen-𝓕 ≠
+causal-across-all-possible-F; necessity is model-relative; stable ≠ causal.
 """
 from __future__ import annotations
 

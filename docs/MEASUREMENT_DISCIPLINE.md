@@ -167,6 +167,13 @@ causal-under-a-model ≠ causal-across-models   (necessity is model-relative: G_
                                         a component can be necessary under a restricted model and redundant under
                                         a richer one that fits the same data — the robust generator is what
                                         survives the whole admissible model class. "necessary to WHICH F?")
+causal-across-chosen-𝓕 ≠ causal-across-all-possible-F   (the dangerous edge: ⋂ G_F(F) is only as good as the
+                                        admissible class 𝓕 you chose. Too narrow → confounders survive; too broad →
+                                        every mechanism becomes optional and the intersection collapses to ∅
+                                        (demonstrated: admitting an over-rich autoregressive model erases the
+                                        generator). There is no purely internal certificate — "why is THIS the
+                                        right space of models?" is epistemology, not a pipeline layer. The
+                                        separator needs its own separator.)
 ```
 
 ## The one absolute, and everything else
