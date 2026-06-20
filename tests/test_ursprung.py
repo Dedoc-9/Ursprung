@@ -49,6 +49,7 @@ from ursprung import causal_access as cac
 from ursprung import reconstruction as rec
 from ursprung import side_channel as sch
 from ursprung import accumulation as acc
+from ursprung import adversarial_dynamics as ad
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -721,6 +722,28 @@ def test_accumulation_safety_caps_the_sequence():
     # 4. importance ≠ exposure: internal importance does not leak as observable behavior
     check(r["importance_hidden"], "differing internal importances collapse to one external exposure level")
     check(acc.exposed_level(10) == acc.exposed_level(90) == 0, "at 1 public level, exposure is constant")
+
+
+def test_adversarial_dynamics_defense_is_the_leak():
+    r = ad.crucible()
+    # 1. reaction debt: a defense that reacts only near the secret leaks; a constant reaction leaks nothing
+    check(r["reaction_naive_leak"] > 0, "a reaction correlated with the hidden trigger leaks (the discontinuity is the signal)")
+    check(r["reaction_safe_leak"] == 0, "a reaction uncorrelated with the secret carries no information")
+    # 2. absence firewall: missing ≠ informative unless entitled
+    check(r["absence_naive"] > 0, "a conspicuously missing representation is a negative-space signal")
+    check(r["absence_masked"] == 0, "for an unentitled observer the suppression must mask its own gap (missing ≠ informative)")
+    check(r["absence_entitled_honest"] == r["absence_naive"], "for an entitled observer the absence is honest, not masked")
+    # 3. distributed reconstruction: each observer safe, the union reconstructs, the firewall caps the group
+    check(r["per_observer_each_safe"], "each observer alone stays below the reconstruction threshold")
+    check(r["distributed_union"] > 0.5, "the colluding GROUP (union of fragments) reconstructs > threshold")
+    check(r["distributed_firewalled"] <= 0.5, "the distributed firewall caps the cross-observer reconstruction")
+    # 4. adaptive ≠ random: the boundary moves on probing instead of rolling dice
+    check(r["adaptive_total"] < r["random_total"], "an adaptive boundary yields less under sustained probing than a fixed-distribution one")
+    # 5. the ultimate invariant: reveal consequences, never the mechanism
+    check(r["consequence_after_ok"], "a consequence may be revealed at/after the committed event")
+    check(r["consequence_before_blocked"], "a consequence shown BEFORE the event leaks the predictive mechanism")
+    check(r["mechanism_always_blocked"], "the mechanism (prepared branch / hidden cause) is never disclosable")
+    check(ad.reveals_mechanism("hidden_branch_choice", 99), "naming a hidden branch is mechanism even long after the event")
 
 
 def main():

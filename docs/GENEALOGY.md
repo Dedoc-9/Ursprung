@@ -200,6 +200,22 @@ WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT �
     changing observable behavior, so its own spend can't fingerprint hidden importance ({10,90} → one
     external level). allowed-query ≠ allowed-sequence; authorized ≠ harmless; integrity ≠ truth.
 
+- [x] **Milestone 14 — Adversarial Information Dynamics (the DEFENSE is the leak).**
+  - [x] `adversarial_dynamics.py` — the anti-cheat problem stops being "stop bad data" and becomes "stop
+    systems from inferring hidden state through the system's own behavior." Five mechanisms, each with a
+    negative control: (1) **Reaction Debt** = observer_change × inference_value × persistence — a defense
+    that reacts only near the secret (fog spikes, LOD drops) leaks via the discontinuity; a reaction
+    *uncorrelated* with the secret leaks **0** (naive 54 vs safe 0). (2) **Absence firewall** — the
+    negative-space attack ("I noticed something MISSING"); Absence Signal = expected − observed; missing ≠
+    informative unless entitled, else the suppression masks its own gap (naive 10 → masked 0, entitled 10).
+    (3) **Distributed Reconstruction Debt** — a colluding GROUP is a distributed sensor; each observer below
+    threshold (3 × 20 bits) but the union reconstructs **0.94**, capped to **0.31** by the cross-observer
+    firewall. (4) **Adaptive ≠ random** — a fixed distribution is averaged out (200 over 20 probes); an
+    adaptive boundary that moves on observed probing yields **27**. (5) **The ultimate invariant** — a
+    representation may reveal CONSEQUENCES (explosion, damage, motion, sound; only at/after the committed
+    event) but never the MECHANISM by which hidden state becomes predictable (why-before-event, prepared
+    branch). The anti-wallhack floor. reaction ≠ disclosure; absence ≠ information; consequence ≠ mechanism.
+
 ### Milestone-3 finding (the failure is the result)
 
 The Causal Continuity Hypothesis as *stated* (allocate ∝ U·C·P) **failed** the equal-budget bench. Diagnosis
