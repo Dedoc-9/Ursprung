@@ -288,13 +288,18 @@ control, and an explicit "expires on real silicon" bound.
 - **Channel Discovery + Measurement Discipline — the landing.** The audit is inverted to "what channels
   exist?", the detector is shown to be its own hypothesis class, and the project's epistemic boundary is
   written down ([`docs/MEASUREMENT_DISCIPLINE.md`](docs/MEASUREMENT_DISCIPLINE.md)).
-- **The perception loop — the conceptual arc becomes an executable target.** `disclosure.py` adds the
-  intent → representation seam; `ursprung/perception/` runs the first complete loop and the repo's first
-  **privacy-funnel** benchmark; `adversary.py` *falsifies* its per-frame leakage number (an accumulating
-  learner recovers the exact secret); and `session_accounting.py` answers the falsification with the first
-  **general** result — *purpose-preserving disclosure under an accumulating observer* (utility 1.0, session
-  exploitability collapsed, exact never recovered). The world-side direction is in
-  [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
+- **The perception loop — measurement becomes *classification*.** `disclosure.py` adds the intent →
+  representation seam; `ursprung/perception/` runs the first complete loop and the repo's first **privacy-funnel**
+  benchmark; `adversary.py` *falsifies* its per-frame leakage number (an accumulating learner recovers the exact
+  secret); `session_accounting.py` answers with the first **general** result — *purpose-preserving disclosure
+  under an accumulating observer*; `frontier.py` removes the free lunch on a non-separable task; and
+  `fidelity.py` is the **Perception Fidelity Condition** that ties them together. The object of study has
+  shifted from the channel `I(S;O)` to the observer's **belief trajectory** `B_t = P(S | O_{1:t})`, and the
+  repo now *exhibits and classifies* three recovery regimes: **bounded** (separable — task converges, secret
+  does not), **tradeoff** (non-separable — a real frontier), and **cascade-collapse** (a session of weak signals
+  reconstructs the secret). The condition reports *which regime a given `(task, policy, observer-class)` falls
+  in* — a **behavioral forecast, not a safety certificate.** A general classifier (a "Denjoy–Young–Saks for
+  perception") is the open target, not a claim. World-side direction: [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
 
 **The conceptual arc is complete; the remaining work is empirical, not more laws.** It lives behind the
 intentionally-unbuilt seams — `reality_harness.NetworkChannel` (point it at a real socket),

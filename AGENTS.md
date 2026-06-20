@@ -244,12 +244,18 @@ capability / access-control layers (anti-cheat information flow), `channel_disco
 auditing), `DisclosurePolicy` (intent → representation), and the privacy-funnel framing
 (`maximize utility − λ·leakage`). Port the *shape*; the constructed numbers do not transfer.
 
-**3. As a measurement / audit substrate (the nearest real win).** Point `channel_discovery` + the
-`DisclosurePolicy` auditor at a real telemetry or output stream to find *actual* leaks — *policy says reveal X;
-did the output contain only X?* This is the empirical phase and yields real results with modest work; it needs
-an estimator that handles continuous, coupled signals (the bundled one is discrete / symbolic), but the loop,
-the `MeasurementResult` boundary discipline, and the adversary-class sweep (`adversary_capacity`) are already
-here. Report findings as "found by estimator E over trace D against class A," never "safe."
+**3. As a measurement / audit substrate, and a representation *classifier* (the nearest real win).** Point
+`channel_discovery` + the `DisclosurePolicy` auditor at a real telemetry or output stream to find *actual*
+leaks — *policy says reveal X; did the output contain only X?* But the deeper use, via `ursprung/perception/`,
+is to stop judging the *channel* and start classifying the *observer's reconstruction trajectory* `B_t =
+P(S | O_{1:t})`: the Perception Fidelity Condition (`perception/fidelity.py`) reports which regime a `(task,
+policy, observer-class)` falls in — **bounded** (task converges, secret does not), **tradeoff** (a real
+frontier), or **cascade-collapse** (a session of weak signals reconstructs the secret). The output is a
+**behavioral forecast** (`task_convergence`, `secret_recovery_risk`, `regime`, bounding `observer_class`),
+never a safety flag. The new optimization target this implies: *deliver the least representation that produces
+the intended behavior* — not the most accurate one. (It needs an estimator for continuous, coupled signals; the
+bundled one is discrete/symbolic. The `MeasurementResult` boundary discipline and the adversary-class sweep
+(`adversary_capacity`) are already here.) Report "found by estimator E over trace D against class A," never "safe."
 
 **4. As an LLM-on-track methodology (for any systems project).** The `observe → hypothesize → implement →
 verify → record` loop, the four LLM failure-mode guards (silent architectural drift, accidental authority
