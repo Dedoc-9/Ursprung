@@ -197,7 +197,9 @@ being kept open for.
 [`docs/LLM_ON_TRACK.md`](docs/LLM_ON_TRACK.md) — how the workbench mechanisms keep an LLM coding partner on
 the renderer track. [`docs/PREDICTIVE_FIDELITY.md`](docs/PREDICTIVE_FIDELITY.md) — the prediction → membrane →
 PFAL → TCFF chain. [`docs/RENDER_VERIFICATION_RECORD.md`](docs/RENDER_VERIFICATION_RECORD.md) — features as
-experiments. [`docs/GENEALOGY.md`](docs/GENEALOGY.md) — the full genealogy & checklist. [`AGENTS.md`](AGENTS.md)
+experiments. [`docs/GENEALOGY.md`](docs/GENEALOGY.md) — the full genealogy & checklist.
+[`docs/MEASUREMENT_DISCIPLINE.md`](docs/MEASUREMENT_DISCIPLINE.md) — the project's epistemic boundary: the
+measurement loop, closed-world failure, what a result means, and what NOT to claim. [`AGENTS.md`](AGENTS.md)
 — the contract every change obeys.
 
 ## License

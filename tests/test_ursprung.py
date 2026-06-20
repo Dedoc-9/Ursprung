@@ -916,6 +916,13 @@ def test_channel_discovery_finds_the_unmodeled_channel():
     check(r["discovers_more_than_audit"], "discovery scans more channels than the audit enumerated")
     check(cd.secret_severed_in("audio_events"), "secret_severed_in confirms an absolute (severed) channel")
     check(not cd.secret_severed_in("correction_events"), "secret_severed_in reports a leaking channel as not severed")
+    # the recursive mirror: the detector is itself a hypothesis class (estimator coverage)
+    check(r["per_sample_reads_severed"], "a marginal estimator reads the accumulation channel as severed (I = 0)")
+    check(r["windowed_finds_leak"], "a sequence estimator finds the same channel leaking (temporal structure)")
+    check(r["same_channel_flips_verdict"], "the SAME channel + trace flips verdict across estimator classes — 'no leak' is always 'under estimator E'")
+    check(r["result_carries_its_boundary"], "every MeasurementResult names its estimator class and coverage boundary, never a bare 'safe'")
+    ps = cd.measure("accumulation_events", cd.accumulation_channel, cd.slow_secret, "per_sample")
+    check(ps.estimator_class == "C_marginal" and ps.coverage_boundary, "a MeasurementResult carries its estimator class and blind spot")
 
 
 def main():

@@ -129,6 +129,68 @@ def secret_severed_in(channel, tr=None, threshold=0.02):
     return channel_information(tr).get(channel, 0.0) <= threshold
 
 
+# --- estimator coverage: the detector is itself a hypothesis class (M21, recursively) --------------
+
+def slow_secret(t):
+    """A SLOW hidden bit (flips every 16 ticks) leaked only through temporal STRUCTURE, not marginals."""
+    return (t // 16) % 2
+
+
+def accumulation_channel(t):
+    """The same marginal in both secret states (8 ones per 16 ticks either way → per-sample I = 0), but the
+    temporal PATTERN encodes the secret: front-loaded when slow=1, alternating when slow=0. An M13-style
+    accumulation leak — invisible to a marginal estimator, obvious to a temporal one. The SAME channel and
+    trace yield opposite verdicts under different estimator classes."""
+    pos = t % 16
+    if slow_secret(t) == 1:
+        return 1 if pos < 8 else 0          # front-loaded
+    return pos % 2                          # alternating (same count of ones, different structure)
+
+
+class MeasurementResult:
+    """A measurement carries its own boundary. It NEVER says `channel_safe = True`; it says 'this much
+    information was found by THIS estimator class, whose blind spot is THIS.' (The whole project in one type.)"""
+    __slots__ = ("channel", "estimator_class", "detected_information", "coverage_boundary")
+
+    def __init__(self, channel, estimator_class, detected_information, coverage_boundary):
+        self.channel = channel
+        self.estimator_class = estimator_class
+        self.detected_information = detected_information
+        self.coverage_boundary = coverage_boundary
+
+    def __repr__(self):
+        return "<MeasurementResult %s via %s: I=%.4f | blind to: %s>" % (
+            self.channel, self.estimator_class, self.detected_information, self.coverage_boundary)
+
+
+def per_sample_information(target_fn, channel_fn, n=256):
+    """Estimator class C_marginal: I(value_t ; secret_t). Blind to anything that lives across samples."""
+    return round(mutual_information([(target_fn(t), channel_fn(t)) for t in range(n)]), 4)
+
+
+def windowed_information(target_fn, channel_fn, W=16, n=256):
+    """Estimator class C_sequence: I(W-window of values ; secret), at window-aligned ticks. Sees temporal
+    structure a marginal estimator cannot — but is itself blind to horizons > W and to channels not in the
+    trace. A strictly different hypothesis class, not a strictly stronger one."""
+    pairs = []
+    for t in range(0, n - W + 1, W):
+        sig = tuple(channel_fn(t + i) for i in range(W))
+        pairs.append((target_fn(t), sig))
+    return round(mutual_information(pairs), 4)
+
+
+def measure(channel, channel_fn, target_fn, estimator="per_sample"):
+    """Return a MeasurementResult — an information figure that names its estimator class and coverage boundary,
+    never a bare 'safe'."""
+    if estimator == "per_sample":
+        return MeasurementResult(channel, "C_marginal", per_sample_information(target_fn, channel_fn),
+                                 "marginal only — blind to temporal accumulation and cross-sample structure")
+    if estimator == "windowed":
+        return MeasurementResult(channel, "C_sequence", windowed_information(target_fn, channel_fn),
+                                 "this window/representation only — blind to longer horizons and to channels the trace omits")
+    raise ValueError("estimator must be per_sample|windowed")
+
+
 # --- the discovery crucible -------------------------------------------------------------------------
 
 def crucible():
@@ -149,6 +211,15 @@ def crucible():
     out["leak_is_real"] = not secret_severed_in("animation_events")
     # 4. discovery inverts the question: it ranks ALL channels, not just the audited ones
     out["discovers_more_than_audit"] = len(d["info"]) > len(MODELED_AUDIT)
+    # 5. estimator coverage (the recursive mirror): the SAME channel flips verdict across estimator classes
+    ps = measure("accumulation_events", accumulation_channel, slow_secret, "per_sample")
+    wd = measure("accumulation_events", accumulation_channel, slow_secret, "windowed")
+    out["accumulation_per_sample"] = ps.detected_information
+    out["accumulation_windowed"] = wd.detected_information
+    out["per_sample_reads_severed"] = ps.detected_information <= 0.02       # the marginal estimator sees nothing
+    out["windowed_finds_leak"] = wd.detected_information > 0.02             # the sequence estimator finds it
+    out["same_channel_flips_verdict"] = out["per_sample_reads_severed"] and out["windowed_finds_leak"]
+    out["result_carries_its_boundary"] = bool(ps.coverage_boundary) and bool(wd.coverage_boundary)
     return out
 
 
@@ -169,9 +240,14 @@ def demo():
     print("  · an UNMODELED channel (animation_events) was discovered to leak: %s" % r["unmodeled_leak_found"])
     print("  · auditing only the enumerated set would have PASSED while the system bled: %s"
           % r["audit_alone_would_pass"])
+    print()
+    print("  estimator coverage (the detector is itself a hypothesis class):")
+    print("     accumulation_events  per-sample I=%.3f (reads SEVERED)  vs  windowed I=%.3f (LEAKS)"
+          % (r["accumulation_per_sample"], r["accumulation_windowed"]))
+    print("     → the SAME channel + trace flips verdict across estimator classes: %s" % r["same_channel_flips_verdict"])
     print("\n  the hardest unknown was never the secret — it is the observer's representation of the world.")
     print("  I=0 ⇒ severed ⇒ absolute (any observer); I>0 ⇒ leak is real, exploitability is class-relative.")
-    print("  measurement ≠ truth; absence of evidence here ≠ evidence of absence on real hardware.")
+    print("  'no leak found' = 'none found by estimator E over trace D'; measurement ≠ truth; simulation ≠ physics.")
     return r
 
 
