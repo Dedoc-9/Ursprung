@@ -255,6 +255,43 @@ observation another, an accessible description a third. The fidelity engine is t
 aspect of a much larger object: the deliberate composition of perception under a budget, against observers
 whose model classes we can only ever bound.
 
+## 9. Prior art — where this sits, and the category question
+
+This is **composition, not invention.** Naming a category is itself a claim, and the discipline forbids
+overclaiming, so the honest statement is that Ursprung sits at the intersection of three established fields,
+applied over a *verified, deterministic interactive world*:
+
+- **Information Flow Control — the tightest home for the M10–M21 half.** The "sever the secret from every
+  channel" absolute *is* **noninterference** (hidden state must not affect observable output; Goguen–Meseguer).
+  But the quantitative, observer-relative treatment here is the subfield **Quantitative Information Flow (QIF)**
+  — leakage measured in bits (mutual information / min-entropy), which is exactly `channel_discovery.py`, and
+  the AIC lattice (`adversary_capacity.py`) is QIF made *relative to an observer's model class*. And
+  `DisclosurePolicy` is precisely **declassification** — committed, controlled release. (Accurate phrase:
+  *noninterference + declassification + quantitative information flow.*)
+- **Privacy engineering — the second half's objective.** The privacy-utility tradeoff / privacy funnel (§2c),
+  with **differential privacy** as the adjacent rigorous budget mechanism.
+- **Information design / Bayesian persuasion — the under-named join.** Choosing the *minimum representation
+  sufficient for an observer's purpose without enabling unintended inference* is information design lifted to
+  interactive systems (§2a). This is the part with no settled industry name.
+- **Trustworthy-AI / agent-observation design — a real but looser adjacency.** The §4 agent-observation backend
+  ("what an agent may observe vs infer") touches AI-safety eval framing; it is an analogy, not a home field,
+  and is ranked last in tightness.
+
+**The distinction that is actually novel** is the abstraction-boundary shift the whole project encodes:
+
+```
+access control / authorization asks:   "Is this observer ALLOWED to receive this?"
+this category asks:                     "What is the MINIMUM representation that lets this observer achieve
+                                         its purpose WITHOUT learning unintended state?"
+```
+
+The contribution is the *combination* — quantitative, observer-class-relative, side-channel-inclusive,
+intent-driven, and with the defender admitting it is itself a bounded observer (the recursive caution of §6) —
+not any one of the fields above. If a name is needed, **Intent-Aware Information Mediation (an Information
+Mediation Layer / IML)** is a reasonable proposal, presented as *"composes IFC/QIF + privacy engineering +
+information design,"* never as a freshly-invented discipline. (Analogy: an API gateway controls service
+*access*; an IML controls meaningful *disclosure*.)
+
 ---
 
 ## References (grounding; current as of June 2026)
