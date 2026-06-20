@@ -55,6 +55,7 @@ from ursprung import execution_surface as es
 from ursprung import convergence as cv
 from ursprung import reality_harness as rh
 from ursprung import behavioral_harness as bh
+from ursprung import adversary_harness as ah
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -853,6 +854,24 @@ def test_behavioral_harness_player_is_final_observer():
     check(r["constant_feel_opaque"], "a constant-feel policy is behaviorally indistinguishable")
     check(r["feel_ok"], "a player may experience the world (recoil, hits, audio)")
     check(r["policy_tell_blocked"], "a player may not learn a policy threshold (the rollback threshold) through interaction")
+
+
+def test_adversary_harness_learning_observer():
+    r = ah.crucible()
+    # the closed-loop learner cracks a naive policy in O(log N) but cannot localize constant-feel
+    check(r["naive_is_cracked"], "a naive policy's hidden boundary is localized below the extraction bound")
+    check(r["constant_feel_resists_learning"], "constant-feel keeps the learner's regret at/above the extraction bound")
+    check(r["naive_learns"], "the agent's true regret descends with interactions against a naive policy (it learns)")
+    check(r["constant_feel_curve_flat"], "the agent's regret does NOT improve against constant-feel (the curve stays flat)")
+    check(r["leakage_naive_gt_constant"], "Behavioral Leakage (info/experiment) is higher for naive than constant-feel")
+    # incentive / decision-channel leakage: hidden state can leak through the action economy
+    check(r["decision_leak_naive"] == 1.0, "under a naive policy every decision channel (hit-reg, audio, matchmaking…) leaks")
+    check(r["decision_leak_constant"] == 0.0, "under constant-feel no decision channel leaks")
+    # active learning + reproducibility (the substrate is a deterministic regression environment)
+    check(ah.AdaptiveObserver(1024).select_experiment() == 512, "the agent selects the max-information-gain experiment (bisection midpoint)")
+    check(ah.run_agent("naive", 300, 1024, 12)[-1] <= 1, "active bisection localizes a naive boundary to within 1 over 12 chosen experiments")
+    check(ah.run_agent("constant_feel", 300, 1024, 12)[-1] >= 1, "the same agent cannot localize a constant-feel boundary")
+    check(ah.crucible() == r, "the adversary experiment is reproducible (deterministic regression environment)")
 
 
 def main():

@@ -311,13 +311,34 @@ WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT �
     not a learned adversary, a real player, or a real socket; the real channel is intentionally unbuilt
     (reports unavailable). privacy ≠ scalar; image ≠ generator; simulation ≠ physics; integrity ≠ truth.
 
-> **Status after M19:** the model is conceptually complete *and self-aware* — M18/M19 turned its own
-> discipline on itself (a representation policy ≠ an information-flow guarantee; privacy ≠ a scalar; the last
-> observer is the player, not the renderer). The two harnesses are substrate, not law. The remaining work is
-> empirical and lives behind two intentionally-unbuilt seams: `reality_harness.NetworkChannel` (point it at a
-> real socket) and `behavioral_harness.ExperimentLayer(channel="real")` (and, ultimately, real humans). The
-> question is no longer "what law is missing?" but "which of the nineteen milestones survive contact with real
-> latency, GPUs, drivers, and players?"
+- [x] **Milestone 20 — the Adaptive Adversary Harness (`can an intelligent observer learn the system?`).**
+  - [x] `adversary_harness.py` — M19's observer was one-shot; M20 closes the loop, because a player is not a
+    passive recipient but an active EXPERIMENTER. The attacker model becomes a learning problem (`policy →
+    observe → infer → choose next experiment → exploit`); the player learns the *transfer function*, not a
+    fact. The harness builds the loop (world → policy → adaptive agent → observation → memory → new strategy →
+    world) with a probing `AdaptiveObserver` (belief interval + active experiment selection = max-information
+    bisection + memory), and measures, per policy: **regret / learning curve**, **Behavioral Leakage =
+    information_gained / experiments** (leakage from *strategies*, not frames), **incentive / decision-channel
+    leakage** (hit-reg, movement prediction, audio occlusion, matchmaking, AI behaviour — the action economy,
+    not pixels), and an **extraction bound**. **Produced result:** against a naive policy the learner localizes
+    the hidden boundary in O(log N) (regret **128 → 1**, below the bound); against M19's **constant-feel** the
+    regret stays pinned (**≈399, flat**) no matter how many chosen experiments it runs — constant-feel
+    *withstands a learning adversary*, which is the test that separates "secure" from "looks secure." **Honest
+    bound:** the agent is a 1-D active-threshold learner; constant-feel resists THIS observer class — a real ML
+    agent or human may model channels outside it. The agent, channel, and player are all still simulated.
+    secure-against-this-observer ≠ secure; learning ≠ truth; simulation ≠ physics; integrity ≠ truth.
+
+> **Status after M20 — the model is complete and has measured its own edge.** The progression reads as one
+> question per milestone: M10 *can I trust it?* · M11 *may I use it?* · M12 *can I reconstruct it?* · M13 *can
+> I accumulate it?* · M14 *can I learn from the defense?* · M15 *can I infer the generator?* · M16 *can I infer
+> the machine?* · M17 *can I infer reality from correction?* · M18 *can measurement replace assumptions?* ·
+> M19 *who is the final observer?* · M20 *can an intelligent observer learn the system itself?* The two
+> harnesses (M18/M20) and the behavioral layer (M19) are **substrate, not law** — adding another firewall
+> would be decorative. The remaining work is empirical and lives behind intentionally-unbuilt seams:
+> `reality_harness.NetworkChannel` and `behavioral_harness.ExperimentLayer(channel="real")` (real socket /
+> netcode), an adversary upgraded from a 1-D learner to a real ML agent, telemetry, and ultimately human
+> studies. The question is no longer "what law is missing?" but "which of the twenty milestones survive
+> contact with real latency, GPUs, drivers, learners, and players?"
 
 ### Milestone-3 finding (the failure is the result)
 
