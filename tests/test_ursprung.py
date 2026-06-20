@@ -48,6 +48,7 @@ from ursprung import capability as cap
 from ursprung import causal_access as cac
 from ursprung import reconstruction as rec
 from ursprung import side_channel as sch
+from ursprung import accumulation as acc
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -701,6 +702,25 @@ def test_side_channels_are_closed():
     check(v["by_count_would_pick"] == "CHEAT", "by witness count the colluding majority would win")
     check(v["admitted"] and v["winning_hash"] == "TRUE",
           "by weighted trust the honest+server claim wins — collusion defeated (consensus ≠ truth)")
+
+
+def test_accumulation_safety_caps_the_sequence():
+    r = acc.crucible()
+    # 1. history compression: per-frame harmless, accumulated reconstructs (M12's firewall would miss this)
+    check(r["per_frame_harmless"], "each frame's leak is below the single-frame threshold")
+    check(r["accumulated_debt"] > 0, "accumulated over the window the history reconstructs > threshold (debt > 0)")
+    # 2. privacy budget: hidden object = 0 blocks any spend; the COMBINATION trips, not the piece
+    check(r["hidden_spend_blocked"], "a hidden-object (budget 0) representation spend is blocked")
+    check(r["visible_spend_ok"], "a visible-object (unlimited) spend is allowed")
+    pb = acc.PrivacyBudget(); pb.set_budget("A", "wall", 1.0)
+    check(pb.spend("A", "wall", 0.6) and not pb.spend("A", "wall", 0.6),
+          "each spend is individually fine; the COMBINATION exceeds the privacy budget")
+    # 3. causal query rate limiting: allowed query, disallowed sequence
+    check(r["early_queries_allowed"], "each individual query about the subject is legal")
+    check(r["accumulation_throttled"], "the accumulation of legal queries is throttled (sequence ≠ query)")
+    # 4. importance ≠ exposure: internal importance does not leak as observable behavior
+    check(r["importance_hidden"], "differing internal importances collapse to one external exposure level")
+    check(acc.exposed_level(10) == acc.exposed_level(90) == 0, "at 1 public level, exposure is constant")
 
 
 def main():

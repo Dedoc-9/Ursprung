@@ -188,6 +188,18 @@ WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT �
     leak 25), and **weighted-trust consensus** (evidence × authority × reliability × validity, not headcount —
     8 colluding clients lose to 3 honest+server, trust 136 vs 0). consensus ≠ truth.
 
+- [x] **Milestone 13 — Accumulation Safety (the query is allowed, the SEQUENCE is not).**
+  - [x] `accumulation.py` — after M12 the anti-cheat problem becomes *information economics under adversarial
+    constraints*; the subtlest attacker is **maliciously honest** (every request legal, the attack is in the
+    aggregation). Four mechanisms: (1) **Temporal Reconstruction Debt** — M12's Reconstruction Debt gains
+    MEMORY so 500 frames of per-frame-harmless fragments are caught as history-compression (5 bits/frame,
+    accumulated debt **0.50**); (2) **Representation Privacy Budget** per observer×object — hidden enemy 0,
+    visible door ∞, destructible wall limited; the *combination* trips, not the piece (0.6 + 0.6 > 1.0);
+    (3) **Causal Query Rate Limiting** — each query legal, the accumulation throttled (first 50 allowed, then
+    capped); (4) **importance ≠ exposure** — the allocator may internally know "this matters" without
+    changing observable behavior, so its own spend can't fingerprint hidden importance ({10,90} → one
+    external level). allowed-query ≠ allowed-sequence; authorized ≠ harmless; integrity ≠ truth.
+
 ### Milestone-3 finding (the failure is the result)
 
 The Causal Continuity Hypothesis as *stated* (allocate ∝ U·C·P) **failed** the equal-budget bench. Diagnosis
