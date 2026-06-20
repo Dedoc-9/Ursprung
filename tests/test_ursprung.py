@@ -56,6 +56,7 @@ from ursprung import convergence as cv
 from ursprung import reality_harness as rh
 from ursprung import behavioral_harness as bh
 from ursprung import adversary_harness as ah
+from ursprung import adversary_capacity as ac
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -872,6 +873,30 @@ def test_adversary_harness_learning_observer():
     check(ah.run_agent("naive", 300, 1024, 12)[-1] <= 1, "active bisection localizes a naive boundary to within 1 over 12 chosen experiments")
     check(ah.run_agent("constant_feel", 300, 1024, 12)[-1] >= 1, "the same agent cannot localize a constant-feel boundary")
     check(ah.crucible() == r, "the adversary experiment is reproducible (deterministic regression environment)")
+
+
+def test_adversary_capacity_identifiability_is_class_relative():
+    r = ac.crucible()
+    # the absolute result: severing the secret from the channel beats EVERY adversary class
+    check(r["constant_secret_absolute"], "constant-feel's secret is non-identifiable under all classes (info-theoretic severing)")
+    # the relative result: M20's 'resists learning' was only true against the 1-D learner (C1)
+    check(r["constant_generator_safe_vs_C1"], "constant-feel's generator is invisible to the C1 threshold learner (M20's class)")
+    check(r["constant_generator_cracked_by_C2"], "a single-bit structure learner (C2) identifies the generator M20 could not")
+    check(r["constant_generator_cracked_by_C3"], "the structured class (C3) also identifies it")
+    check(r["recovered_bit"] == 3, "the structure learner names the actual rule (response keys off bit 3)")
+    # the secret leaks only to the class that can express its dependence
+    check(r["naive_secret_C1"], "naive's threshold secret is recovered by the matching (threshold) class")
+    check(r["naive_secret_not_C2"], "the 'richer-looking' single-bit class cannot recover a threshold secret — capacity is not a scalar")
+    # AIC is a lattice, not a total order; only C3 dominates
+    check(r["classes_incomparable"], "C1 cracks the threshold rule but not the bit rule; C2 the reverse — the classes are incomparable")
+    check(r["C3_dominates_generator"], "the richest tested class identifies every generator")
+    check(r["keyed_only_C3"], "a parity-keyed generator needs the structured class (neither threshold nor single-bit suffices)")
+    # the synthesis
+    check(r["secret_absolute_generator_relative"], "secret-privacy can be absolute (sever the channel); generator-privacy is only ever class-relative")
+    # the little learners are real, not asserted
+    check(ac.detect_threshold(ac.rule_naive, 100) is True, "the threshold detector identifies the naive rule")
+    check(ac.detect_threshold(ac.rule_constant_feel, 100) is False, "the threshold detector correctly fails on the non-monotone bit rule")
+    check(ac.detect_single_bit(ac.rule_naive, 100) is None, "the single-bit detector correctly fails on the threshold rule")
 
 
 def main():

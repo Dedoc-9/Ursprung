@@ -328,17 +328,41 @@ WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT �
     agent or human may model channels outside it. The agent, channel, and player are all still simulated.
     secure-against-this-observer ≠ secure; learning ≠ truth; simulation ≠ physics; integrity ≠ truth.
 
-> **Status after M20 — the model is complete and has measured its own edge.** The progression reads as one
-> question per milestone: M10 *can I trust it?* · M11 *may I use it?* · M12 *can I reconstruct it?* · M13 *can
-> I accumulate it?* · M14 *can I learn from the defense?* · M15 *can I infer the generator?* · M16 *can I infer
-> the machine?* · M17 *can I infer reality from correction?* · M18 *can measurement replace assumptions?* ·
-> M19 *who is the final observer?* · M20 *can an intelligent observer learn the system itself?* The two
-> harnesses (M18/M20) and the behavioral layer (M19) are **substrate, not law** — adding another firewall
-> would be decorative. The remaining work is empirical and lives behind intentionally-unbuilt seams:
-> `reality_harness.NetworkChannel` and `behavioral_harness.ExperimentLayer(channel="real")` (real socket /
-> netcode), an adversary upgraded from a 1-D learner to a real ML agent, telemetry, and ultimately human
-> studies. The question is no longer "what law is missing?" but "which of the twenty milestones survive
-> contact with real latency, GPUs, drivers, learners, and players?"
+- [x] **Milestone 21 — Adversary Information Capacity (`security = non-identifiability under bounded access`).**
+  - [x] `adversary_capacity.py` — takes M20's own warning (*secure against THIS observer class ≠ secure*) and
+    makes it the experiment: it does not add a defense, it VARIES THE ADVERSARY and watches what becomes
+    identifiable. It splits the blurred target into two — the **secret** (the hidden boundary T) and the
+    **generator** (the rule mapping hidden state → behaviour) — and sweeps a lattice of adversary classes
+    (Adversary Information Capacity = hypothesis-space richness, *not* probes/bandwidth/memory): C0 passive ·
+    C1 threshold (M20's bisection agent) · C2 single-bit · C3 structured (threshold ∪ single-bit ∪ parity).
+    Every cell is computed by an actual little learner. **Produced results:** (1) constant-feel's **secret** is
+    non-identifiable under *every* class — the policy severs T from the channel, so no learner, however rich,
+    can extract what was never transmitted (information-theoretic, AIC-independent — the **only absolute
+    guarantee in the stack**); (2) constant-feel's **generator** is invisible to C1 (M20's learner could not
+    express it) but **identified by C2/C3** (a structure learner names the rule — "keys off bit 3") — so M20's
+    "resists learning" was always **class-relative**; (3) the classes are **incomparable** (C1 cracks the
+    threshold rule not the bit rule; C2 the reverse) — **AIC is a lattice, not a scalar**; only C3 dominates,
+    and a parity-keyed rule needs C3. **The synthesis the whole arc was building toward:** secret-privacy can
+    be made **absolute** (sever the secret from the channel); generator-privacy is **only ever class-relative**
+    — for any finite rule a rich enough class identifies it (`image ≠ generator` can be bounded, never
+    guaranteed). **Honest bound:** a tiny illustrative lattice; a real ML agent/human occupies an unknown,
+    far richer class; the "absolute" secret result holds only for a channel that genuinely omits T — any
+    correlated side effect in a real engine breaks it. identifiability ≠ truth; secure-against-class ≠ secure.
+
+> **Status after M21 — the model has formalized its own success condition.** The progression reads as one
+> question per milestone: M10 *trust?* · M11 *may I use it?* · M12 *reconstruct?* · M13 *accumulate?* · M14
+> *learn from the defense?* · M15 *infer the generator?* · M16 *infer the machine?* · M17 *infer reality from
+> correction?* · M18 *can measurement replace assumptions?* · M19 *who is the final observer (the player)?* ·
+> M20 *can an intelligent observer learn the system?* · M21 *learnable by WHICH class of observer?* The arc
+> resolves to a single primitive — **security = non-identifiability under bounded experimental access** — with
+> a sharp split: **sever the secret from the channel for an absolute guarantee; everything else (the
+> generator, the machine, the convergence) is only ever non-identifiable relative to an adversary's model
+> class.** The harnesses (M18/M20/M21) are **substrate, not law**; another firewall would be decorative. The
+> remaining work is empirical, behind intentionally-unbuilt seams: `reality_harness.NetworkChannel` and
+> `behavioral_harness.ExperimentLayer(channel="real")` (real socket / netcode), the adversary upgraded from
+> these toy learners to a real ML class, telemetry, and human studies. The question is no longer "what law is
+> missing?" but "which of the twenty-one milestones survive contact with real latency, GPUs, drivers,
+> learners, and players?"
 
 ### Milestone-3 finding (the failure is the result)
 
