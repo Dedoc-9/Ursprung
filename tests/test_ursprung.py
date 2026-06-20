@@ -1181,6 +1181,7 @@ def test_perception_attribution_ghost_is_a_candidate_set():
     check(r["stable_artifact_is_invariant"], "a stable artifact is invariant across every projection")
     check(r["stable_artifact_attributed_to_GC"], "yet the stable artifact is attributed to G_C (it is not necessary)")
     check(r["invariance_alone_overattributes"], "invariance alone over-attributes — it would keep the stable artifact")
+    check(r["ever_hidden_is_not_causal"], "two distinct questions: the stable artifact was ever-hidden (Q1 yes) but is not causal (Q2 no)")
     check(r["both_tests_required"], "G_F = invariant ∧ necessary; both tests are required, neither alone — stable ≠ causal")
     # projection-relative artifact, and the hash limitation
     check(r["projection_artifact_is_variant"], "a projection-relative component is the variant artifact in G_C")

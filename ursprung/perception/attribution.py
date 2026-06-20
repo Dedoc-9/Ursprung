@@ -32,7 +32,15 @@ necessity** (not either alone) is the attribution rule.
 A note on the hash layer (old L7): `Hash(Z)` binds *same state → same hash* — `integrity = reproducibility`.
 It does **not** bind *correct state → truth*: a perfectly replayable system can replay the wrong explanation,
 and the hash says nothing about which components are `G_F` vs `G_C`. `integrity = reproducibility ≠ causal
-validity`.
+validity`. So the hash moves *conceptually downward*: the old 7-stage stack (…spectral → memory → hash) becomes
+a 9-stage attribution stack — `… L7 Projection (Π) · L8 Attribution (separate G_F from G_C) · L9 Integrity
+(hash / replay binding)`. Attribution comes *before* the hash, because the hash certifies the identity of a
+trajectory, not the correctness of its explanation; integrity binds what attribution decided, it does not
+decide it.
+
+This module also keeps two questions deliberately separate (see `attribute()`): Q1 *was it ever hidden?*
+(membership in `ghost_candidates`) and Q2 *was it causal?* (membership in `causal_candidates` = G_F). The `b`
+component answers yes to Q1 and no to Q2 — the divergence that the old `G ≈ hidden mechanism` framing erased.
 
 CLASSIFICATION: OBSERVER (mutates_core=False). HONEST BOUND: toy separable state and discrete projections; real
 attribution (which part of an EM/timing/quantization residue is generator vs artifact) needs many projections,
@@ -83,15 +91,23 @@ def is_necessary(component):
 
 
 def attribute():
-    """Decompose the ghost into G_F (invariant ∧ necessary) and G_C (the rest) — the attribution operator V."""
+    """Decompose the ghost into G_F (invariant ∧ necessary) and G_C (the rest) — the attribution operator V.
+
+    Two questions, kept deliberately separate (this is the architecture's point):
+      Q1 — was it EVER HIDDEN?   → membership in `ghost_candidates` (the union of every projection's ghost).
+      Q2 — was it CAUSAL?         → membership in `causal_candidates` = G_F (invariant across Π ∧ necessary to F).
+    A component can answer yes to Q1 and no to Q2 (the `b` case): ever hidden, never causal. Conflating the two
+    is the mistake the old `G ≈ hidden mechanism` framing made.
+    """
     ghosts = [ghost(p) for p in PROJECTIONS]
-    invariant = set.intersection(*ghosts)
-    candidates = set.union(*ghosts)
-    necessary = {x for x in candidates if is_necessary(x)}
-    g_f = {x for x in candidates if x in invariant and x in necessary}
-    g_c = candidates - g_f
-    return {"candidates": candidates, "invariant": invariant, "necessary": necessary,
-            "G_F": g_f, "G_C": g_c}
+    invariant = set.intersection(*ghosts)            # hidden under EVERY projection (necessary for Q2, not sufficient)
+    ghost_candidates = set.union(*ghosts)            # Q1: ever hidden under SOME projection
+    necessary = {x for x in ghost_candidates if is_necessary(x)}     # intervention test (necessary for Q2)
+    causal_candidates = {x for x in ghost_candidates if x in invariant and x in necessary}   # Q2: G_F = both
+    g_f = causal_candidates
+    g_c = ghost_candidates - g_f
+    return {"ghost_candidates": ghost_candidates, "invariant": invariant, "necessary": necessary,
+            "causal_candidates": causal_candidates, "G_F": g_f, "G_C": g_c}
 
 
 # --- the crucible -----------------------------------------------------------------------------------
@@ -99,16 +115,18 @@ def attribute():
 def crucible():
     r = attribute()
     out = {"G_F": sorted(r["G_F"]), "G_C": sorted(r["G_C"]),
-           "invariant": sorted(r["invariant"]), "candidates": sorted(r["candidates"])}
+           "invariant": sorted(r["invariant"]), "ghost_candidates": sorted(r["ghost_candidates"])}
     # the ghost is a candidate set, not a truth
     out["ghost_is_candidate_set"] = len(ghost("P1")) == 3
     # the decomposition partitions the candidates: G_F ⊔ G_C
-    out["decomposition_partitions"] = (r["G_F"] | r["G_C"]) == r["candidates"] and not (r["G_F"] & r["G_C"])
+    out["decomposition_partitions"] = (r["G_F"] | r["G_C"]) == r["ghost_candidates"] and not (r["G_F"] & r["G_C"])
     out["G_F_is_generator_only"] = r["G_F"] == {"g"}
     # the decisive case: a component invariant across EVERY projection but NOT necessary → G_C (stable artifact)
     out["stable_artifact_is_invariant"] = "b" in r["invariant"]
     out["stable_artifact_attributed_to_GC"] = "b" in r["G_C"]
     out["invariance_alone_overattributes"] = r["invariant"] > r["G_F"]    # {g,b} ⊋ {g}
+    # the two questions are distinct: b is a GHOST candidate (ever hidden) but NOT a CAUSAL candidate (in G_F)
+    out["ever_hidden_is_not_causal"] = "b" in r["ghost_candidates"] and "b" not in r["causal_candidates"]
     # both tests are required: G_F is the intersection of invariant and necessary, neither alone
     out["both_tests_required"] = r["G_F"] == (r["invariant"] & r["necessary"]) and r["invariant"] != r["G_F"]
     # the projection-relative artifact is the variant component
@@ -125,10 +143,12 @@ def demo():
     print("Attribution — the ghost is a candidate set, not a truth (G = G_F + G_C)\n")
     print("  the residual G = Z − Π(Z) decomposes into generator residue (G_F) and confounder residue (G_C);")
     print("  the split comes from tests against the other operators, not from the residual itself.\n")
-    print("  ghost candidates: %s" % r["candidates"])
-    print("  invariant across all Π: %s   (necessary-and-invariant → G_F)" % r["invariant"])
+    print("  Q1 was it ever hidden?  ghost candidates: %s" % r["ghost_candidates"])
+    print("  Q2 was it causal?       invariant across all Π: %s  →  G_F (invariant ∧ necessary)" % r["invariant"])
     print("  G_F (generator): %s     G_C (confounder/artifact): %s" % (r["G_F"], r["G_C"]))
     print()
+    print("  · 'b' answers Q1 YES (ever hidden) but Q2 NO (not causal): %s — the two questions diverge"
+          % r["ever_hidden_is_not_causal"])
     print("  · 'b' is invariant across EVERY projection but NOT necessary → a STABLE ARTIFACT, assigned to G_C: %s / %s"
           % (r["stable_artifact_is_invariant"], r["stable_artifact_attributed_to_GC"]))
     print("  · so invariance ALONE over-attributes (it would keep b): %s — both tests are required: %s"

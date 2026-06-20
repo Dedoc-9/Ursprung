@@ -389,7 +389,12 @@ never a new invariant:
     assigns it to `G_C`. So `G_F = invariant ∧ necessary`, and `stable ≠ causal`. And the hash binds
     *reproducibility*, not causal validity — it cannot tell `G_F` from `G_C` (`integrity = reproducibility ≠
     causal validity`). The ghost stopped being a hidden-state container and became a causal-separation problem.
-    New separators: `stable ≠ causal`, `integrity = reproducibility ≠ causal validity`.
+    New separators: `stable ≠ causal`, `integrity = reproducibility ≠ causal validity`. The module keeps two
+    questions apart — Q1 *was it ever hidden?* (`ghost_candidates`) and Q2 *was it causal?* (`causal_candidates`
+    = G_F) — and `b` answers yes/​no, the divergence the old framing erased. Structurally this turns the old
+    7-stage physics stack into a 9-stage **attribution** stack: `… L7 Projection · L8 Attribution (separate G_F
+    from G_C) · L9 Integrity (hash/replay)`. The hash moved *downward*: it certifies the identity of a trajectory,
+    not the correctness of its explanation — it binds what attribution decided, it does not decide it.
 
 The remaining honest gaps (so this is not over-read): the compiler is still a *lookup / greedy channel select*,
 not a continuous funnel *solve*; the world, the learner, and the leakage estimator are constructed; the utility
