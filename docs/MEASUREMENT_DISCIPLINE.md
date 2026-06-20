@@ -147,6 +147,11 @@ signal privacy      ≠ generator privacy   (hiding the content is not hiding th
                                             R — power/timing/EM — leaks the generator: I(G;A)=0 ⊅ I(G;A,O,R)=0)
 unobserved          ≠ unknown        (a determined generator with no available channel is unobservable, not
                                        absent — the limit is observability, not computation)
+adaptation          ≠ transformation (changing the projection ≠ changing the generator; CORE can stay invariant)
+response            ≠ learning
+personalization     ≠ self-change
+observer-relative   ≠ observer-controlled  (the observer selects which projection it receives; it never
+                                             becomes the author of the underlying policy)
 ```
 
 ## The one absolute, and everything else

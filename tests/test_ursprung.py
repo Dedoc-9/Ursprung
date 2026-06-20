@@ -1112,6 +1112,22 @@ def test_perception_substrate_generator_leaks_through_residue():
     check(r["unobserved_not_unknown"], "with no residue channel recovery is 0 though the generator is determined — unobserved != unknown")
 
 
+def test_perception_adaptation_provenance_interface_not_truth():
+    r = perc.adaptation.crucible()
+    # adaptation is detectable: the observer can infer it caused a different interface trajectory
+    check(r["adaptation_changes_view"], "the view differs per observer (the system adapts its projection)")
+    check(r["adaptation_detectable"], "the adaptation is detectable — I(observer; view) > 0")
+    # but interface adaptation leaves CORE byte-identical — 'I adapted your interface, not my truth'
+    check(r["core_hash_independent_of_observer"], "the CORE hash is identical across observers (the cardinal invariant holds under adaptation)")
+    check(r["self_change_breaks_core"], "a self-change (generator mutation) breaks core invariance")
+    # the distinguishability point: view alone is ambiguous; only the attestation separates the two
+    check(r["view_alone_ambiguous"], "from the view alone, interface-adaptation and self-change both look like 'behaviour changed'")
+    check(r["attestation_distinguishes"], "only a CORE-invariance attestation distinguishes 'changed itself' from 'changed what it showed'")
+    # observer-relative != observer-controlled, and every transition has an attributable boundary
+    check(r["observer_relative_not_controlled"], "the observer selects the projection but does not author the core — observer-relative ≠ observer-controlled")
+    check(r["provenance_attributable"], "every transition carries provenance: what changed / why / what did NOT change (core, attested)")
+
+
 def main():
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):

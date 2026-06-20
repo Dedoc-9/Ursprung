@@ -334,6 +334,18 @@ never a new invariant:
     computation. The project's oldest question, sharpest: *hidden from which observer, through which channel,
     over what horizon?*
 
+15. **Adaptation provenance — DONE; changed itself vs changed what it showed.** `ursprung/perception/
+    adaptation.py` makes the cost *distinguishability* of state change (`I(observer;Δstate)>0`), not change.
+    Interface adaptation (VIEW/ALLOCATOR) gives each observer a different projection — detectable
+    (`I(observer;view)=1`) — while `CORE` stays byte-identical (the M1 cardinal invariant), so the system can
+    prove *"I adapted your interface, not my truth."* From the view alone, interface-adaptation and self-change
+    are indistinguishable; only a CORE-invariance attestation separates them. Every transition carries an
+    attributable boundary (what changed / why / what did NOT). `observer-relative ≠ observer-controlled` — the
+    observer picks the projection, never authors the policy. New separators: `adaptation ≠ transformation`,
+    `response ≠ learning`, `personalization ≠ self-change`, `observer-relative ≠ observer-controlled`. This is
+    the cardinal invariant (M1) applied to observer-relative disclosure, and it loops to §11: proving "interface,
+    not truth" without leaking the adaptation is the attestation frontier.
+
 The remaining honest gaps (so this is not over-read): the compiler is still a *lookup / greedy channel select*,
 not a continuous funnel *solve*; the world, the learner, and the leakage estimator are constructed; the utility
 models are declared conventions; the capacity axis is a memory-horizon *proxy*, not real model capacity; the

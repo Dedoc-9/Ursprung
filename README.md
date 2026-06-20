@@ -270,7 +270,7 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 
 ## Status
 
-The full suite is **397 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
+The full suite is **404 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
 control, and an explicit "expires on real silicon" bound.
 
 - **M1 — foundation.** Invariant harness; the renderer is proven observer-only (`integrity ≠ truth`).
@@ -319,7 +319,11 @@ control, and an explicit "expires on real silicon" bound.
   the generator leaks through its **residue** `R` (power/timing/EM) even when the output is encrypted
   (`signal privacy ≠ generator privacy`); the observer is a **sensor-fusion** adversary; `L` becomes a physical
   capacity curve `L(C_sensors)`; and `unobserved ≠ unknown` (a determined generator with no available channel is
-  *unobservable*, not absent — the limit is observability, not computation). World-side direction:
+  *unobservable*, not absent — the limit is observability, not computation). Finally `adaptation.py` adds
+  **provenance**: the cost is *distinguishability* of state change, not change — interface adaptation (VIEW)
+  gives each observer a different projection while `CORE` stays byte-identical (the M1 invariant), so the system
+  can prove *"I adapted your interface, not my truth"*; only a core-invariance attestation tells "changed
+  itself" from "changed what it showed," and `observer-relative ≠ observer-controlled`. World-side direction:
   [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
 
 **The conceptual arc is complete; the remaining work is empirical, not more laws.** It lives behind the
