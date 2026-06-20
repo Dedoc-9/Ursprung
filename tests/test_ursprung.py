@@ -36,8 +36,8 @@ from ursprung import adversarial_scenes as adv
 from ursprung import resistance_tensor as rt
 from ursprung import shader_cache as sc
 from ursprung import causal_surface as cs
-from ursprung import readiness as rd
-from ursprung import causal_contract as cc
+from ursprung import readiness as rdy
+from ursprung import causal_contract as ccon
 from ursprung import representation_futures as rf
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
@@ -521,27 +521,27 @@ def test_causal_surface_beats_proximity_for_shared_objects():
 
 
 def test_readiness_layer_prepares_shared_resources():
-    prepared, shared_ids = rd.demo(seed=1, budget=400)
+    prepared, shared_ids = rdy.demo(seed=1, budget=400)
     check(len(prepared & shared_ids) >= 1, "the readiness layer prepares shared high-CSA resources")
 
 
 # --- Milestone 8: Causal Contract + Representation Futures Graph -------------------------------------
 
 def test_causal_contract_maps_causality_not_outcomes():
-    con = cc.make_contract("door", ["collision", "explosion", "net_authority"], ["intact", "cracked", "debris"])
+    con = ccon.make_contract("door", ["collision", "explosion", "net_authority"], ["intact", "cracked", "debris"])
     check(con.admissible(), "a relationship-map contract (affected_by + possible representations) is admissible")
     try:
-        cc.reject_outcome("door", "destroyed", at_tick=400)
+        ccon.reject_outcome("door", "destroyed", at_tick=400)
         check(False, "a contract asserting an outcome must be rejected")
-    except cc.CausalAuthorityLeak:
+    except ccon.CausalAuthorityLeak:
         check(True, "an outcome assertion raises CausalAuthorityLeak (a contract maps causality, never predicts)")
 
 
 def test_csa_temporal_decay_fixes_the_leak():
     obj = {"agents_can_affect": 4, "expected_divergence": 6, "lighting_sensitivity": 8}
-    check(cc.decayed_csa(obj, dt=0) > cc.decayed_csa(obj, dt=120) * 3,
+    check(ccon.decayed_csa(obj, dt=0) > ccon.decayed_csa(obj, dt=120) * 3,
           "Causal Surface Area decays with temporal distance — no readiness memory leak")
-    check(cc.temporal_relevance(0) == 100 and cc.temporal_relevance(10 ** 6) <= 1,
+    check(ccon.temporal_relevance(0) == 100 and ccon.temporal_relevance(10 ** 6) <= 1,
           "temporal relevance is 100 now and decays toward 0 far out")
 
 
@@ -560,7 +560,7 @@ def test_futures_graph_prepares_breadth_never_selects():
     try:
         rf.select_future("intact", "destroyed")
         check(False, "select_future must be forbidden")
-    except cc.CausalAuthorityLeak:
+    except ccon.CausalAuthorityLeak:
         check(True, "select_future is forbidden — the renderer prepares futures, only CORE selects one")
 
 
