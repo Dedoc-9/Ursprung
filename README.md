@@ -292,8 +292,10 @@ the renderer track. [`docs/PREDICTIVE_FIDELITY.md`](docs/PREDICTIVE_FIDELITY.md)
 PFAL → TCFF chain. [`docs/RENDER_VERIFICATION_RECORD.md`](docs/RENDER_VERIFICATION_RECORD.md) — features as
 experiments. [`docs/GENEALOGY.md`](docs/GENEALOGY.md) — the full genealogy & checklist.
 [`docs/MEASUREMENT_DISCIPLINE.md`](docs/MEASUREMENT_DISCIPLINE.md) — the project's epistemic boundary: the
-measurement loop, closed-world failure, what a result means, and what NOT to claim. [`AGENTS.md`](AGENTS.md)
-— the contract every change obeys.
+measurement loop, closed-world failure, what a result means, and what NOT to claim.
+[`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md) — the *next-gen direction* (research, not built):
+the world-side dual of the M10–M21 arc — a committed, leakage-bounded **Perception Compiler** of which the
+fidelity engine is one backend. [`AGENTS.md`](AGENTS.md) — the contract every change obeys.
 
 ## License
 
