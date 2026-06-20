@@ -149,6 +149,21 @@ WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT �
     access debt falls 99→62→28→0 as visibility rises; spending access by Preparation Value (5) beats uniform/
     random (50/42). The limit is information topology, not GPU throughput.
 
+- [x] **Milestone 10 — Dependency Integrity Layer + Representation Compiler (trusting the access channel).**
+  - [x] `dependency_integrity.py` — dependency access can be corrupted/stale/adversarial (the new seam:
+    **access ≠ relevance**). A `DependencyClaim` carries its own doubt {confidence, evidence, expiration,
+    consequence}. Three guards (mirroring the workbench's `chronicle`/`quorum`): a **content-hash tautology**
+    (unforged iff recompute matches), an **exact-integer k-of-n consensus stream validator** (dissent kept as
+    a ghost; consensus ≠ truth), and **evidence × temporal decay** folded into
+    `Preparation Value = CSA × Dependency Access × Evidence Confidence × Temporal Relevance`. The **Dependency
+    Fog Crucible** (hidden / false / stale) shows integrity-aware loses least.
+  - [x] `representation_compiler.py` — provider contracts become compositional: a pipeline of geometry +
+    lighting + motion + continuity stages. `compile_pipeline` lowers a desired representation onto the
+    **cheapest chain that preserves continuity** under a latency budget, reserving each later stage's cheapest
+    tier (continuity downgrades, never drops). Closer to a compiler than a renderer.
+  - Invariant: the renderer may consume dependency information, but it must know how stale, uncertain, and
+    expensive that information is.
+
 ### Milestone-3 finding (the failure is the result)
 
 The Causal Continuity Hypothesis as *stated* (allocate ∝ U·C·P) **failed** the equal-budget bench. Diagnosis

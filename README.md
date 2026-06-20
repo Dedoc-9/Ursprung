@@ -131,6 +131,8 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 | `ursprung/causal_mutation.py` | **OBSERVER** | Causal Mutation Surface = `authority_distance × agents × rollback × rep`; Shared Object Crucible (loses least when reality disagrees) |
 | `ursprung/provider_contract.py` | **OBSERVER** | representation providers declare `{inputs, cost, failure_mode}`; readiness selects by contract, degrades gracefully |
 | `ursprung/dependency_surface.py` | **OBSERVER** | Dependency Surface Area + `Preparation Value = CSA × Dependency Access` (the hidden resource is dependency access) |
+| `ursprung/dependency_integrity.py` | **OBSERVER** | Dependency Integrity Layer: content-hash tautology + exact-integer k-of-n consensus stream validator + evidence/decay (access ≠ relevance) |
+| `ursprung/representation_compiler.py` | **ALLOCATOR** | compose provider contracts into the cheapest representation chain that preserves continuity under a latency budget |
 | `loop.py` | — | smallest executable world loop, end to end |
 | `AGENTS.md` | — | the renderer contract (the rules every change obeys) |
 

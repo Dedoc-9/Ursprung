@@ -42,6 +42,8 @@ from ursprung import representation_futures as rf
 from ursprung import causal_mutation as cm
 from ursprung import provider_contract as pcon
 from ursprung import dependency_surface as dep
+from ursprung import dependency_integrity as di
+from ursprung import representation_compiler as rc
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -603,6 +605,40 @@ def test_dependency_access_is_the_hidden_resource():
     vr = dep.value_ranked_debt(objs, exposure_budget=60)
     check(vr["value_ranked"] <= vr["uniform"] and vr["value_ranked"] <= vr["random"],
           "spending dependency access by Preparation Value beats uniform/random")
+
+
+# --- Milestone 10: dependency integrity + representation compiler -----------------------------------
+
+def test_dependency_claim_tautology_and_consensus():
+    g = di.DependencyClaim("door", "destruction_shader", consequence=5)
+    check(di.tautology_holds(g, g.content_hash()), "a genuine claim passes the integrity tautology")
+    check(not di.tautology_holds(g, "deadbeefdeadbeef"), "a tampered hash fails the tautology")
+    ws = [di.DependencyClaim("door", "destruction_shader", consequence=5) for _ in range(3)]
+    ws.append(di.DependencyClaim("door", "destruction_shader", consequence=999))   # one adversarial witness
+    v = di.consensus_validate(ws, k=3)
+    check(v["admitted"] and v["agree"] == 3 and v["dissent"] == 1,
+          "k-of-n consensus admits the agreeing majority; the adversary is kept as a dissent ghost")
+    check(not di.consensus_validate(ws, k=4)["admitted"], "raising k beyond agreement refuses (no false consensus)")
+
+
+def test_evidence_and_decay_close_access_not_relevance():
+    obj = {"affected_agents": 4, "expected_divergence": 5, "lighting_sensitivity": 8, "dependency_access": 100}
+    false = di.DependencyClaim("o", "d", evidence=0, issued_tick=100, expiration=10 ** 9)
+    fresh = di.DependencyClaim("o", "d", evidence=100, issued_tick=100, expiration=10 ** 9)
+    stale = di.DependencyClaim("o", "d", evidence=100, issued_tick=0, expiration=10 ** 9)
+    check(di.integrity_aware_preparation_value(obj, false, 100) == 0, "a false dependency earns ~no preparation budget")
+    check(di.integrity_aware_preparation_value(obj, stale, 600) < di.integrity_aware_preparation_value(obj, fresh, 100),
+          "a stale dependency decays (temporal half-life)")
+    res = di.fog_crucible(seed=1, budget=300)
+    check(min(res, key=lambda k: res[k]) == "integrity_aware", "integrity-aware loses least under dependency fog")
+
+
+def test_representation_compiler_preserves_continuity():
+    ample = rc.compile_pipeline({"geometry", "lighting", "motion", "history"}, 60)
+    tight = rc.compile_pipeline({"geometry", "lighting", "motion", "history"}, 8)
+    check(ample["continuity_preserved"] and tight["continuity_preserved"], "continuity is preserved in both")
+    check(not ample["degraded"] and ample["total_quality"] > tight["total_quality"], "ample budget → full quality")
+    check(tight["total_latency"] <= 8 and tight["degraded"], "tight budget degrades but fits the deadline")
 
 
 def main():
