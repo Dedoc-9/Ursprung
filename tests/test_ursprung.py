@@ -981,6 +981,27 @@ def test_perception_adversary_leakage_is_not_exploitability():
     check(r["exploitability_exceeds_estimate"], "session exploitability far exceeds the per-frame leakage estimate — leakage ≠ exploitability")
 
 
+def test_session_accounting_is_purpose_preserving_under_accumulation():
+    r = perc.session_accounting.crucible()
+    # the accumulation-aware compiler drops the triangulating channel and keeps the stable task band
+    check(r["aware_drops_triangulating_channel"], "the compiler drops the moving-threat channel that triangulates over a session")
+    check(r["aware_keeps_task_channel"], "the compiler keeps the coarse band channel the task needs")
+    # naive (the policy adversary.py broke) recovers the exact secret and busts the session budget
+    check(r["naive_exact_recovered"], "the naive session policy still lets the accumulating learner recover the exact secret")
+    check(r["naive_fails_budget"], "naive exceeds the session leakage budget (6 bits > 2)")
+    # accumulation-aware: utility preserved AND exploitability collapsed, exact never recovered
+    check(r["aware_preserves_utility"], "accumulation-aware keeps task utility at the floor (1.0)")
+    check(r["aware_within_budget"], "accumulation-aware keeps session exploitability under the budget")
+    check(r["aware_collapses_exploitability"], "accumulation-aware collapses exploitability vs naive (6 → ~1 bit)")
+    check(r["aware_does_not_recover_exact"], "the accumulating learner can no longer recover the exact secret under the aware policy")
+    check(r["aware_holds_for_all_secrets"], "the aware policy stays within budget and hides the exact cell for every secret")
+    # blind is private but useless; only the aware policy clears both axes
+    check(r["blind_under_serves"], "the blind policy is within budget but fails the utility floor")
+    check(r["only_aware_passes"], "of the three session policies, only the accumulation-aware one passes both axes")
+    # the first general result
+    check(r["purpose_preserving_under_accumulation"], "purpose-preserving disclosure under an accumulating observer: utility 1.0, exploitability collapsed, exact hidden")
+
+
 def main():
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):

@@ -253,10 +253,21 @@ never a new invariant:
    inequality holds); it shows the per-frame leakage budget is the **wrong budget for a session**. Exactly the
    M13 (accumulation) / M19 (temporal) / M21 (richer observer class) lesson, biting the perception loop.
 
-The remaining honest gaps (so this is not over-read): the compiler is still a *lookup*, not a funnel *solve*;
-the world and the leakage estimator are constructed; and — surfaced by step 6 — **the loop's leakage metric is
-per-frame, not per-session**, so the next real increment is *accumulation-aware disclosure* (a session leakage
-budget / constant-feel for the temporal channel), not another conceptual layer.
+7. **Session Leakage Accounting — DONE; the first GENERAL result.** `ursprung/perception/session_accounting.py`
+   answers the falsification: account leakage over the *session*, not the frame. A `SessionLeakageBudget` caps
+   accumulated bits; the `AccumulationAwareCompiler` selects channels by committed worst-case *session* leakage,
+   keeping the stable task band and dropping the per-frame channel that triangulates. Re-running the *exact*
+   `adversary.py` learner: the naive session policy still recovers the exact secret (6 bits, busts the 2-bit
+   budget); **accumulation-aware keeps utility at 1.0 while exploitability collapses to 0.83 bits — the exact
+   cell is never recovered**, for every secret; blind under-serves. That is **purpose-preserving disclosure
+   under an accumulating observer** — the first result general across games, agents, dashboards, and robotics.
+   Honest bound: holds against the *modeled* observer class and only because the task channel is *separable*
+   from the leak channel; a richer class or a non-separable task changes it (`secure-against-class ≠ secure`).
+
+The remaining honest gaps (so this is not over-read): the compiler is still a *lookup / greedy channel select*,
+not a continuous funnel *solve*; the world, the learner, and the leakage estimator are constructed; and the
+separable-task assumption is doing real work. The next increments are empirical — a real learner class, a real
+trace, a non-separable task — not another conceptual layer.
 
 ## 8. The one-line shift
 

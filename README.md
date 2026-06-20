@@ -264,13 +264,13 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 | `ursprung/adversary_capacity.py` | **OBSERVER** | Adversary Information Capacity: sweeps the adversary's **model class** (a lattice: passive / threshold / single-bit / structured) over two targets — the **secret** vs the **generator**. Result: severing the secret is *absolute* (beats all classes); generator-privacy is only ever *class-relative* (M20's constant-feel falls to a structure learner). `security = non-identifiability under bounded experimental access` |
 | `ursprung/channel_discovery.py` | **OBSERVER** | Channel Discovery (a harness feature, the bridge to the empirical phase): inverts "does channel X leak?" into "what channels *exist*?" — mutual information per observable channel, surfacing an **unmodeled** leaker an audit would miss. `I = 0 ⇒ severed/absolute; I > 0 ⇒ feed the adversary class` |
 | `ursprung/disclosure.py` | **OBSERVER** | the intent → representation seam (first brick of the *perception compiler*): a committed, content-addressed `DisclosurePolicy(observer, purpose, allowed, forbidden)` + a toy compiler + the M10–M21 firewall as auditor — *policy says reveal X; did the output contain only X?* Instrument, not a law; `compliant ≠ safe` |
-| `ursprung/perception/` | **OBSERVER** | the first complete **perception loop** (the repo's first privacy-funnel benchmark): `world → DisclosurePolicy → compiled observation → agent → task → leakage`. Measures **participation utility** (task success) against **leakage** (`I(secret;view)`, via `channel_discovery`). Result: only the *compiled* policy preserves full task success (U=1.0) under the leakage budget — `raw` over-discloses (L=6 bits), `blind` under-serves (U=0.56). `adversary.py` then turns the frontier *adversarial*: a per-frame leakage estimate of **0.79 bits** is **falsified** by an accumulating learner that recovers the **exact** secret (6 bits) across a session — **`leakage ≠ exploitability`** (class-relative, M21; temporal, M13) |
+| `ursprung/perception/` | **OBSERVER** | the first complete **perception loop** (the repo's first privacy-funnel benchmark): `world → DisclosurePolicy → compiled observation → agent → task → leakage`. Measures **participation utility** (task success) against **leakage** (`I(secret;view)`, via `channel_discovery`). Result: only the *compiled* policy preserves full task success (U=1.0) under the leakage budget — `raw` over-discloses (L=6 bits), `blind` under-serves (U=0.56). `adversary.py` then turns the frontier *adversarial*: a per-frame leakage estimate of **0.79 bits** is **falsified** by an accumulating learner that recovers the **exact** secret (6 bits) across a session — **`leakage ≠ exploitability`** (class-relative, M21; temporal, M13). `session_accounting.py` is the fix and the first **general** result: accounting leakage per *session*, the accumulation-aware compiler drops the triangulating channel and keeps the stable task band — utility stays **1.0** while session exploitability **collapses 6 → 0.83 bits** (exact never recovered) under a 2-bit session budget. *Purpose-preserving disclosure under an accumulating observer* |
 | `loop.py` | — | smallest executable world loop, end to end |
 | `AGENTS.md` | — | the renderer contract (the rules every change obeys) |
 
 ## Status
 
-The full suite is **303 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
+The full suite is **341 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
 control, and an explicit "expires on real silicon" bound.
 
 - **M1 — foundation.** Invariant harness; the renderer is proven observer-only (`integrity ≠ truth`).
@@ -288,16 +288,24 @@ control, and an explicit "expires on real silicon" bound.
 - **Channel Discovery + Measurement Discipline — the landing.** The audit is inverted to "what channels
   exist?", the detector is shown to be its own hypothesis class, and the project's epistemic boundary is
   written down ([`docs/MEASUREMENT_DISCIPLINE.md`](docs/MEASUREMENT_DISCIPLINE.md)).
+- **The perception loop — the conceptual arc becomes an executable target.** `disclosure.py` adds the
+  intent → representation seam; `ursprung/perception/` runs the first complete loop and the repo's first
+  **privacy-funnel** benchmark; `adversary.py` *falsifies* its per-frame leakage number (an accumulating
+  learner recovers the exact secret); and `session_accounting.py` answers the falsification with the first
+  **general** result — *purpose-preserving disclosure under an accumulating observer* (utility 1.0, session
+  exploitability collapsed, exact never recovered). The world-side direction is in
+  [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
 
-**The conceptual arc is complete; the remaining work is empirical, not more laws.** It lives behind two
-intentionally-unbuilt seams — `reality_harness.NetworkChannel` (point it at a real socket) and
-`behavioral_harness.ExperimentLayer(channel="real")` — plus:
+**The conceptual arc is complete; the remaining work is empirical, not more laws.** It lives behind the
+intentionally-unbuilt seams — `reality_harness.NetworkChannel` (point it at a real socket),
+`behavioral_harness.ExperimentLayer(channel="real")`, and the perception compiler's lookup compiler — plus:
 - A **real-silicon benchmark** — every constructed-world number expires there (equal GPU time; temporal
   artifacts, input-to-photon latency, reconstruction error, motion stability).
 - **Composing + calibrating the resistance tensor** — the 7-dimensional `resistance_tensor.py` already exists;
   what is open is using it as the resistance *everywhere* and tuning its weights against measured artifacts.
-- A **stronger adversary class** (replace the toy threshold/bit/parity learners with a real ML/RL class) and
-  **channel discovery over real telemetry traces** — the natural first experiments of the empirical phase.
+- A **stronger adversary class** (replace the toy learners with a real ML/RL class), **channel discovery over
+  real telemetry traces**, and a **non-separable task** for the perception loop — the natural first experiments
+  of the empirical phase.
 
 ## Toward a fidelity operating system (direction, not built)
 

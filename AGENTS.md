@@ -281,15 +281,20 @@ Weltlinie + monitored invariants intact. It does **not** mean the renderer is co
 
 ## Status
 
-The conceptual arc is **complete** (303-check suite). M1 foundation + invariant harness → M2 the five laws →
+The conceptual arc is **complete** (341-check suite). M1 foundation + invariant harness → M2 the five laws →
 M3/3.1 the VIEW raster slice and the *ranking ≠ allocation* result (from a recorded **failed** hypothesis) →
 M4–M9 fidelity-as-economy (resistance tensor, shader cache, readiness, providers, dependency integrity,
 compiler) → M10–M21 the information-firewall arc (see the section above) → Channel Discovery + the
-Measurement Discipline. Run: `PYTHONHASHSEED=0 python3 loop.py`; suite `python3 tests/test_ursprung.py`.
+Measurement Discipline → the **perception loop** (`disclosure.py` + `ursprung/perception/`: the first
+privacy-funnel benchmark; `adversary.py` falsifies its per-frame leakage; `session_accounting.py` answers with
+*purpose-preserving disclosure under an accumulating observer* — utility preserved, session exploitability
+collapsed). Run: `PYTHONHASHSEED=0 python3 loop.py`; suite `python3 tests/test_ursprung.py`.
 
 **The remaining work is empirical, not more laws.** Do not add another conceptual milestone without explicit
 direction; the only sanctioned additions now are **better measurement substrates** or **stronger observer
-classes**, both *experiments*. The next builds live behind two intentionally-unbuilt seams —
-`reality_harness.NetworkChannel` (wire to a real socket) and `behavioral_harness.ExperimentLayer(channel="real")`
-— plus a real-silicon benchmark (every constructed number expires there), a richer `CompositeResistance`, a
-real ML/RL adversary class replacing the toy learners, and channel discovery over real telemetry traces.
+classes**, both *experiments*. The next builds live behind intentionally-unbuilt seams —
+`reality_harness.NetworkChannel` (wire to a real socket), `behavioral_harness.ExperimentLayer(channel="real")`,
+and the perception compiler's lookup compiler — plus a real-silicon benchmark (every constructed number expires
+there), calibrating the existing resistance tensor, a real ML/RL adversary class replacing the toy learners,
+channel discovery over real telemetry traces, and a **non-separable task** for the perception loop (which would
+turn the free lunch back into a genuine utility/leakage tradeoff).
