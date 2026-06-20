@@ -346,6 +346,18 @@ never a new invariant:
     the cardinal invariant (M1) applied to observer-relative disclosure, and it loops to §11: proving "interface,
     not truth" without leaking the adaptation is the attestation frontier.
 
+16. **The four-operator separation — DONE; the spine.** `ursprung/perception/operators.py` factors any
+    observer/world interaction into four independent operators — Dynamics `Z_{t+1}=F(Z_t)` (CORE), Memory
+    `S_t=M(S_{t-1},Z_t)` (accumulation), Projection `O_t=Π(Z_t)` (disclosure), Reconstruction `Ĝ_C=A_C(O_{1:t})`
+    (observer class). **The useful artifact is the separation, not a final equation.** Every prior module varies
+    one slot: disclosure tunes Π, session accounting tunes M, observer-capacity / adversary tune A_C, the
+    cardinal invariant fixes F. The bench shows they are *independent knobs*: with F fixed, Π moves leakage
+    (raw 3 → coarse 2) holding A_C fixed, and A_C moves it (marginal 2 → full 3) holding Π fixed — so
+    `leakage = L(F, M, Π, A_C)`, never a property of one operator. And the dynamics is identical regardless of
+    Π (CORE ⟂ VIEW in operator form). The separation *localizes* where any result comes from, and the project's
+    separators are all statements that two slots are distinct (`truth (F) ≠ projection (Π)`; `observer-relative
+    (Π) ≠ observer-controlled (F)`; `secure-against-class (one A_C) ≠ secure (all A_C)`).
+
 The remaining honest gaps (so this is not over-read): the compiler is still a *lookup / greedy channel select*,
 not a continuous funnel *solve*; the world, the learner, and the leakage estimator are constructed; the utility
 models are declared conventions; the capacity axis is a memory-horizon *proxy*, not real model capacity; the

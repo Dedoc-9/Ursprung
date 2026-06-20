@@ -270,7 +270,7 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 
 ## Status
 
-The full suite is **404 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
+The full suite is **410 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
 control, and an explicit "expires on real silicon" bound.
 
 - **M1 — foundation.** Invariant harness; the renderer is proven observer-only (`integrity ≠ truth`).
@@ -323,8 +323,11 @@ control, and an explicit "expires on real silicon" bound.
   **provenance**: the cost is *distinguishability* of state change, not change — interface adaptation (VIEW)
   gives each observer a different projection while `CORE` stays byte-identical (the M1 invariant), so the system
   can prove *"I adapted your interface, not my truth"*; only a core-invariance attestation tells "changed
-  itself" from "changed what it showed," and `observer-relative ≠ observer-controlled`. World-side direction:
-  [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
+  itself" from "changed what it showed," and `observer-relative ≠ observer-controlled`. And `operators.py` names
+  the spine the whole arc instantiates: **leakage `= L(F, M, Π, A_C)`** — dynamics, memory, projection, observer
+  reconstruction — four *independent knobs* (the projection and the observer class move leakage separately; the
+  dynamics `F` is independent of the projection, CORE ⟂ VIEW in operator form). *The useful artifact is the
+  separation, not a final equation.* World-side direction: [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
 
 **The conceptual arc is complete; the remaining work is empirical, not more laws.** It lives behind the
 intentionally-unbuilt seams — `reality_harness.NetworkChannel` (point it at a real socket),

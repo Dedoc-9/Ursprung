@@ -1128,6 +1128,19 @@ def test_perception_adaptation_provenance_interface_not_truth():
     check(r["provenance_attributable"], "every transition carries provenance: what changed / why / what did NOT change (core, attested)")
 
 
+def test_perception_operators_separation_is_the_artifact():
+    r = perc.operators.crucible()
+    # holding the observer fixed, the projection moves leakage; holding the projection fixed, the observer does
+    check(r["projection_matters"], "with F and A_C fixed, the projection Π moves leakage (raw vs coarse)")
+    check(r["observer_matters"], "with F and Π fixed, the observer class A_C moves leakage (marginal vs full)")
+    check(r["leakage_is_joint"], "leakage is L(Π, A_C) jointly — never a property of one operator alone")
+    # the dynamics is independent of the projection — changing Π does not change the generator (CORE ⟂ VIEW)
+    check(r["F_independent_of_projection"], "the world trajectory is identical regardless of Π — F is independent of the projection")
+    check(r["memory_accumulates"], "the memory operator M accumulates the trajectory")
+    # the separation localizes the source of every result
+    check(r["raw_full"] == 3.0 and r["coarse_marginal"] == 2.0, "the operators reproduce the expected per-configuration leakage")
+
+
 def main():
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):
