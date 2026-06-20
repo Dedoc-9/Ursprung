@@ -349,6 +349,26 @@ WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT �
     far richer class; the "absolute" secret result holds only for a channel that genuinely omits T — any
     correlated side effect in a real engine breaks it. identifiability ≠ truth; secure-against-class ≠ secure.
 
+- [x] **Channel Discovery (a harness feature, not a law) — `what channels EXIST?`** *the bridge to the empirical phase.*
+  - [x] `channel_discovery.py` — M21 reduced anti-cheat to "can hidden state influence an observable?", but
+    that guarantee is only as good as the list of channels you thought to check. M20's bit-7 slip was a bug in
+    the model of the *observer*; the dual bug is in the model of the *world* — the channel you never
+    enumerated. This inverts the harness question from "does channel X leak?" to "what channels exist, and
+    which carry information about the secret?": it scans an observable trace (latency, frame_time,
+    packet_timing, correction/resource/audio/animation events), computes **mutual information** I(channel ;
+    secret) per channel, ranks, and flags the leakers. **Produced result:** the clean channels read as severed
+    (I = **0.000** → M21's class-independent absolute guarantee), `correction_events` fully reveals (I ≈ **0.95**
+    = H(secret)), and — the headline — an **unmodeled channel** (`animation_events`, I ≈ **0.27**, a partial
+    leak) is discovered *outside* the modeled audit set: an audit of only the enumerated channels would have
+    PASSED while the system bled. The dangerous channel is the one you didn't list. I = 0 ⇒ severed ⇒ absolute;
+    I > 0 ⇒ the leak is real and is handed to the adversary class (`adversary_capacity`), where exploitability
+    is class-relative. **A negative control caught a modeling error mid-build:** the first `animation = secret
+    XOR block_parity` was a one-time pad (I = 0, *perfectly* severed — the opposite of a leak); `secret OR
+    block_parity` gives the intended partial correlation. **Honest bound:** discrete MI over a constructed,
+    deterministic trace — by definition discovery cannot find a channel the *trace* omits; on real silicon the
+    channels are continuous, coupled, and MI must be estimated with error. Absence of evidence here ≠ evidence
+    of absence on real hardware. measurement ≠ truth; simulation ≠ physics; integrity ≠ truth.
+
 > **Status after M21 — the model has formalized its own success condition.** The progression reads as one
 > question per milestone: M10 *trust?* · M11 *may I use it?* · M12 *reconstruct?* · M13 *accumulate?* · M14
 > *learn from the defense?* · M15 *infer the generator?* · M16 *infer the machine?* · M17 *infer reality from

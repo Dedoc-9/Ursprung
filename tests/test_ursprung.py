@@ -57,6 +57,7 @@ from ursprung import reality_harness as rh
 from ursprung import behavioral_harness as bh
 from ursprung import adversary_harness as ah
 from ursprung import adversary_capacity as ac
+from ursprung import channel_discovery as cd
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -897,6 +898,24 @@ def test_adversary_capacity_identifiability_is_class_relative():
     check(ac.detect_threshold(ac.rule_naive, 100) is True, "the threshold detector identifies the naive rule")
     check(ac.detect_threshold(ac.rule_constant_feel, 100) is False, "the threshold detector correctly fails on the non-monotone bit rule")
     check(ac.detect_single_bit(ac.rule_naive, 100) is None, "the single-bit detector correctly fails on the threshold rule")
+
+
+def test_channel_discovery_finds_the_unmodeled_channel():
+    r = cd.crucible()
+    # clean channels read as severed (I = 0): the M21 class-independent absolute guarantee
+    check(r["clean_channels_severed"], "channels independent of the secret carry zero mutual information (severed)")
+    check(r["severed_is_absolute"], "a severed channel leaks the secret to no observer of any capacity")
+    # a fully-revealing channel is found
+    check(r["correction_fully_reveals"], "a channel that mirrors the secret reads as near-maximal mutual information")
+    # THE HEADLINE: discovery surfaces a leaking channel that the modeled audit set omits
+    check(r["unmodeled_leak_found"], "discovery finds a leaking channel (animation_events) outside the modeled audit set")
+    check(r["animation_not_in_audit"], "that channel was never in the enumerated audit set")
+    check(r["audit_alone_would_pass"], "an audit of only the enumerated channels would have passed while the system leaks")
+    check(r["leak_is_real"], "the unmodeled channel's leak is real (I > 0), to be handed to the adversary class")
+    # discovery inverts the question: it ranks ALL observed channels, not just the audited ones
+    check(r["discovers_more_than_audit"], "discovery scans more channels than the audit enumerated")
+    check(cd.secret_severed_in("audio_events"), "secret_severed_in confirms an absolute (severed) channel")
+    check(not cd.secret_severed_in("correction_events"), "secret_severed_in reports a leaking channel as not severed")
 
 
 def main():

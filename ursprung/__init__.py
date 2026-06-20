@@ -20,7 +20,8 @@ from . import (world_core, view_layer, ghost_report, verify, registry,  # noqa: 
                dependency_surface, dependency_integrity, representation_compiler,
                capability, causal_access, reconstruction, side_channel, accumulation,
                adversarial_dynamics, representation_privacy, execution_surface, convergence,
-               reality_harness, behavioral_harness, adversary_harness, adversary_capacity)
+               reality_harness, behavioral_harness, adversary_harness, adversary_capacity,
+               channel_discovery)
 
 __all__ = ["world_core", "view_layer", "ghost_report", "verify", "registry",
            "render_record", "conventions", "divergence", "prediction",
@@ -33,5 +34,5 @@ __all__ = ["world_core", "view_layer", "ghost_report", "verify", "registry",
            "dependency_integrity", "representation_compiler", "capability", "causal_access",
            "reconstruction", "side_channel", "accumulation", "adversarial_dynamics",
            "representation_privacy", "execution_surface", "convergence", "reality_harness",
-           "behavioral_harness", "adversary_harness", "adversary_capacity"]
+           "behavioral_harness", "adversary_harness", "adversary_capacity", "channel_discovery"]
 __version__ = "0.1.0-milestone1"
