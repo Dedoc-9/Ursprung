@@ -135,6 +135,8 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 | `ursprung/representation_compiler.py` | **ALLOCATOR** | compose provider contracts into the cheapest representation chain that preserves continuity under a latency budget |
 | `ursprung/capability.py` | **OBSERVER** | Causal Capability Token: permissioned use of dependency knowledge; `mutate/select/reveal_hidden` forbidden on every token |
 | `ursprung/causal_access.py` | **OBSERVER** | Causal Access Control Layer (information firewall): a claim influences representation only if unforged AND in authorized causal scope AND capability-permitted (blocks wallhack/ESP) |
+| `ursprung/reconstruction.py` | **OBSERVER** | Causal Composition Firewall + Information Reconstruction Debt: cap a SET of allowed fragments so they can't jointly reconstruct forbidden knowledge |
+| `ursprung/side_channel.py` | **OBSERVER** | side-channel defenses: timing normalization, prediction-inversion breadth guard, weighted-trust consensus (defeats colluding clients) |
 | `loop.py` | — | smallest executable world loop, end to end |
 | `AGENTS.md` | — | the renderer contract (the rules every change obeys) |
 

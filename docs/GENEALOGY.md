@@ -177,6 +177,17 @@ WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT �
   - Invariant: CORE owns reality · dependencies expose possibility · capabilities constrain interpretation ·
     representation consumes permissioned uncertainty. (authorized ≠ true; consensus ≠ truth; integrity ≠ truth.)
 
+- [x] **Milestone 12 — Causal Composition Firewall + side-channel defenses (the reconstruction boss fight).**
+  - [x] `reconstruction.py` — a cheat needs only enough *authorized* fragments to RECONSTRUCT the forbidden
+    fact (shadow + sound + particle + animation → enemy). **Information Reconstruction Debt** measures the
+    reconstruction beyond a safe threshold; the **Causal Composition Firewall** caps it (blocks the marginal
+    fragment, not the piece). Crucible: naive per-fragment reconstruction 1.00 (full leak) → firewalled 0.31.
+    The chain: integrity ≠ confidentiality ≠ authorization ≠ harmlessness.
+  - [x] `side_channel.py` — the renderer's own behavior as a sensor: **timing normalization** (7 ms spread →
+    0), the **prediction-inversion guard** (prepare breadth ≠ announce probability; 1 branch leaks 100, 4
+    leak 25), and **weighted-trust consensus** (evidence × authority × reliability × validity, not headcount —
+    8 colluding clients lose to 3 honest+server, trust 136 vs 0). consensus ≠ truth.
+
 ### Milestone-3 finding (the failure is the result)
 
 The Causal Continuity Hypothesis as *stated* (allocate ∝ U·C·P) **failed** the equal-budget bench. Diagnosis

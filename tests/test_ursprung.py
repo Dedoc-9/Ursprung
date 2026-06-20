@@ -46,6 +46,8 @@ from ursprung import dependency_integrity as di
 from ursprung import representation_compiler as rc
 from ursprung import capability as cap
 from ursprung import causal_access as cac
+from ursprung import reconstruction as rec
+from ursprung import side_channel as sch
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -672,6 +674,33 @@ def test_information_firewall_blocks_wallhack_despite_integrity_and_consensus():
           "an out-of-scope claim is rejected even though unforged + agreed (wallhack/ESP blocked)")
     r = cac.fog_attack()
     check(r["advantage_leaked"] == 0, "Dependency Fog Attack: advantage leaked = 0 (authorization is the floor)")
+
+
+# --- Milestone 12: composition firewall + side-channel defenses -------------------------------------
+
+def test_composition_firewall_caps_reconstruction():
+    r = rec.crucible(fact_bits=64, threshold=0.5)
+    check(r["each_individually_allowed"], "each fragment is individually allowed (below threshold)")
+    check(r["naive_reconstruction"] > 0.5, "without the firewall the SET reconstructs > threshold (a leak)")
+    check(r["debt_without_firewall"] > 0, "Information Reconstruction Debt > 0 (per-fragment firewall would leak)")
+    check(r["composition_firewall_reconstruction"] <= 0.5, "the composition firewall caps reconstruction at/below threshold")
+    check(len(r["blocked"]) >= 1, "the marginal fragment(s) crossing the threshold are blocked")
+
+
+def test_side_channels_are_closed():
+    ft = [8, 12, 15, 8]
+    check(sch.timing_leak(ft) > sch.timing_leak(sch.normalize_timing(ft, 16)), "timing normalization reduces the leak")
+    check(sch.timing_leak(sch.normalize_timing(ft, 16)) == 0, "quantized timing has no resource-dependent spread")
+    check(sch.inversion_leak(["debris"]) > sch.inversion_leak(["a", "b", "c", "d"]),
+          "preparing breadth dilutes the prediction-inversion leak (prepare ≠ announce probability)")
+    cheat = [{"hash": "CHEAT", "evidence": 30, "authority": 10, "reliability": 10, "validity": 80} for _ in range(8)]
+    honest = [{"hash": "TRUE", "evidence": 90, "authority": 95, "reliability": 90, "validity": 90},
+              {"hash": "TRUE", "evidence": 80, "authority": 60, "reliability": 80, "validity": 90},
+              {"hash": "TRUE", "evidence": 80, "authority": 60, "reliability": 80, "validity": 90}]
+    v = sch.weighted_consensus(cheat + honest)
+    check(v["by_count_would_pick"] == "CHEAT", "by witness count the colluding majority would win")
+    check(v["admitted"] and v["winning_hash"] == "TRUE",
+          "by weighted trust the honest+server claim wins — collusion defeated (consensus ≠ truth)")
 
 
 def main():
