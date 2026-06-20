@@ -323,6 +323,17 @@ never a new invariant:
     agency`). New separators: `consistency ≠ correctness`, `prediction ≠ understanding`, `privacy ≠
     unpredictability`, `non-identifiability ≠ freedom`, `noise ≠ ignorance`.
 
+14. **Substrate hiddenness — DONE; observability, not just inference.** `ursprung/perception/substrate.py`
+    adds the physical layer: the generator leaks through its **residue** `R` (power / timing / EM) even when the
+    output `A` is encrypted, so `I(G;A,O)` widens to `I(G;A,O,R)` and the observer is a **sensor-fusion**
+    adversary. Findings: `signal privacy ≠ generator privacy` (`I(G;content)=0` but `I(G;power)>0`); fusion
+    dominates (power⊕timing recovers the whole generator, 2 bits, though each leaks 1); `L` is a **physical
+    capacity curve** `L(C_sensors)`, monotone in sensor access; and `unobserved ≠ unknown` — with no residue
+    channel recovery is 0 yet the generator is *determined*, distinct from the non-identifiable/noise case. The
+    control-theory frame: a hidden generator is an *unobservable state*; the limit is observability, not
+    computation. The project's oldest question, sharpest: *hidden from which observer, through which channel,
+    over what horizon?*
+
 The remaining honest gaps (so this is not over-read): the compiler is still a *lookup / greedy channel select*,
 not a continuous funnel *solve*; the world, the learner, and the leakage estimator are constructed; the utility
 models are declared conventions; the capacity axis is a memory-horizon *proxy*, not real model capacity; the

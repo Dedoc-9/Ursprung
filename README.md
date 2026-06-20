@@ -270,7 +270,7 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 
 ## Status
 
-The full suite is **392 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
+The full suite is **397 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
 control, and an explicit "expires on real silicon" bound.
 
 - **M1 — foundation.** Invariant harness; the renderer is proven observer-only (`integrity ≠ truth`).
@@ -315,7 +315,11 @@ control, and an explicit "expires on real silicon" bound.
   H(cause)`), and the deepest adversary asks not "what goal?" but **"is there a stable generator to recover at
   all?"** — three regimes (identifiable / ambiguous / non-identifiable), where non-identifiability is
   class-relative and "become noise" only *relocates* the secret to the stochastic character (`noise ≠
-  ignorance`). The object becomes **identity under observation**. World-side direction:
+  ignorance`). The object becomes **identity under observation**. And `substrate.py` adds the *physical* layer:
+  the generator leaks through its **residue** `R` (power/timing/EM) even when the output is encrypted
+  (`signal privacy ≠ generator privacy`); the observer is a **sensor-fusion** adversary; `L` becomes a physical
+  capacity curve `L(C_sensors)`; and `unobserved ≠ unknown` (a determined generator with no available channel is
+  *unobservable*, not absent — the limit is observability, not computation). World-side direction:
   [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
 
 **The conceptual arc is complete; the remaining work is empirical, not more laws.** It lives behind the

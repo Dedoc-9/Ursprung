@@ -143,6 +143,10 @@ non-identifiability ≠ freedom        (behaviour with no stable generator is no
 unpredictability    ≠ agency
 noise               ≠ ignorance      (even noise has structure; 'become noise' relocates the secret to the
                                        stochastic character — I(N;behaviour) — it does not remove it)
+signal privacy      ≠ generator privacy   (hiding the content is not hiding the machine; the physical residue
+                                            R — power/timing/EM — leaks the generator: I(G;A)=0 ⊅ I(G;A,O,R)=0)
+unobserved          ≠ unknown        (a determined generator with no available channel is unobservable, not
+                                       absent — the limit is observability, not computation)
 ```
 
 ## The one absolute, and everything else

@@ -1097,6 +1097,21 @@ def test_perception_identifiability_is_there_a_stable_generator():
     check(r["secret_relocated_not_eliminated"], "becoming noise relocates the secret from goal to stochastic character — noise ≠ ignorance")
 
 
+def test_perception_substrate_generator_leaks_through_residue():
+    r = perc.substrate.crucible()
+    # signal privacy != generator privacy: the encrypted output hides content, the residue exposes the machine
+    check(r["signal_hidden"], "the encrypted output channel leaks nothing about the generator (I(G;content)=0)")
+    check(r["generator_leaks_via_residue"], "a physical residue channel (power) leaks the generator (I(G;power)>0)")
+    check(r["signal_privacy_neq_generator_privacy"], "hiding the content is not hiding the machine — signal privacy != generator privacy")
+    # a sensor-fusion adversary recovers more than any single channel
+    check(r["fusion_exceeds_single"], "fusing power+timing recovers more than either channel alone")
+    check(r["fusion_recovers_full_generator"], "sensor fusion recovers the whole generator")
+    # leakage is a physical capacity curve, monotone in sensor access
+    check(r["capacity_monotone"], "L(C_sensors) is monotone in which channels the observer physically has")
+    # unobserved != unknown: recovery 0 with no channel is a missing channel, not a missing/absent generator
+    check(r["unobserved_not_unknown"], "with no residue channel recovery is 0 though the generator is determined — unobserved != unknown")
+
+
 def main():
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):
