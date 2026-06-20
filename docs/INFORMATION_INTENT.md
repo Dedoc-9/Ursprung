@@ -231,14 +231,22 @@ never a new invariant:
    `capability.py`/`causal_access.py`.) **— STARTED:** the embarrassingly-small first brick exists as
    `ursprung/disclosure.py` (`DisclosurePolicy` + a toy compiler + the M10–M21 firewall as auditor: *policy
    says reveal X; did the output contain only X?*). Still toy; the compiler is a lookup, not yet a funnel solve.
-2. **A `participation_utility` term** — value-of-information for a toy POMDP observer (bits that change the
-   optimal action), so the §3 objective is benchable with a negative control, like every prior milestone.
-3. **The privacy-funnel bench** — solve `maximize U − λL s.t. cost` over a constructed world; show the frontier,
-   and that foveated-style allocation is the `λ=0` corner. Honest bound: constructed; expires on real workloads.
-4. **Lower one non-pixel backend** — an *agent observation vector* for an RL/active-perception observer, proving
-   the engine produces a privacy-bounded observation with no rendering at all (the "narrow aspect" made literal).
-5. **Verify with the first half** — run channel discovery over the realized disclosure to confirm leakage ≤ `π`'s
-   budget, under a stated estimator class.
+2. **A `participation_utility` term** — value-of-information for a toy observer (measured task success), so the
+   §3 objective is benchable with a negative control. **— DONE:** `ursprung/perception/utility.py`.
+3. **The privacy-funnel bench** — show the (utility, leakage) frontier over a constructed world. **— DONE:**
+   `ursprung/perception/` is the first one — `world → DisclosurePolicy → compiled observation → agent → task →
+   leakage`, with the result that only the *compiled* policy preserves full task success (U=1.0) under the
+   leakage budget while `raw` over-discloses (L=6 bits) and `blind` under-serves (U=0.56). Honest bound:
+   constructed; expires on real workloads.
+4. **Lower one non-pixel backend** — an *agent observation vector* (a dict, no rendering). **— DONE in toy
+   form:** the compiled observation in `perception/observation_compiler.py` is exactly a non-pixel observer
+   view; the "narrow aspect" is now literal.
+5. **Verify with the first half** — leakage is measured by `channel_discovery`'s QIF estimator inside the loop;
+   the `MeasurementResult` carries its observer-class coverage boundary (`compliant ≠ safe`). **— DONE.**
+
+The remaining honest gaps (so this is not over-read): the compiler is still a *lookup*, not a funnel *solve*;
+the observer is a fixed decision rule, not a *learning* adversary (wiring an M20/M21 learner against the
+compiled view is the next real increment); the world and the leakage estimator are constructed.
 
 ## 8. The one-line shift
 

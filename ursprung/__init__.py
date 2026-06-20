@@ -27,6 +27,7 @@ from . import (world_core, view_layer, ghost_report, verify, registry,  # noqa: 
                adversarial_dynamics, representation_privacy, execution_surface, convergence,
                reality_harness, behavioral_harness, adversary_harness, adversary_capacity,
                channel_discovery, disclosure)
+from . import perception  # the first complete perception loop (subpackage)
 
 __all__ = ["world_core", "view_layer", "ghost_report", "verify", "registry",
            "render_record", "conventions", "divergence", "prediction",
@@ -40,5 +41,5 @@ __all__ = ["world_core", "view_layer", "ghost_report", "verify", "registry",
            "reconstruction", "side_channel", "accumulation", "adversarial_dynamics",
            "representation_privacy", "execution_surface", "convergence", "reality_harness",
            "behavioral_harness", "adversary_harness", "adversary_capacity", "channel_discovery",
-           "disclosure"]
-__version__ = "0.22.0"
+           "disclosure", "perception"]
+__version__ = "0.23.0"

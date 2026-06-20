@@ -59,6 +59,7 @@ from ursprung import adversary_harness as ah
 from ursprung import adversary_capacity as ac
 from ursprung import channel_discovery as cd
 from ursprung import disclosure as disc
+from ursprung import perception as perc
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -943,6 +944,27 @@ def test_disclosure_policy_compiles_and_audits():
     check(r["audit_carries_boundary"], "the audit names its coverage boundary (declared channels only)")
     p = disc.DisclosurePolicy("player", "survival", ["threat_direction"], ["exact_position"])
     check(p.permits("threat_direction") and not p.permits("exact_position"), "permits() respects allowed and forbidden")
+
+
+def test_perception_loop_is_the_first_privacy_funnel_benchmark():
+    r = perc.crucible()
+    # the full loop runs: world → policy → compiled observation → agent → task → leakage
+    # raw: full task success but the secret is fully recoverable (over-discloses)
+    check(r["raw_utility"] == 1.0, "the raw policy lets the agent act optimally (utility 1.0)")
+    check(r["raw_leakage"] == 6.0, "the raw policy leaks the whole secret (I = H(secret) = 6 bits)")
+    check(r["raw_over_discloses"], "raw clears the utility floor but exceeds the leakage budget — over-discloses")
+    # compiled: SAME task success at a fraction of the leakage → clears both → the funnel point
+    check(r["compiled_utility"] == 1.0, "the compiled observation preserves full task success")
+    check(r["compiled_cuts_leakage"], "the compiled observation leaks strictly less than raw")
+    check(r["compiled_passes"], "compiled clears BOTH the utility floor and the leakage budget")
+    # blind: private but useless
+    check(r["blind_leakage"] == 0.0, "the blind policy leaks nothing")
+    check(r["blind_under_serves"], "blind is within the leakage budget but fails the utility floor — under-serves")
+    # the produced result: only the compiled policy is on the right side of the frontier
+    check(r["only_compiled_passes"], "of the three policies, only the compiled one preserves utility under the leakage budget")
+    # the measurement carries its boundary, never a bare 'safe'
+    res = perc.evaluate("compiled")
+    check(res.passes and res.coverage_boundary, "the MeasurementResult reports pass/fail with a coverage boundary, not 'safe'")
 
 
 def main():
