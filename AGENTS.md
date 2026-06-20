@@ -201,6 +201,15 @@ new VIEW/ALLOCATOR/OBSERVER system as something an adversary will read, and obey
   Never claim "safe"; report what was found, by which estimator class, with what coverage boundary —
   `secure-against-this-observer ≠ secure`, and the detector is itself a hypothesis class.
 
+- **report your blind spot.** Every measurement/observer tool must return its **coverage boundary** — what
+  its estimator/hypothesis class *cannot* see — alongside what it found, never a bare `safe`/`leak` boolean.
+  The detector is itself a bounded observer (its reach is an Adversary-Information-Capacity choice one level
+  up); `I = 0 under estimator E` is not `I = 0 in the system`. An instrument that hides its blind spot
+  silently upgrades `tested` to `safe`. The pattern is `MeasurementResult` in `channel_discovery.py`
+  (`{channel, estimator_class, detected_information, coverage_boundary}`). For maintainers this flips the
+  default question from *"what mechanism blocks this?"* to *"what does this mechanism make observable, and
+  what observer class are we bounding?"*
+
 Every such system is an **OBSERVER** (it measures, ranks, attributes; it never mutates the trajectory and
 never asserts truth). The cardinal invariant and the four-layer law above still bind it.
 

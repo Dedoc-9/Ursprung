@@ -114,6 +114,21 @@ cache, cost) by which that rule runs. Every defense ships with an executable ben
 (e.g. naive timing spread 7 ms → 0; on-demand cost signature 13 → 0 when pre-prepared; reconstruction 1.00 →
 0.31 firewalled).
 
+The same **inversion** recurs across M15–M21: each defense names an *observable* an adversary would read
+backward into a *hidden* thing, and the boundary that forbids it. This is the thread tying the arc together:
+
+| Observable | Hidden thing inferred | The boundary |
+|---|---|---|
+| timing / cost | execution state | `execution ≠ hidden state` |
+| representation | the generator | `image ≠ generator` |
+| correction | the cause | `correction ≠ cause` |
+| observer behavior | the policy | `behavior ≠ representation rule` |
+| measurement result | reality | `measurement ≠ truth` |
+
+The last row is the recursive one: even the defender's *own measurement* is an observable that must not be
+mistaken for the truth about the system — which is why a result names its estimator class and coverage
+boundary rather than declaring "safe."
+
 ### What it actually proves (the measurement discipline)
 
 Pushed to its limit, the arc stops being a stack of defenses and becomes a **measurement discipline** — and it
