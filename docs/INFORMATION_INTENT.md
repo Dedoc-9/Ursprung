@@ -190,6 +190,13 @@ This is not a new philosophy bolted on. It reuses every invariant:
 - **The separators still bind.** `ParticipationUtility` and `Leakage` are *measured under an estimator class*;
   the engine reports what it can and cannot see (`MEASUREMENT_DISCIPLINE.md`). It never declares an experience
   "safe and sufficient," only "sufficient for purpose P and below leakage budget under observer class A."
+- **The receiver has an intent class — the mirror of M21.** M21 found that a *detector* has a hypothesis class,
+  and a channel reads differently across classes. Symmetrically, a *receiver* has an **intent class** — novice
+  player, expert, spectator, teammate, AI agent, accessibility tool, cheat developer — and **useful to one is
+  not safe for another.** So the compiler cannot optimize against a single observer: it optimizes disclosure for
+  the *intended* classes and the firewall verifies against the *unintended* ones.
+  `trust = optimize disclosure for intended observers  ∧  verify against unintended observers.` (M21's
+  detector-hypothesis-class and this receiver-intent-class are the two faces of the same object.)
 - **CORE is still sealed.** The Perception Compiler is VIEW/ALLOCATOR/OBSERVER. It governs *what is shown*; it
   never moves the Weltlinie. `integrity ≠ truth` is untouched.
 
@@ -204,6 +211,15 @@ This is not a new philosophy bolted on. It reuses every invariant:
   privacy.decoy_admissible`, are the admissible boundary.)
 - **A single scalar "quality" score.** Rejected for the same reason privacy was not a scalar (M21): utility is a
   vector over purposes/observers, and leakage is a vector over channels and estimator classes.
+
+**A caution that outranks the rejected framings.** The privacy-funnel / information-bottleneck language is a
+*lens*, not the hard part. Minimizing `I(S ; O)` is mechanical *once the variables are fixed*; the difficult,
+recursive question is **choosing the right variables to measure usefulness and leakage in the first place.**
+The detector was an observer with a blind spot (M21); the **perception compiler is also an observer** — its
+choice of utility and leakage variables *is* its hypothesis class, with its own coverage boundary. So the
+compiler, too, must report what it cannot see. The recursion does not bottom out — "have I chosen the right
+variables?" is the permanent condition of the system, not a step to be completed. This is why the build order
+in §7 is *instruments and substrates*, never a closed-form "optimal disclosure."
 
 ## 7. What to build first (empirical, not another law)
 
