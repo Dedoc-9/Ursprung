@@ -216,6 +216,22 @@ WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT �
     event) but never the MECHANISM by which hidden state becomes predictable (why-before-event, prepared
     branch). The anti-wallhack floor. reaction ≠ disclosure; absence ≠ information; consequence ≠ mechanism.
 
+- [x] **Milestone 15 — Representation Privacy / Ambiguity Control (`image ≠ generator`).**
+  - [x] `representation_privacy.py` — once the system *intentionally* manages uncertainty, the management can
+    become a signal; the final attack infers not the hidden object but the **generator** (the rule mapping
+    hidden state → representation: "streaming stalls ⇒ enemy near"). The refinement of `consequence ≠
+    mechanism` into `image ≠ generator`. Five mechanisms with controls: (1) **Ambiguity Debt** — an invertible
+    uncertainty radius is a ruler (debt **9.09**, 11 recoverable levels) vs a coarse exposure (**0.00**, 1
+    level); (2) **Representation Hysteresis** — a single threshold oscillates (**10** flips, probe-able) vs an
+    enter≠exit band (**1** flip), the shader-stability fix applied to security; (3) **decoy without reality
+    mutation** — fake REALITY forbidden (CORE cannot lie), fake OBSERVABILITY PATTERN admissible; (4)
+    **Observer Fingerprint Debt** — uncaused per-observer policy variance leaks the rules (**40** vs **0**),
+    extending `importance ≠ exposure` to `observer behavior ≠ representation policy`; (5) **`image ≠
+    generator`** — expose world facts, never the implementation tells correlated with hidden state. **Honest
+    bound:** these are structural proxies, not a cryptographic guarantee; the formal form of `image ≠
+    generator` is **Indistinguishability Obfuscation** (Goldreich-Levin hard-core predicates, LWE / discrete-log
+    hardness) — this is its *shape*, not its *proof*. ambiguity ≠ deception; image ≠ generator; integrity ≠ truth.
+
 ### Milestone-3 finding (the failure is the result)
 
 The Causal Continuity Hypothesis as *stated* (allocate ∝ U·C·P) **failed** the equal-budget bench. Diagnosis

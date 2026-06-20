@@ -50,6 +50,7 @@ from ursprung import reconstruction as rec
 from ursprung import side_channel as sch
 from ursprung import accumulation as acc
 from ursprung import adversarial_dynamics as ad
+from ursprung import representation_privacy as rp
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -744,6 +745,28 @@ def test_adversarial_dynamics_defense_is_the_leak():
     check(r["consequence_before_blocked"], "a consequence shown BEFORE the event leaks the predictive mechanism")
     check(r["mechanism_always_blocked"], "the mechanism (prepared branch / hidden cause) is never disclosable")
     check(ad.reveals_mechanism("hidden_branch_choice", 99), "naming a hidden branch is mechanism even long after the event")
+
+
+def test_representation_privacy_image_not_generator():
+    r = rp.crucible()
+    # 1. ambiguity debt: an invertible uncertainty field collapses; a coarse one preserves the ambiguity
+    check(r["ambiguity_naive"] > r["ambiguity_shaped"], "an invertible uncertainty radius is a measurement instrument (high ambiguity debt)")
+    check(r["ambiguity_shaped"] == 0.0, "a coarse/constant exposure leaves the design's full ambiguity intact")
+    check(r["naive_recoverable"] > r["shaped_recoverable"], "the naive field lets the attacker distinguish more secret levels")
+    # 2. representation hysteresis: a single threshold oscillates (probe-able); a band does not
+    check(r["single_threshold_flips"] > r["hysteresis_flips"], "a single threshold oscillates under hovering — the attacker reads it")
+    check(r["hysteresis_flips"] <= 1, "enter ≠ exit band stays stable (the boundary resists being used as a probe)")
+    # 3. decoy without reality mutation: fake reality forbidden, fake observability pattern allowed
+    check(r["fake_reality_blocked"], "a decoy that asserts a false world fact is forbidden (CORE cannot lie)")
+    check(r["fake_observability_ok"], "a non-informative continuity pattern that asserts no fact is admissible")
+    check(r["core_mutation_blocked"], "a decoy that mutates committed state is forbidden")
+    # 4. observer fingerprint debt: uncaused per-observer variance leaks the rules
+    check(r["fingerprint_leak"] == 40, "uncaused per-observer policy variance is a fingerprint leak")
+    check(r["fingerprint_hardened"] == 0, "policy driven only by world state has no fingerprint debt")
+    # 5. image ≠ generator
+    check(r["world_fact_ok"], "a world consequence (explosion) may be exposed")
+    check(r["generator_tell_blocked"], "a known implementation tell (streaming stall ⇒ proximity) is blocked")
+    check(r["correlated_impl_blocked"], "even a world fact leaks the generator if its rendering correlates with hidden state")
 
 
 def main():
