@@ -130,6 +130,8 @@ bounded observer    ≠ all observers
 zero MI on trace    ≠ zero MI on hardware
 identifiability     ≠ truth
 integrity           ≠ truth
+measurement         ≠ legitimacy     (a measurable dial reports what happened under a policy,
+                                       never whether the policy was acceptable — see INFORMATION_INTENT.md §11)
 ```
 
 ## The one absolute, and everything else

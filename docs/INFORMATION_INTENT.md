@@ -414,6 +414,61 @@ what escaped" is forever class-relative. None is closed by another invariant; al
 smallest *true* cell of this vision is buildable now — one agent, one task, one `DisclosurePolicy`, a measured
 leakage bound (§7 step 4) — and that cell, not the platform, is the honest next step.
 
+## 11. Governance — the boundary the code cannot cross
+
+*This is a boundary statement, not a solution. It belongs here because `Leakage(C)` is the point where the
+architecture stops being a security primitive and becomes a socially-situated measurement system.*
+
+The deepest issue is not controlling information; it is **controlling who can verify the control**. Once the
+disclosure dial is computable, the load-bearing variable is not *who owns the model* but *who can check the
+curve* — **verifiability, not ownership**.
+
+**The epistemic asymmetry (why this is structural, not a flaw).** Auditing leakage requires a relationship to
+the secret `S` itself: to confirm `I(S;O) ≤ τ` you need `S`, which the observer by definition lacks. So every
+arrangement is a choice about how to allocate trust across a triangle —
+
+```
+              truth-holder (has S)
+                    /   \
+                   /     \
+            verifier ───── observer
+```
+
+— and no design removes that triangle; it only decides who sits where. A purely *local, user-controlled*
+observer model audits the *output* it can see, not the *withholding* it cannot; a purely *public/regulated*
+auditor can check the curve but centralizes a different power and must be trusted with `S`. The defensible
+direction is to regulate the **protocol of proof** rather than the ownership of the model: **verifiable
+disclosure attestation** — prove a *behavioral* statement about a hidden world without revealing it
+(`∀ C ∈ class X: recovery(S, O) < τ ∧ utility > U_min`), the zero-knowledge shape of the iO connection in §9.
+That is a hard frontier: the verifier is not checking a checksum, it is checking a property of a system, over
+an observer class, without `S`. It does not exist in usable form; naming it is the point.
+
+**What the parts actually govern.** The compiler decides *what representation exists*; the `MeasurementResult`
+decides *what claims may be made about it* — different powers. A dangerous system says "policy = X, therefore
+safe." A disciplined one reports the observer class, horizon, task, and estimator it tested, the measured
+utility and recovery, and the **coverage boundary** (unknown observers `> C`, unknown horizons `> t`). It does
+not solve trust; it exposes the boundary. That refusal — never the word "safe" — is the accountability
+primitive.
+
+**The failure mode: a measurable dial can manufacture false legitimacy.** A number is not a justification.
+`leakage_budget = 0.1 bits` may be a reasonable privacy floor, an impossible restriction, or a buried policy
+choice — the measurement reports *what happened under a policy*, never *whether the policy was acceptable*.
+Hence the separator that belongs beside the others: **`measurement ≠ legitimacy`** (alongside `simulation ≠
+physics`, `secure-against-class ≠ secure`, `integrity ≠ truth`).
+
+**The category this names.** The stack — Reality Engine → truth model → disclosure compiler → observer
+experience → inference measurement → **attestation / audit** — ends not in *security* but in *accountability*.
+The honest contribution:
+
+> A representation system cannot remove the governance question. It can only transform hidden disclosure
+> choices into explicit, measurable, contestable parameters. The remaining question — *who controls the policy,
+> who can verify it, and who is empowered to challenge the result* — is political, and the code can inform it
+> but must not pretend to settle it. Making the dial visible is the contribution; setting it is not the code's
+> to do.
+
+The next conceptual frontier after `Leakage(C)` is therefore the place the technical and governance problems
+**become the same problem**: *verifiable claims about adaptive observers without revealing the protected state.*
+
 ---
 
 ## References (grounding; current as of June 2026)
