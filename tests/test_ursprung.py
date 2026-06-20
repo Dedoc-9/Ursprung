@@ -52,6 +52,7 @@ from ursprung import accumulation as acc
 from ursprung import adversarial_dynamics as ad
 from ursprung import representation_privacy as rp
 from ursprung import execution_surface as es
+from ursprung import convergence as cv
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -789,6 +790,27 @@ def test_execution_surface_cost_is_not_hidden_state():
     # 5. renderer ≠ oracle
     check(r["world_observation_ok"], "a client may observe a world fact")
     check(r["machinery_blocked"], "a client may not observe the machinery (a timing/cache tell) that maps hidden state to representation")
+
+
+def test_convergence_correction_not_cause():
+    r = cv.crucible()
+    # 1. reconciliation signature debt: an exact rollback distance is invertible; a bounded family is not
+    check(r["recon_exact_levels"] > r["recon_bucketed_levels"], "an exact correction distance leaks more states than a bounded family")
+    check(r["recon_bucketed_levels"] <= 4, "the bounded correction family {none,small,medium,large} reveals only the coarse class")
+    # 2. divergence firewall: an unentitled client learns 'world changed', not the repair detail
+    check(r["disclosure_unentitled_bits"] == 1, "an unentitled client is told only that the world changed")
+    check(r["disclosure_entitled_bits"] > r["disclosure_unentitled_bits"], "an entitled client gets the full in-scope correction")
+    # 3. convergence readiness: a prepared correction is unobservable; an unprepared one spikes
+    check(r["readiness_unprepared"] > 0, "an unprepared correction's cost reveals that a hidden event was near")
+    check(r["readiness_prepared"] == 0, "a prepared representation absorbs the correction with no observable reconciliation event")
+    # 4. distributed correction reconstruction: a fleet of honest clients is a distributed microscope
+    check(r["per_client_each_safe"], "each client's own correction stays below the reconstruction threshold")
+    check(r["fleet_union"] > 0.5, "the fleet's compared corrections (the union) reconstructs the hidden event")
+    check(r["fleet_firewalled"] <= 0.5, "the distributed correction firewall caps the cross-client union")
+    # 5. correction ≠ cause
+    check(r["change_fact_ok"], "a correction may reveal THAT reality changed")
+    check(r["repair_detail_blocked"], "a correction may not reveal WHY/WHERE/WHO it was repaired (the rollback distance)")
+    check(r["entitled_sees_detail"], "a causally entitled observer may see the repair detail")
 
 
 def main():

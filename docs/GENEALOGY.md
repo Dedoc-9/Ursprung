@@ -251,6 +251,28 @@ WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT �
     DVFS, bus contention) and these integer signatures collapse to noise. observable cost ≠ hidden state;
     renderer ≠ oracle; integrity ≠ truth.
 
+- [x] **Milestone 17 — Convergence Surface / Distributed Reality Reconciliation (`correction ≠ cause`).**
+  - [x] `convergence.py` — the dual of M10–M16: the system can hide information, but it must survive
+    DISAGREEMENT. Two legitimate observers hold different partial realities (A predicted state A, B predicted
+    state B, server committed C) and must converge without the convergence leaking. Normal engines snap →
+    replay, but the stack made snapping suspicious (correction magnitude leaks hidden state, timing leaks
+    causality, objects corrected reveal dependencies, rollback cost reveals expensive futures). New currency:
+    **Convergence Debt** = the observable cost of making multiple private representations become one reality.
+    Four mechanisms + invariant: (1) **Reconciliation Signature Debt** — an exact rollback distance is
+    invertible (**41** distinguishable states) vs a bounded family {none,small,medium,large} (**4**); (2)
+    **Divergence Firewall** — an unentitled client learns "world changed" (**1** field) not "…hidden collision
+    37 m away, entity 184" (**4**); M14 was many-observers→fact, this is disagreement→fact; (3) **Convergence
+    Readiness** — the M7/M9 question turns to "what makes the CORRECTION cheap?"; a prepared representation
+    absorbs the rollback (debt **0**) vs an unprepared spike (**39**); (4) **Distributed Correction
+    Reconstruction** — a fleet of honest clients comparing their own corrections is a distributed microscope;
+    each safe (4 × 15 bits = 0.23), union reconstructs **0.94**, firewalled to **0.47**. **Invariant
+    (`correction ≠ cause`):** a correction may reveal THAT reality changed, never WHY/WHERE/WHO — `consequence
+    ≠ mechanism` and `image ≠ generator` on the convergence axis. M16 foreshadowed this: a shader hitch is a
+    *local* correction, a rollback a *temporal* one — both are "reality had to be repaired." **Honest bound:**
+    correction-distance / bit / fragment proxies, not measured netcode under real latency/jitter/loss;
+    convergence is only meaningful against REAL divergence — the first layer in the arc that cannot be
+    validated with constructed numbers. correction ≠ cause; convergence ≠ disclosure; integrity ≠ truth.
+
 ### Milestone-3 finding (the failure is the result)
 
 The Causal Continuity Hypothesis as *stated* (allocate ∝ U·C·P) **failed** the equal-budget bench. Diagnosis
