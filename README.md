@@ -16,10 +16,16 @@ The renderer never discovers truth; it manages where its approximations fail. It
 **arbitrary boundaries require deterministic handling, and finite fidelity should be allocated by expected
 future failure cost, not present visual complexity.**
 
-What began as a renderer *philosophy* has, under benchmarking, become a set of measurable **rendering
-economics**: finite fidelity is a budget, every approximation is debt, and the bench — not the manifesto —
-decides which allocation policy wins. The central result so far came from a *failed* hypothesis (see below):
-**priority and allocation are different mathematical objects.**
+What began as a renderer *philosophy* became, under benchmarking, a set of measurable **rendering economics**:
+finite fidelity is a budget, every approximation is debt, and the bench — not the manifesto — decides which
+allocation policy wins. The central result so far came from a *failed* hypothesis (see below): **priority and
+allocation are different mathematical objects.**
+
+It then grew a **second arc**. Because a renderer of a partially-hidden world is also a *potential leak* of
+hidden state, rendering became an **information firewall** and finally a **measurement discipline** — a system
+that reports what it can and cannot see rather than declaring itself safe. The broadest framing (research, not
+built) is that this fidelity engine is *one backend* of a committed, leakage-bounded **perception compiler**
+([`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md)).
 
 ## The five laws (the philosophy layer)
 
@@ -54,7 +60,7 @@ Truth layer        →  Consequence layer  →  Priority layer  →  Allocation 
 |---|---|---|---|
 | **Reality Debt** | future liability | `A × P × C` | `reality_debt.py` |
 | **Priority (PFAL)** | *what matters?* | `U × C × P × S × τ` | `pfal_bench.py`, `tcff.py` |
-| **Representation Resistance** | *what is expensive to represent?* | `Rr` (perimeter today; composite later) | `representation.py` |
+| **Representation Resistance** | *what is expensive to represent?* | `Rr` (perimeter proxy; 7-dim tensor in `resistance_tensor.py`) | `representation.py` |
 | **Allocation (water-filling)** | *how to distribute budget?* | `WaterFill(Priority, Resistance) ∝ √(Priority·Rr)` | `allocation.py` |
 | **Rasterization** | executes the allocation | conventions | `raster.py` |
 
@@ -158,9 +164,13 @@ PYTHONHASHSEED=0 python3 loop.py                  # live loop: milestone + predi
 PYTHONHASHSEED=0 python3 tests/test_ursprung.py   # unit suite (stdlib asserts)
 ```
 
+On Windows PowerShell, use `python` and set the seed inline: `$env:PYTHONHASHSEED="0"; python loop.py`
+(env vars do not persist across separate command blocks, so keep the assignment on the same line).
 If the engine is not at `~/Desktop/Reality_Engine`, set `URSPRUNG_WORKBENCH=/path/to/Reality_Engine`.
 
-## What Milestone 1 proves (and only this)
+## The cardinal proof — the renderer is observer-only (Milestone 1)
+
+This is the foundational invariant the whole project stands on, not the current frontier (see *Status*):
 
 > *I can replay the same world and prove the renderer is only an observer.*
 
@@ -255,7 +265,8 @@ intentionally-unbuilt seams — `reality_harness.NetworkChannel` (point it at a 
 `behavioral_harness.ExperimentLayer(channel="real")` — plus:
 - A **real-silicon benchmark** — every constructed-world number expires there (equal GPU time; temporal
   artifacts, input-to-photon latency, reconstruction error, motion stability).
-- A **richer Representation Resistance** than perimeter, composed into one `CompositeResistance`.
+- **Composing + calibrating the resistance tensor** — the 7-dimensional `resistance_tensor.py` already exists;
+  what is open is using it as the resistance *everywhere* and tuning its weights against measured artifacts.
 - A **stronger adversary class** (replace the toy threshold/bit/parity learners with a real ML/RL class) and
   **channel discovery over real telemetry traces** — the natural first experiments of the empirical phase.
 

@@ -3,7 +3,9 @@
 Ursprung is a deterministic high-fidelity renderer built as a **read-only consumer** of the sealed
 `Reality_Engine` (Chronicle/Dentatus) workbench. The workbench is the **verification substrate**, not the
 renderer. Do not expand Chronicle/Dentatus concepts here unless they directly improve one of: frame-time
-stability, visual fidelity, deterministic replay, debugging, the asset/world pipeline, or player experience.
+stability, visual fidelity, deterministic replay, debugging, the asset/world pipeline, player experience, or
+**information integrity** (anti-cheat / multiplayer disclosure — the second arc; see *The information-firewall
+discipline* below).
 
 ## The pipeline (the only shape)
 
@@ -200,7 +202,6 @@ new VIEW/ALLOCATOR/OBSERVER system as something an adversary will read, and obey
   only *relative to a stated observer class* and dissolves against a richer one (`adversary_capacity.py`).
   Never claim "safe"; report what was found, by which estimator class, with what coverage boundary —
   `secure-against-this-observer ≠ secure`, and the detector is itself a hypothesis class.
-
 - **report your blind spot.** Every measurement/observer tool must return its **coverage boundary** — what
   its estimator/hypothesis class *cannot* see — alongside what it found, never a bare `safe`/`leak` boolean.
   The detector is itself a bounded observer (its reach is an Adversary-Information-Capacity choice one level
