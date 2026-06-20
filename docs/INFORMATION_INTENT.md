@@ -274,6 +274,16 @@ never a new invariant:
    publish *the cost of knowledge* so the policy author's choice (more utility / less leakage) is explicit and
    contestable. *That* visibility is the contribution, not a free lunch.
 
+9. **The Perception Fidelity Condition — DONE; the unifying test.** `ursprung/perception/fidelity.py` folds the
+   frontier, the threshold, and inverse-leakage into one Dini-style *sufficient* condition: a representation is
+   **task-faithful** (`utility ≥ U_min`) AND **inference-bounded** (`session recovery < τ` — the cascade-aware,
+   accumulated quantity, *not* per-frame). It HOLDS for the separable task (utility 1.0, recovery 0.83, ~5 bits
+   of residual uncertainty preserved) and is provably **infeasible** for the non-separable one (the only level
+   meeting `U_min` busts `τ`). The reconstruction bound is best read as an *upper Dini derivate* of accumulated
+   recovery (worst-case cascade slope); the regime split (faithful-bounded / irreducible / cascade-collapse)
+   echoes **Denjoy–Saks–Young**'s almost-everywhere classification — a "DSY for perception" is the honest,
+   theorem-shaped target, not proved here. Sufficient, not necessary; under the modeled observer class.
+
 The remaining honest gaps (so this is not over-read): the compiler is still a *lookup / greedy channel select*,
 not a continuous funnel *solve*; the world, the learner, and the leakage estimator are constructed; the utility
 models are declared conventions. The "participation *rarely* needs full knowledge" claim is now a *per-task

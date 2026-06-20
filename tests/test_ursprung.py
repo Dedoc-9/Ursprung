@@ -1017,6 +1017,20 @@ def test_perception_frontier_is_the_measurable_cost_of_knowledge():
     check(r["separable_was_a_special_case"], "the separable session win does not generalize — when the task needs the secret, the tradeoff is irreducible")
 
 
+def test_perception_fidelity_condition_distinguishes_feasible_from_irreducible():
+    r = perc.fidelity.crucible()
+    # the separable session task satisfies BOTH clauses — a feasible Perception Fidelity Condition
+    check(r["separable_faithful"] and r["separable_bounded"], "the separable task is both task-faithful and inference-bounded")
+    check(r["separable_holds"], "the Perception Fidelity Condition HOLDS for the separable task")
+    check(r["separable_preserves_uncertainty"], "the separable case preserves residual uncertainty (inverse leakage > 4 bits)")
+    # the non-separable task: no disclosure level satisfies both — the condition is infeasible
+    check(not r["nonseparable_feasible"], "no disclosure level makes the non-separable task both faithful and bounded — infeasible")
+    check(r["nonseparable_umin_only_at_full_leakage"], "the only level meeting the utility floor busts the reconstruction bound (faithful XOR bounded)")
+    check(r["nonseparable_full_utility_zero_residual"], "full interception utility leaves zero residual uncertainty (the secret fully recovered)")
+    # the condition does its job: feasible for one task, provably irreducible for the other
+    check(r["condition_distinguishes"], "the Perception Fidelity Condition holds for the separable task and is infeasible for the non-separable one")
+
+
 def main():
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):
