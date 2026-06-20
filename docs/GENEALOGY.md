@@ -232,6 +232,25 @@ WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT �
     generator` is **Indistinguishability Obfuscation** (Goldreich-Levin hard-core predicates, LWE / discrete-log
     hardness) — this is its *shape*, not its *proof*. ambiguity ≠ deception; image ≠ generator; integrity ≠ truth.
 
+- [x] **Milestone 16 — Execution Surface Privacy (`observable cost ≠ hidden state`).**
+  - [x] `execution_surface.py` — the boundary condition the stack converged on: you can protect information
+    flow, but a renderer is a PHYSICAL PROCESS and the process is observable. The attacker stops asking "what
+    is hidden?" and asks "what does the renderer *struggle* with?" Where M6 (shader cache / transition debt)
+    and M15 (privacy) fuse — the industrial bridge is the physical implementation of the security model. Five
+    mechanisms with controls: (1) **Transition Signature Debt** — Signature = Δ(latency, cache, memory,
+    bandwidth, shader_state); on-demand streaming spikes for the secret (debt **13**), pre-preparation does
+    not (**0**); (2) **Cache Side-Channel Budget** — a hit/miss is a message; prepare by allowed policy not
+    by hidden-state visibility (exposure **1 → 0**); (3) **semantic constant-time** — world A (enemy exists)
+    vs B (does not) must not be separable from behavior (on-demand classifier accuracy **1.0** → prepared
+    **0.5**, chance); (4) **three-currency objective** — the safest renderer may look wasteful because
+    *unused* preparation is cheaper than an *observable* preparation event; counting leakage flips the
+    cheapest plan from `min_gpu` to `over_prepared` over the SAME two plans (old GPU-only objective vs new
+    fidelity+transition+leakage); (5) **renderer ≠ oracle** — a client may observe the world, never the
+    machinery by which hidden state becomes observable. **Honest bound:** declared cost-vector / separability
+    proxies, not a measured micro-architectural channel; on real silicon leakage is continuous (cache lines,
+    DVFS, bus contention) and these integer signatures collapse to noise. observable cost ≠ hidden state;
+    renderer ≠ oracle; integrity ≠ truth.
+
 ### Milestone-3 finding (the failure is the result)
 
 The Causal Continuity Hypothesis as *stated* (allocate ∝ U·C·P) **failed** the equal-budget bench. Diagnosis

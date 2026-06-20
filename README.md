@@ -140,6 +140,7 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 | `ursprung/accumulation.py` | **OBSERVER** | Accumulation Safety: temporal Reconstruction Debt (history-compression), Representation Privacy Budgets, Causal Query Rate Limiting, `importance ≠ exposure` — the query is allowed, the *sequence* is not |
 | `ursprung/adversarial_dynamics.py` | **OBSERVER** | Adversarial Information Dynamics: Reaction Debt (the defense leaks through its reactions), absence firewall (`missing ≠ informative`), Distributed Reconstruction Debt (cross-client triangulation), adaptive ≠ random, and the floor — reveal `consequence`, never `mechanism` |
 | `ursprung/representation_privacy.py` | **OBSERVER** | Representation Privacy / Ambiguity Control: Ambiguity Debt (uncertainty ≠ instrument), Representation Hysteresis (enter ≠ exit), decoy-without-mutation, Observer Fingerprint Debt, and the invariant `image ≠ generator` (structural shape of Indistinguishability Obfuscation, not its proof) |
+| `ursprung/execution_surface.py` | **OBSERVER** | Execution Surface Privacy: Transition Signature Debt (Δ latency/cache/memory must not correlate with the secret), Cache Side-Channel Budget, semantic constant-time (world A vs B indistinguishable), three-currency objective (fidelity + transition + leakage), and `renderer ≠ oracle` — where M6 and M15 fuse |
 | `loop.py` | — | smallest executable world loop, end to end |
 | `AGENTS.md` | — | the renderer contract (the rules every change obeys) |
 

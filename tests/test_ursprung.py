@@ -51,6 +51,7 @@ from ursprung import side_channel as sch
 from ursprung import accumulation as acc
 from ursprung import adversarial_dynamics as ad
 from ursprung import representation_privacy as rp
+from ursprung import execution_surface as es
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -767,6 +768,27 @@ def test_representation_privacy_image_not_generator():
     check(r["world_fact_ok"], "a world consequence (explosion) may be exposed")
     check(r["generator_tell_blocked"], "a known implementation tell (streaming stall ⇒ proximity) is blocked")
     check(r["correlated_impl_blocked"], "even a world fact leaks the generator if its rendering correlates with hidden state")
+
+
+def test_execution_surface_cost_is_not_hidden_state():
+    r = es.crucible()
+    # 1. transition signature debt: on-demand streaming spikes for the secret; pre-preparation does not
+    check(r["signature_on_demand"] > 0, "streaming a representation on demand makes a cost signature unique to the secret")
+    check(r["signature_prepared"] == 0, "a pre-prepared representation emits the same signature whether or not the secret is present")
+    # 2. cache side-channel budget: prepare by policy, not by hidden-state visibility
+    check(r["cache_exposure_naive"] > 0, "preparing assets only when the secret is near makes the cache a message")
+    check(r["cache_exposure_policy"] == 0, "a fixed readiness policy reveals nothing through what got prepared")
+    # 3. semantic constant-time: world A vs B must not be separable from behavior
+    check(r["separable_on_demand"], "on-demand behavior lets a classifier separate enemy-present from enemy-absent")
+    check(not r["separable_prepared"], "prepared behavior is indistinguishable across the two worlds")
+    check(r["accuracy_on_demand"] == 1.0 and r["accuracy_prepared"] == 0.5, "separability collapses to chance when prepared")
+    # 4. three-currency objective: counting leakage flips the winner over the SAME plans
+    check(r["old_objective_winner"] == "min_gpu", "the old GPU-only objective picks the cheap, leaky plan")
+    check(r["new_objective_winner"] == "over_prepared", "counting information leakage makes over-preparation the cheapest plan")
+    check(r["over_prepared_total_new"] < r["min_gpu_total_new"], "under fidelity+transition+leakage, over-preparation wins")
+    # 5. renderer ≠ oracle
+    check(r["world_observation_ok"], "a client may observe a world fact")
+    check(r["machinery_blocked"], "a client may not observe the machinery (a timing/cache tell) that maps hidden state to representation")
 
 
 def main():
