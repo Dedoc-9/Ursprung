@@ -17,7 +17,8 @@ from . import (world_core, view_layer, ghost_report, verify, registry,  # noqa: 
                perceptual, policy_arena, stress, transition_debt, adversarial_scenes,
                resistance_tensor, shader_cache, causal_surface, readiness,
                causal_contract, representation_futures, causal_mutation, provider_contract,
-               dependency_surface, dependency_integrity, representation_compiler)
+               dependency_surface, dependency_integrity, representation_compiler,
+               capability, causal_access)
 
 __all__ = ["world_core", "view_layer", "ghost_report", "verify", "registry",
            "render_record", "conventions", "divergence", "prediction",
@@ -27,5 +28,5 @@ __all__ = ["world_core", "view_layer", "ghost_report", "verify", "registry",
            "transition_debt", "adversarial_scenes", "resistance_tensor", "shader_cache",
            "causal_surface", "readiness", "causal_contract", "representation_futures",
            "causal_mutation", "provider_contract", "dependency_surface",
-           "dependency_integrity", "representation_compiler"]
+           "dependency_integrity", "representation_compiler", "capability", "causal_access"]
 __version__ = "0.1.0-milestone1"

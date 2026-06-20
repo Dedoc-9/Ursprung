@@ -164,6 +164,19 @@ WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT �
   - Invariant: the renderer may consume dependency information, but it must know how stale, uncertain, and
     expensive that information is.
 
+- [x] **Milestone 11 — Causal Access Control Layer + Capability Token (the information firewall / anti-cheat floor).**
+  - [x] `capability.py` — a **Causal Capability Token** `{what, subject, scope, horizon, source, cannot}`
+    authorizes USE of dependency knowledge for a bounded purpose; `mutate / select_outcome / reveal_hidden /
+    grant_authority` are forbidden on every token by construction. The question becomes "am I permitted to use
+    this, and only for this purpose?", not "is it true?".
+  - [x] `causal_access.py` — the information firewall: a claim may influence an observer's representation only
+    if (1) unforged, (2) within the observer's **authorized causal scope**, and (3) capability-permitted. The
+    **Dependency Fog Attack** shows the decisive result — a fabricated "hidden enemy" claim PASSES the
+    content-hash tautology AND a colluding consensus, yet **advantage leaked = 0** because it is out of scope
+    (wallhack/ESP blocked). Integrity and consensus are necessary, not sufficient; authorization is the floor.
+  - Invariant: CORE owns reality · dependencies expose possibility · capabilities constrain interpretation ·
+    representation consumes permissioned uncertainty. (authorized ≠ true; consensus ≠ truth; integrity ≠ truth.)
+
 ### Milestone-3 finding (the failure is the result)
 
 The Causal Continuity Hypothesis as *stated* (allocate ∝ U·C·P) **failed** the equal-budget bench. Diagnosis

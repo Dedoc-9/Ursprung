@@ -44,6 +44,8 @@ from ursprung import provider_contract as pcon
 from ursprung import dependency_surface as dep
 from ursprung import dependency_integrity as di
 from ursprung import representation_compiler as rc
+from ursprung import capability as cap
+from ursprung import causal_access as cac
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -639,6 +641,37 @@ def test_representation_compiler_preserves_continuity():
     check(ample["continuity_preserved"] and tight["continuity_preserved"], "continuity is preserved in both")
     check(not ample["degraded"] and ample["total_quality"] > tight["total_quality"], "ample budget → full quality")
     check(tight["total_latency"] <= 8 and tight["degraded"], "tight budget degrades but fits the deadline")
+
+
+# --- Milestone 11: capability tokens + causal access control (information firewall) -----------------
+
+def test_capability_token_is_bounded_and_never_grants_authority():
+    t = cap.issue("prepare_representation", subject="door", scope="visual_only", horizon=200)
+    check(t.permits("prepare_representation", "visual_only", 100), "token permits a bounded prepare within horizon")
+    check(not t.permits("prepare_representation", "gameplay", 100), "token denies a different purpose")
+    check(not t.permits("prepare_representation", "visual_only", 500), "token denies use beyond its horizon")
+    check("mutate" in t.cannot and "select_outcome" in t.cannot and "reveal_hidden" in t.cannot,
+          "mutate / select_outcome / reveal_hidden are forbidden on every token")
+    try:
+        cap.issue("mutate", subject="door")
+        check(False, "issuing a token that grants mutate must raise")
+    except cap.CapabilityViolation:
+        check(True, "a capability token may never grant mutate/select (prepare ≠ decide)")
+
+
+def test_information_firewall_blocks_wallhack_despite_integrity_and_consensus():
+    obs = cac.Observer("A", authorized_scope={"door", "wall"})
+    legit = di.DependencyClaim("door", "destruction_shader", consequence=5)
+    check(cac.admissible_for_representation(legit, obs, legit.content_hash())[0],
+          "an in-scope, unforged claim is admitted (legitimate readiness)")
+    cheat = di.DependencyClaim("enemy_hidden", "position_reveal", consequence=9)
+    check(di.tautology_holds(cheat, cheat.content_hash()), "the cheat claim passes the integrity tautology")
+    check(di.consensus_validate([cheat] * 5, k=3)["admitted"], "the cheat claim passes a colluding consensus")
+    ok, reason = cac.admissible_for_representation(cheat, obs, cheat.content_hash())
+    check(not ok and reason.startswith("forbidden_advantage"),
+          "an out-of-scope claim is rejected even though unforged + agreed (wallhack/ESP blocked)")
+    r = cac.fog_attack()
+    check(r["advantage_leaked"] == 0, "Dependency Fog Attack: advantage leaked = 0 (authorization is the floor)")
 
 
 def main():
