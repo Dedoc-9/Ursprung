@@ -72,6 +72,70 @@ See [`docs/GENEALOGY.md`](docs/GENEALOGY.md) for the full genealogy & checklist 
 and not yet built, and [`docs/PREDICTIVE_FIDELITY.md`](docs/PREDICTIVE_FIDELITY.md) for the prediction →
 membrane → PFAL → TCFF chain.
 
+## The second arc — the renderer as an information firewall (and the side-channel defense)
+
+The same separation that makes the renderer an *observer of truth* makes it a candidate **leak** of truth: in
+a shared, partially-hidden world (multiplayer, fog-of-war, anti-cheat), the renderer must show enough to be
+playable without becoming an oracle for hidden state. A second arc grew out of this, reframing rendering as a
+**fidelity control system / information firewall.** Its progression reads as one question per milestone:
+
+> trust it? → may I use it? → can I reconstruct it? → accumulate it? → learn from the defense? → infer the
+> generator? → infer the machine? → infer reality from correction? → can measurement replace assumptions? →
+> who is the final observer? → learnable by *which class* of observer?
+
+The early rungs are classic firewalls — content-hash integrity + k-of-n consensus (`dependency_integrity.py`),
+capability tokens (`capability.py`), an access-control layer that blocks a wallhack even when the claim is
+*unforged and agreed* (`causal_access.py`), and a composition firewall that caps a *set* of individually-
+authorized fragments so they can't jointly reconstruct a secret (`reconstruction.py`). The chain they enforce:
+**integrity ≠ confidentiality ≠ authorization ≠ harmlessness.**
+
+### The novel part: the defense is the leak
+
+The harder result — and the part with no standard textbook answer — is that once information flow is
+controlled, **the system's own behavior becomes the channel.** The side-channel defense family treats the
+renderer/netcode itself as a sensor an adversary reads:
+
+| Leak (the system as sensor) | Defense | Module |
+|---|---|---|
+| response time correlated with the secret | **timing normalization** (quantize → zero resource-dependent spread) | `side_channel.py` |
+| which branch was prepared reveals the cause | **prediction-inversion breadth** (`prepare ≠ announce probability`) | `side_channel.py` |
+| a colluding majority of clients | **weighted-trust consensus** (evidence×authority×reliability, not headcount) | `side_channel.py` |
+| the *defense's own reaction* (fog spikes near the enemy) | **Reaction Debt** — make the reaction uncorrelated with the secret | `adversarial_dynamics.py` |
+| something conspicuously **missing** (no footstep, no packet) | **absence firewall** (`missing ≠ informative`) | `adversarial_dynamics.py` |
+| an uncertainty radius that shrinks as you approach | **Ambiguity Debt** (uncertainty must not become a ruler) | `representation_privacy.py` |
+| a boundary that flips on hovering | **Representation Hysteresis** (enter ≠ exit threshold) | `representation_privacy.py` |
+| a hitch / cache miss / cost spike when the secret is near | **Execution Surface Privacy** (`observable cost ≠ hidden state`) | `execution_surface.py` |
+| a rollback whose magnitude/timing leaks the cause | **Reconciliation Signature Debt** (bounded correction family) | `convergence.py` |
+
+These unify into one ladder of invariants the renderer enforces: **`consequence ≠ mechanism` → `image ≠
+generator` → `renderer ≠ oracle` → `correction ≠ cause`.** A representation may reveal *what* happened in the
+world; it may never reveal the *rule that maps hidden state to representation*, nor the *machinery* (timing,
+cache, cost) by which that rule runs. Every defense ships with an executable bench and a negative control
+(e.g. naive timing spread 7 ms → 0; on-demand cost signature 13 → 0 when pre-prepared; reconstruction 1.00 →
+0.31 firewalled).
+
+### What it actually proves (the measurement discipline)
+
+Pushed to its limit, the arc stops being a stack of defenses and becomes a **measurement discipline** — and it
+is honest about exactly one guarantee. Varying the *adversary's model class* (`adversary_capacity.py`) shows
+that "secure" is almost always **relative to an observer class**: M20's "constant-feel resists a learning
+adversary" was true only against a 1-D learner; a structure learner recovers the rule. Adversary Information
+Capacity is a *lattice*, not a scalar. The single class-independent result:
+
+> **Security = non-identifiability under bounded experimental access.** The only *absolute* guarantee is to
+> **sever the secret from every observable channel** (`I(secret ; observable) = 0` for all observables). The
+> generator, the machine, the convergence, the player's *feel* — all are non-identifiable only relative to a
+> stated observer class, and dissolve against a richer one.
+
+And because the defender is *also* a bounded observer, `channel_discovery.py` inverts the audit from "does
+channel X leak?" to "what channels **exist**?" — computing mutual information per channel and surfacing an
+*unmodeled* leaker an enumerated audit would miss. Its own twist: the **detector is itself a hypothesis
+class** — the same channel reads `I = 0.00` under a marginal estimator and `I = 1.00` under a sequence
+estimator, so a result is never `safe`, only "no leak found *by estimator E, over trace D, against class A*."
+The full epistemic boundary — including the separators (`measured ≠ guaranteed`, `tested ≠ safe`,
+`simulation ≠ physics`, `bounded observer ≠ all observers`, `zero MI on trace ≠ zero MI on hardware`) — is in
+[`docs/MEASUREMENT_DISCIPLINE.md`](docs/MEASUREMENT_DISCIPLINE.md).
+
 ## Run it
 
 ```bash
@@ -152,19 +216,33 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 
 ## Status
 
-- **Milestone 1 — done.** Foundation + invariant harness; the renderer is proven observer-only.
-- **Milestone 2 — done.** Predictive-fidelity architecture + the five laws (debt · boundary · PFAL ·
-  reconciliation · conservation), each encoded as data/rule with a verified demo and an honest bound.
-- **Milestone 3 — done.** VIEW vertical slice (deterministic projection→coverage→sampling→raster) + the
-  Causal Continuity Hypothesis. The naive hypothesis **failed** the equal-budget bench (recorded, not hidden).
-- **Milestone 3.1 — done.** The failure became a refinement: the ranking/allocation split + Representation
-  Resistance. `ranked_waterfill` strictly beat every control.
+The full suite is **303 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
+control, and an explicit "expires on real silicon" bound.
 
-**Open work (bench-defined, not more laws):**
-- A **real-silicon benchmark** — every constructed-world number above expires there (equal GPU time;
-  temporal artifacts, input-to-photon latency, reconstruction error, motion stability).
-- A **richer Representation Resistance** than perimeter: geometric, temporal, shading, reconstruction,
-  perceptual, and causal resistance fields composed into one `CompositeResistance`.
+- **M1 — foundation.** Invariant harness; the renderer is proven observer-only (`integrity ≠ truth`).
+- **M2 — the five laws.** Reality Debt · Arbitrary-Boundary · Predictive Fidelity (PFAL/TCFF) · Polygon
+  Reconciliation · Temporal Fidelity Conservation, each encoded as data/rule.
+- **M3 / 3.1 — rendering economics.** VIEW raster slice + the Causal Continuity Hypothesis, which **failed**
+  the equal-budget bench (recorded, not hidden) and became the *ranking ≠ allocation* refinement;
+  `ranked_waterfill` strictly beat every control.
+- **M4–M9 — fidelity as an economy.** Stressors, transition debt, the resistance tensor + fidelity
+  derivative, the shader cache (hitches → allocation), Causal Surface Area, the Readiness Layer, provider
+  contracts, dependency surface/integrity, and the representation compiler.
+- **M10–M21 — the information-firewall arc** (see *The second arc* above). Integrity → authorization →
+  reconstruction safety → accumulation safety → adversarial dynamics → representation privacy → execution
+  surface privacy → convergence → the reality/behavioral/adaptive harnesses → Adversary Information Capacity.
+- **Channel Discovery + Measurement Discipline — the landing.** The audit is inverted to "what channels
+  exist?", the detector is shown to be its own hypothesis class, and the project's epistemic boundary is
+  written down ([`docs/MEASUREMENT_DISCIPLINE.md`](docs/MEASUREMENT_DISCIPLINE.md)).
+
+**The conceptual arc is complete; the remaining work is empirical, not more laws.** It lives behind two
+intentionally-unbuilt seams — `reality_harness.NetworkChannel` (point it at a real socket) and
+`behavioral_harness.ExperimentLayer(channel="real")` — plus:
+- A **real-silicon benchmark** — every constructed-world number expires there (equal GPU time; temporal
+  artifacts, input-to-photon latency, reconstruction error, motion stability).
+- A **richer Representation Resistance** than perimeter, composed into one `CompositeResistance`.
+- A **stronger adversary class** (replace the toy threshold/bit/parity learners with a real ML/RL class) and
+  **channel discovery over real telemetry traces** — the natural first experiments of the empirical phase.
 
 ## Toward a fidelity operating system (direction, not built)
 

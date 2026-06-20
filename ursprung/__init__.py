@@ -5,10 +5,15 @@ Reality_Engine (Chronicle/Dentatus) workbench.
 
 Pipeline:  authoritative world state → deterministic snapshot → visual interpretation → (GPU) → frame
 
-Layer map (see registry.py):  CORE (world_core) · VIEW (view_layer) · OBSERVER (ghost_report, verify).
-ALLOCATOR layers (LOD/culling/quality) come in a later milestone.
+Layer map (see registry.py):  CORE (world_core) · VIEW (view_layer, raster) · ALLOCATOR (temporal_membrane,
+tcff, allocation, shader_cache, readiness, representation_futures, representation_compiler) · OBSERVER
+(everything that measures/ranks/attributes — prediction, the law modules, the information-firewall arc, and
+the harnesses). Only CORE may move committed state.
 
-The workbench is the VERIFICATION SUBSTRATE, not the renderer. Only CORE may move committed state.
+Two arcs over one verified world: (1) rendering economics — finite fidelity is a budget, every approximation
+is debt, priority ≠ allocation; (2) the information firewall — the renderer must not become an oracle for
+hidden state (see README's "second arc" and docs/MEASUREMENT_DISCIPLINE.md). The workbench is the
+VERIFICATION SUBSTRATE, not the renderer.
 """
 from . import (world_core, view_layer, ghost_report, verify, registry,  # noqa: F401
                render_record, conventions, divergence, prediction, temporal_membrane,
@@ -35,4 +40,4 @@ __all__ = ["world_core", "view_layer", "ghost_report", "verify", "registry",
            "reconstruction", "side_channel", "accumulation", "adversarial_dynamics",
            "representation_privacy", "execution_surface", "convergence", "reality_harness",
            "behavioral_harness", "adversary_harness", "adversary_capacity", "channel_discovery"]
-__version__ = "0.1.0-milestone1"
+__version__ = "0.21.0"

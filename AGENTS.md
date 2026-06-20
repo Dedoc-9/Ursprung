@@ -174,6 +174,36 @@ OBSERVATION (same lens, different measured behavior — investigate the ghost). 
 Because allocation never touches truth, one committed world can feed many renderers (cinematic, competitive,
 VR, handheld, debug) — each a lens, none redefining the world.
 
+## The information-firewall discipline (the renderer must not become an oracle)
+
+In a shared, partially-hidden world the renderer is also a potential **leak** of hidden state. Treat any
+new VIEW/ALLOCATOR/OBSERVER system as something an adversary will read, and obey this ladder of invariants
+(modules in parentheses; full synthesis in the README's *second arc* and `docs/MEASUREMENT_DISCIPLINE.md`):
+
+- **integrity ≠ confidentiality ≠ authorization ≠ harmlessness.** Unforged + agreed-upon does not mean a
+  client is *entitled* to use a claim (`causal_access.py`), and individually-authorized fragments must not
+  *jointly* reconstruct a secret (`reconstruction.py`).
+- **the defense is the leak.** The system's own behavior is a side channel — response timing, which branch
+  was prepared, the *reaction* to a secret (fog/LOD/latency), a conspicuous *absence*, an uncertainty radius,
+  a boundary that flips on hovering, an execution-cost hitch, a rollback's magnitude/timing. A new feature
+  must not make any observable correlate with hidden state. Defenses: timing normalization +
+  prediction-inversion breadth + weighted-trust consensus (`side_channel.py`), Reaction Debt + absence
+  firewall (`adversarial_dynamics.py`), Ambiguity Debt + Representation Hysteresis (`representation_privacy.py`),
+  Execution Surface Privacy (`execution_surface.py`), Reconciliation Signature Debt (`convergence.py`).
+- **the invariant ladder:** `consequence ≠ mechanism` → `image ≠ generator` → `renderer ≠ oracle` →
+  `correction ≠ cause`. A representation may reveal *what happened in the world*; never the *rule that maps
+  hidden state to representation*, nor the *machinery* (timing/cache/cost) that runs it, nor the *cause of a
+  correction* beyond the fact that the world changed.
+- **the one absolute, and the honest rest.** `Security = non-identifiability under bounded experimental
+  access.` The only class-independent guarantee is to **sever the secret from every observable channel**
+  (`I(secret ; observable) = 0` ∀ observable; `channel_discovery.py`). Everything else is non-identifiable
+  only *relative to a stated observer class* and dissolves against a richer one (`adversary_capacity.py`).
+  Never claim "safe"; report what was found, by which estimator class, with what coverage boundary —
+  `secure-against-this-observer ≠ secure`, and the detector is itself a hypothesis class.
+
+Every such system is an **OBSERVER** (it measures, ranks, attributes; it never mutates the trajectory and
+never asserts truth). The cardinal invariant and the four-layer law above still bind it.
+
 ## Performance work
 
 Prefer measurable experiments: **baseline → change → replay → benchmark → compare**. Preserve failed
@@ -196,8 +226,15 @@ Weltlinie + monitored invariants intact. It does **not** mean the renderer is co
 
 ## Status
 
-- **Milestone 1 — ACHIEVED.** Smallest world loop + CORE/VIEW/OBSERVER layers + verification harness +
-  ghost reporter. The renderer is proven to be observer-only. Run: `PYTHONHASHSEED=0 python3 loop.py`.
-- **Next (VIEW vertical slice):** camera → geometry → basic raster path → lighting → frame presentation.
-- **Then (ALLOCATOR experiments):** LOD · visibility · adaptive quality · salience · compute budgets — each
-  must prove *same world trajectory, different resource allocation*.
+The conceptual arc is **complete** (303-check suite). M1 foundation + invariant harness → M2 the five laws →
+M3/3.1 the VIEW raster slice and the *ranking ≠ allocation* result (from a recorded **failed** hypothesis) →
+M4–M9 fidelity-as-economy (resistance tensor, shader cache, readiness, providers, dependency integrity,
+compiler) → M10–M21 the information-firewall arc (see the section above) → Channel Discovery + the
+Measurement Discipline. Run: `PYTHONHASHSEED=0 python3 loop.py`; suite `python3 tests/test_ursprung.py`.
+
+**The remaining work is empirical, not more laws.** Do not add another conceptual milestone without explicit
+direction; the only sanctioned additions now are **better measurement substrates** or **stronger observer
+classes**, both *experiments*. The next builds live behind two intentionally-unbuilt seams —
+`reality_harness.NetworkChannel` (wire to a real socket) and `behavioral_harness.ExperimentLayer(channel="real")`
+— plus a real-silicon benchmark (every constructed number expires there), a richer `CompositeResistance`, a
+real ML/RL adversary class replacing the toy learners, and channel discovery over real telemetry traces.
