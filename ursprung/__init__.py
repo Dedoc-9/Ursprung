@@ -42,4 +42,4 @@ __all__ = ["world_core", "view_layer", "ghost_report", "verify", "registry",
            "representation_privacy", "execution_surface", "convergence", "reality_harness",
            "behavioral_harness", "adversary_harness", "adversary_capacity", "channel_discovery",
            "disclosure", "perception"]
-__version__ = "0.23.0"
+__version__ = "0.24.0"

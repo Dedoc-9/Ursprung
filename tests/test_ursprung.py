@@ -967,6 +967,20 @@ def test_perception_loop_is_the_first_privacy_funnel_benchmark():
     check(res.passes and res.coverage_boundary, "the MeasurementResult reports pass/fail with a coverage boundary, not 'safe'")
 
 
+def test_perception_adversary_leakage_is_not_exploitability():
+    r = perc.adversary.crucible()
+    # per-frame MI is a small, valid per-observation estimate; one frame cannot localize the secret (DPI)
+    check(r["per_frame_leakage"] < 1.5, "the per-frame leakage estimate is a sliver (< 1.5 bits)")
+    check(r["single_frame_candidates"] > 1, "a single compliant observation leaves many candidate cells")
+    check(r["single_frame_within_bound"], "a single frame does not beat the per-frame MI bound (data-processing inequality holds)")
+    # an accumulating (richer-class) learner recovers the EXACT secret across the session
+    check(r["exact_recovered"], "the accumulating multilateration learner recovers the exact secret cell")
+    check(r["accumulated_recovered_bits"] == 6.0, "accumulation recovers the full 6 bits of the secret")
+    check(r["accumulation_beats_single_frame"], "the accumulating learner recovers strictly more than a single frame")
+    # the headline: leakage (per-frame) ≠ exploitability (session) — the static estimate is falsified as a session claim
+    check(r["exploitability_exceeds_estimate"], "session exploitability far exceeds the per-frame leakage estimate — leakage ≠ exploitability")
+
+
 def main():
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):

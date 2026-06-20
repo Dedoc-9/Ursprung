@@ -244,9 +244,19 @@ never a new invariant:
 5. **Verify with the first half** — leakage is measured by `channel_discovery`'s QIF estimator inside the loop;
    the `MeasurementResult` carries its observer-class coverage boundary (`compliant ≠ safe`). **— DONE.**
 
+6. **Adversarial benchmark — leakage ≠ exploitability. — DONE, and it FALSIFIED the static metric (the valuable
+   outcome).** `ursprung/perception/adversary.py` points a *learning* observer at the compiled disclosure: a
+   persistent secret, a mobile observer, one policy-compliant `threat` bit per frame. A per-frame leakage
+   estimate of **0.79 bits** (and a single frame recovers only **0.39 bits**, 49 candidates) is broken by an
+   **accumulating multilateration learner that recovers the EXACT secret (6 bits)** across the session. This
+   does not contradict the per-observation MI bound (the single frame stays within it — the data-processing
+   inequality holds); it shows the per-frame leakage budget is the **wrong budget for a session**. Exactly the
+   M13 (accumulation) / M19 (temporal) / M21 (richer observer class) lesson, biting the perception loop.
+
 The remaining honest gaps (so this is not over-read): the compiler is still a *lookup*, not a funnel *solve*;
-the observer is a fixed decision rule, not a *learning* adversary (wiring an M20/M21 learner against the
-compiled view is the next real increment); the world and the leakage estimator are constructed.
+the world and the leakage estimator are constructed; and — surfaced by step 6 — **the loop's leakage metric is
+per-frame, not per-session**, so the next real increment is *accumulation-aware disclosure* (a session leakage
+budget / constant-feel for the temporal channel), not another conceptual layer.
 
 ## 8. The one-line shift
 
