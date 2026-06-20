@@ -53,6 +53,7 @@ from ursprung import adversarial_dynamics as ad
 from ursprung import representation_privacy as rp
 from ursprung import execution_surface as es
 from ursprung import convergence as cv
+from ursprung import reality_harness as rh
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -811,6 +812,25 @@ def test_convergence_correction_not_cause():
     check(r["change_fact_ok"], "a correction may reveal THAT reality changed")
     check(r["repair_detail_blocked"], "a correction may not reveal WHY/WHERE/WHO it was repaired (the rollback distance)")
     check(r["entitled_sees_detail"], "a causally entitled observer may see the repair detail")
+
+
+def test_reality_harness_traffic_produces_hypothesis():
+    r = rh.crucible()
+    # the substrate is reproducible (deterministic simulated traffic)
+    check(r["channel_deterministic"], "the simulated channel is deterministic — reproducible traffic")
+    check(rh.run_experiment("bucketed") == rh.run_experiment("bucketed"), "an experiment run is reproducible")
+    # measured (not asserted) findings about the reconciliation policies
+    check(r["bucketing_reduces_entropy"], "bucketing (M17) measurably reduces correction entropy")
+    check(r["bucketing_reduces_info"], "bucketing measurably reduces extractable info bits")
+    check(r["bucketing_keeps_existence_leak"], "bucketing still leaks the EXISTENCE of disagreement (distinguishability 1.0)")
+    check(r["floor_reduces_distinguishability"], "a cover-correction floor measurably lowers distinguishability")
+    check(r["floor_costs_fidelity"], "the floor buys existence-privacy with measurably more fidelity cost")
+    check(r["no_free_lunch"], "no reconciliation policy achieves full privacy at no fidelity cost")
+    check(r["large_events_still_leak"], "large corrections still leak — convergence-privacy ⟂ convergence-fidelity is a frontier")
+    # the seam: changing the (simulated) channel changes the measurement, as a real socket would
+    slow = rh.run_experiment("exact", channel=rh.NetworkChannel(base_latency=12, jitter=0, seed=1))
+    fast = rh.run_experiment("exact", channel=rh.NetworkChannel(base_latency=2, jitter=0, seed=1))
+    check(slow["fidelity_cost"] > fast["fidelity_cost"], "latency drives reconciliation cost (the channel is the swappable seam)")
 
 
 def main():

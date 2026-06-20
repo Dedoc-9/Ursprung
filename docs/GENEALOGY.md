@@ -273,6 +273,29 @@ WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT �
     convergence is only meaningful against REAL divergence — the first layer in the arc that cannot be
     validated with constructed numbers. correction ≠ cause; convergence ≠ disclosure; integrity ≠ truth.
 
+- [x] **Milestone 18 — the Reality Harness (`traffic produces the hypothesis`).** *The method inverts.*
+  - [x] `reality_harness.py` — M1–M17 were "bench proves hypothesis"; M17 exposed the limit (convergence is
+    only meaningful against real divergence). M18 is not another defense — it is the measurement substrate:
+    an authoritative server (CORE-driven), a SIMULATED `NetworkChannel` (latency/jitter/loss, deterministic,
+    seeded), and client mirrors that predict → diverge → reconcile. It MEASURES correction entropy,
+    convergence time, observer distinguishability, info-per-correction, counterfactual bits, aggregate
+    extraction, and fidelity cost across reconciliation policies, and lets the numbers fall where they do.
+    **Produced (not asserted) finding:** bucketing (M17) cuts correction entropy **1.76 → 1.36** but
+    distinguishability stays **1.0** — it hides *magnitude*, not the *existence* of disagreement; a
+    cover-correction floor (a Convergence Privacy Budget) lowers distinguishability to **0.6** but raises
+    fidelity cost **18 → 28**, and large corrections still leak. So **convergence-privacy ⟂ convergence-fidelity
+    is a measured frontier, not a win** — the traffic-derived form of the user's proposed equivalence-classes /
+    privacy-budget refinements, *and their limit.* **The swappable seam:** `NetworkChannel.delay_for` is the
+    one model boundary; replace it with a real socket's RTT and the harness becomes the real experiment,
+    unchanged above that line. **Honest bound:** the network is SIMULATED (Arbitrary-Boundary: a model, not the
+    network); measurements are measured-from-simulation — the MODE changed (traffic-driven, reproducible), the
+    proof has not. simulation ≠ physics; integrity ≠ truth.
+
+> **Status after M18:** the reference model (M1–M17) is conceptually complete and M18 is the substrate that
+> carries it toward silicon. The question is no longer "what law is missing?" but "which milestones survive
+> contact with real latency, GPUs, drivers, and adversarial players?" The next build is empirical — point the
+> harness's seam at a real socket — not another conceptual layer.
+
 ### Milestone-3 finding (the failure is the result)
 
 The Causal Continuity Hypothesis as *stated* (allocate ∝ U·C·P) **failed** the equal-budget bench. Diagnosis
