@@ -1060,6 +1060,18 @@ def test_perception_response_action_is_a_channel():
     check(r["non_action_not_ignorance"], "a gated no-op is an attributable optimal abstention, distinguishable from ignorance")
 
 
+def test_perception_intent_leakage_the_secret_is_the_policy():
+    r = perc.intent.crucible()
+    # the agent's goal/policy is recoverable from behaviour (inverse planning), even without the world secret
+    check(r["intent_is_a_secret"], "the agent's goal is recoverable from behaviour — intent leakage I(G;A) > 0")
+    check(r["full_policy_recovered"], "accumulated behaviour recovers the WHOLE policy (I(G;behaviour) = H(G))")
+    check(r["intent_accumulates"], "intent leakage accumulates with observations (the cascade structure, on the optimizer)")
+    check(r["single_observation_ambiguous"], "a single action is goal-ambiguous — inverse planning needs accumulation")
+    # a behavioral-ambiguity defense caps intent leakage at a coupled cost
+    check(r["ambiguity_caps_intent_leak"], "making goals behave alike caps intent leakage below H(G)")
+    check(r["ambiguity_costs_distinctness"], "the ambiguity defense costs goal distinctness (two goals become identical) — a coupled tradeoff")
+
+
 def main():
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):

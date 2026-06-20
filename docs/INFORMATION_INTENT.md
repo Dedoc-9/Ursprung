@@ -302,10 +302,19 @@ never a new invariant:
     distinguishable from *ignorance* — the action-channel parallel to refusing the word "safe." The mature state
     is *minimum necessary reaction*, not maximum intelligence. `I(S;A)` matters as much as `I(S;O)`.
 
+12. **Intent leakage — DONE; the secret is the policy.** `ursprung/perception/intent.py` reaches the secret the
+    LLM era actually exposes: not the world state but the *optimizer*. An inverse-planning observer ("what goal
+    makes this behaviour rational?") recovers `G` — the agent's goal/policy — from behaviour, *without ever
+    recovering `S`* ("hide the data, expose the strategy"). `I(G;A,O)` accumulates from one ambiguous action to
+    the **whole policy** (`H(G)`); behavioral ambiguity caps it only by making goals indistinct (coupled). For
+    an adaptive agent this is the *dominant* secret — the world changes, the policy is invariant. `I(G;·)` is a
+    different secret from `I(S;·)`.
+
 The remaining honest gaps (so this is not over-read): the compiler is still a *lookup / greedy channel select*,
 not a continuous funnel *solve*; the world, the learner, and the leakage estimator are constructed; the utility
-models are declared conventions; the capacity axis is a memory-horizon *proxy*, not real model capacity; and the
-action-channel tradeoff is coupled by construction in a toy. The open frontier where the technical and
+models are declared conventions; the capacity axis is a memory-horizon *proxy*, not real model capacity; the
+action- and intent-channel tradeoffs are coupled by construction in a toy; and intent inference is deterministic
+here, not the inverse-RL / Bayesian-intent inference the real version needs. The open frontier where the technical and
 governance problems become one (§11) is *verifiable claims about adaptive observers without revealing the
 protected state* — empirical and cryptographic, not another conceptual layer. The "participation *rarely* needs full knowledge" claim is now a *per-task
 empirical question* (separable → free lunch; non-separable → an irreducible measured frontier), not a settled
