@@ -291,10 +291,33 @@ WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT �
     network); measurements are measured-from-simulation — the MODE changed (traffic-driven, reproducible), the
     proof has not. simulation ≠ physics; integrity ≠ truth.
 
-> **Status after M18:** the reference model (M1–M17) is conceptually complete and M18 is the substrate that
-> carries it toward silicon. The question is no longer "what law is missing?" but "which milestones survive
-> contact with real latency, GPUs, drivers, and adversarial players?" The next build is empirical — point the
-> harness's seam at a real socket — not another conceptual layer.
+- [x] **Milestone 19 — the Behavioral Reality Harness (`the last observer is the player`).**
+  - [x] `behavioral_harness.py` — M18 forced the distinction between a representation policy and an
+    information-flow guarantee, but it was still passive and collapsed leakage into scalars. M19 closes three
+    gaps and names the final observer. (1) **Convergence Leakage Vector** — privacy is not a scalar; magnitude
+    / existence / timing / correlation / aggregation are independent axes (mirroring the M6 resistance
+    tensor). The vector makes a produced finding explicit: bucketing closes *magnitude* but not *existence*,
+    and **no M17/M18 policy ever touched the *timing* axis** — only a timing-normalized policy (M16, folded
+    in) closes it. A scalar (floor 3.4 < bucketed 4.4) would have hidden that. (2) **Counterfactual
+    Amplification** — a passive client cannot localize the server's hidden boundary (uncertainty **100**); an
+    adversary that *chooses* its inputs binary-searches it to near zero (**0.006**). `Counterfactual Debt =
+    correction_information × probe_control`; one bit × 10⁴ chosen experiments is a query oracle (M13, where
+    the query is now a *world perturbation*). (3) **The experiment-layer seam** — one measurement API over a
+    SIMULATED channel (deterministic, replayable → regression) and a REAL channel (UDP/TCP/QUIC → validity);
+    the simulator becomes the regression bed, not discarded. **The final observer:** a player need not infer
+    the enemy mathematically — they learn the *policy by feel* ("my shots behave differently behind cover"),
+    which is `image ≠ generator` at the gameplay layer; the last firewall is behavioral indistinguishability
+    (constant-feel). **Honest bound:** the axes / probe model / behavioral "classifier" are declared proxies,
+    not a learned adversary, a real player, or a real socket; the real channel is intentionally unbuilt
+    (reports unavailable). privacy ≠ scalar; image ≠ generator; simulation ≠ physics; integrity ≠ truth.
+
+> **Status after M19:** the model is conceptually complete *and self-aware* — M18/M19 turned its own
+> discipline on itself (a representation policy ≠ an information-flow guarantee; privacy ≠ a scalar; the last
+> observer is the player, not the renderer). The two harnesses are substrate, not law. The remaining work is
+> empirical and lives behind two intentionally-unbuilt seams: `reality_harness.NetworkChannel` (point it at a
+> real socket) and `behavioral_harness.ExperimentLayer(channel="real")` (and, ultimately, real humans). The
+> question is no longer "what law is missing?" but "which of the nineteen milestones survive contact with real
+> latency, GPUs, drivers, and players?"
 
 ### Milestone-3 finding (the failure is the result)
 

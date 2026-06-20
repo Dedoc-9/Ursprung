@@ -54,6 +54,7 @@ from ursprung import representation_privacy as rp
 from ursprung import execution_surface as es
 from ursprung import convergence as cv
 from ursprung import reality_harness as rh
+from ursprung import behavioral_harness as bh
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -831,6 +832,27 @@ def test_reality_harness_traffic_produces_hypothesis():
     slow = rh.run_experiment("exact", channel=rh.NetworkChannel(base_latency=12, jitter=0, seed=1))
     fast = rh.run_experiment("exact", channel=rh.NetworkChannel(base_latency=2, jitter=0, seed=1))
     check(slow["fidelity_cost"] > fast["fidelity_cost"], "latency drives reconciliation cost (the channel is the swappable seam)")
+
+
+def test_behavioral_harness_player_is_final_observer():
+    r = bh.crucible()
+    # 1. Convergence Leakage Vector: privacy is a vector, not a scalar
+    check(r["bucketing_closes_magnitude"], "bucketing closes the magnitude axis")
+    check(r["bucketing_keeps_existence"], "bucketing leaves the existence axis fully open")
+    check(r["floor_scalar_lower"] and r["timing_axis_untouched"], "a lower scalar hides that the timing axis was never touched — privacy ≠ scalar")
+    check(r["only_timing_norm_closes_timing"], "only a timing-normalized policy closes the timing axis (a produced insight, not assumed)")
+    # 2. counterfactual amplification: a probing adversary localizes the hidden boundary; a passive one cannot
+    check(r["passive_uncertainty"] == 100.0, "a passive client cannot localize the server's hidden decision boundary")
+    check(r["probing_uncertainty"] < 0.01, "an adversary that chooses its inputs binary-searches the boundary to near-zero uncertainty")
+    check(r["debt_probing"] > r["debt_passive"], "Counterfactual Debt amplifies with probe control (the attacker chooses the question)")
+    # 3. experiment-layer seam: same API over simulated (regression) and real (validity) channels
+    check(r["sim_replayable"], "the simulated channel is deterministic and replayable (the regression environment)")
+    check(r["real_unavailable_same_api"], "the real channel uses the identical API and is intentionally unbuilt here (the validity environment)")
+    # 4. the player as the final observer
+    check(r["naive_feel_learnable"], "a naive policy lets the player learn the rules by feel (image ≠ generator at the gameplay layer)")
+    check(r["constant_feel_opaque"], "a constant-feel policy is behaviorally indistinguishable")
+    check(r["feel_ok"], "a player may experience the world (recoil, hits, audio)")
+    check(r["policy_tell_blocked"], "a player may not learn a policy threshold (the rollback threshold) through interaction")
 
 
 def main():
