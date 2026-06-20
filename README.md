@@ -270,7 +270,7 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 
 ## Status
 
-The full suite is **379 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
+The full suite is **392 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
 control, and an explicit "expires on real silicon" bound.
 
 - **M1 — foundation.** Invariant harness; the renderer is proven observer-only (`integrity ≠ truth`).
@@ -310,7 +310,13 @@ control, and an explicit "expires on real silicon" bound.
   deepest secret: **`I(G;A,O)`** — an inverse-planning observer recovers the agent's *policy/goal* `G` from
   behaviour even when the world secret `S` stays hidden ("hide the data, expose the strategy"); it accumulates
   to the whole policy, capped only by behavioral ambiguity at a coupled cost. *The secret is the policy, not the
-  data.* World-side direction: [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
+  data.* Then `consistency.py` and `identifiability.py` flip the axis from *leakage* to *coherence*: behaviour
+  **under-determines its cause** (adaptation and drift emit identical trajectories; `I(cause;behaviour) <
+  H(cause)`), and the deepest adversary asks not "what goal?" but **"is there a stable generator to recover at
+  all?"** — three regimes (identifiable / ambiguous / non-identifiable), where non-identifiability is
+  class-relative and "become noise" only *relocates* the secret to the stochastic character (`noise ≠
+  ignorance`). The object becomes **identity under observation**. World-side direction:
+  [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
 
 **The conceptual arc is complete; the remaining work is empirical, not more laws.** It lives behind the
 intentionally-unbuilt seams — `reality_harness.NetworkChannel` (point it at a real socket),

@@ -310,11 +310,25 @@ never a new invariant:
     an adaptive agent this is the *dominant* secret — the world changes, the policy is invariant. `I(G;·)` is a
     different secret from `I(S;·)`.
 
+13. **From leakage to coherence — DONE; identity under observation.** `consistency.py` + `identifiability.py`
+    flip the axis: not *how much escaped* but *is the system coherent / is there a self to recover?*
+    `consistency` shows behaviour **under-determines its cause** — stochasticity, adaptation, deception, drift,
+    and learning collapse into the same visible behaviour (adaptation ≡ drift trajectory; `I(cause;behaviour) <
+    H(cause)`); separating them needs *attestation of the transformation `F`*, not more observation.
+    `identifiability` asks whether a stable generator exists at all — three regimes (identifiable / ambiguous /
+    non-identifiable); a coherent agent beyond the observer's class is indistinguishable from a generatorless
+    sequence (`opacity ≠ privacy`); non-identifiability is **class-relative** (M21 again); and the noise floor —
+    if the only invariant is `N_t`, intent leakage becomes **entropy leakage** `I(N;A,O)`, so "become noise"
+    merely *relocates* the secret to the stochastic character (`noise ≠ ignorance`, `unpredictability ≠
+    agency`). New separators: `consistency ≠ correctness`, `prediction ≠ understanding`, `privacy ≠
+    unpredictability`, `non-identifiability ≠ freedom`, `noise ≠ ignorance`.
+
 The remaining honest gaps (so this is not over-read): the compiler is still a *lookup / greedy channel select*,
 not a continuous funnel *solve*; the world, the learner, and the leakage estimator are constructed; the utility
 models are declared conventions; the capacity axis is a memory-horizon *proxy*, not real model capacity; the
-action- and intent-channel tradeoffs are coupled by construction in a toy; and intent inference is deterministic
-here, not the inverse-RL / Bayesian-intent inference the real version needs. The open frontier where the technical and
+action- and intent-channel tradeoffs are coupled by construction in a toy; intent inference is deterministic,
+not the inverse-RL / Bayesian-intent inference the real version needs; and identifiability/coherence are tested
+against a toy generator class, not real agency verification. The open frontier where the technical and
 governance problems become one (§11) is *verifiable claims about adaptive observers without revealing the
 protected state* — empirical and cryptographic, not another conceptual layer. The "participation *rarely* needs full knowledge" claim is now a *per-task
 empirical question* (separable → free lunch; non-separable → an irreducible measured frontier), not a settled

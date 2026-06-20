@@ -1072,6 +1072,31 @@ def test_perception_intent_leakage_the_secret_is_the_policy():
     check(r["ambiguity_costs_distinctness"], "the ambiguity defense costs goal distinctness (two goals become identical) — a coupled tradeoff")
 
 
+def test_perception_consistency_behavior_underdetermines_cause():
+    r = perc.consistency.crucible()
+    # distinct mechanisms emit identical behaviour — purposeful adaptation vs unintended drift collide
+    check(r["adaptation_drift_collide"], "adaptation and drift emit the identical trajectory (distinct causes, same behaviour)")
+    check(r["distinct_causes_identical_behavior"], "at least one pair of distinct causes is behaviorally indistinguishable")
+    check(r["cause_underdetermined"], "I(cause; behaviour) < H(cause) — behaviour does not determine its own cause")
+    check(r["change_is_ambiguous"], "a single 'behaviour changed' signal is shared by most causes — it attributes nothing")
+    check(r["needs_attestation_not_observation"], "separating the causes needs attestation of the transformation, not more behaviour")
+
+
+def test_perception_identifiability_is_there_a_stable_generator():
+    r = perc.identifiability.crucible()
+    # the three regimes are exhibited
+    check(r["identifiable_exists"], "a coherent agent is identifiable (exactly one stable generator fits)")
+    check(r["ambiguous_exists"], "behaviour observed only where two generators agree is ambiguous")
+    check(r["non_identifiable_exists"], "a rule outside the observer's class is non-identifiable (none fit)")
+    # the identity trap and its honest limit
+    check(r["coherent_adaptive_indistinguishable_from_generatorless"], "a coherent adaptive agent and a generatorless sequence get the same verdict — opacity ≠ privacy")
+    check(r["non_identifiability_is_class_relative"], "'non-identifiable' is relative to the observer's generator class — enriching it identifies the agent (M21)")
+    check(r["antipolicy_useful"] and r["antipolicy_unpredictable"], "the anti-policy stays useful while confirming zero generators — usefulness − predictability")
+    # the noise floor: 'become noise' relocates the secret to the stochastic character, it does not remove it
+    check(r["noise_character_recoverable"], "even when the only invariant is noise, the observer recovers the generator's character (I(N;behaviour) > 0)")
+    check(r["secret_relocated_not_eliminated"], "becoming noise relocates the secret from goal to stochastic character — noise ≠ ignorance")
+
+
 def main():
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):

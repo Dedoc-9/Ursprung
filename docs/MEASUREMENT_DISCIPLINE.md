@@ -132,6 +132,17 @@ identifiability     ≠ truth
 integrity           ≠ truth
 measurement         ≠ legitimacy     (a measurable dial reports what happened under a policy,
                                        never whether the policy was acceptable — see INFORMATION_INTENT.md §11)
+consistency         ≠ correctness    (a system can coherently pursue a bad objective)
+prediction          ≠ understanding  (predicting behaviour is not knowing why)
+privacy             ≠ unpredictability
+opacity             ≠ privacy
+adaptation          ≠ inconsistency
+learning            ≠ drift
+non-identifiability ≠ freedom        (behaviour with no stable generator is not thereby autonomous;
+                                       it is equally consistent with brokenness, noise, or deception)
+unpredictability    ≠ agency
+noise               ≠ ignorance      (even noise has structure; 'become noise' relocates the secret to the
+                                       stochastic character — I(N;behaviour) — it does not remove it)
 ```
 
 ## The one absolute, and everything else
