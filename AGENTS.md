@@ -221,6 +221,51 @@ approaches and the reasons they failed — a failed branch carries architectural
 allocation/optimization claim is judged by *comparative utility at equal budget with a negative control*,
 never by correctness.
 
+## Use cases — how to apply Ursprung in a real project
+
+Ursprung is a **specification + reference + measurement discipline**, not a turnkey product. Hold that framing
+before adopting any of it: `integrity ≠ truth`, `tested ≠ safe`, `simulation ≠ physics`, and every bench number
+is constructed and **expires on real silicon**. With that in mind, there are four robust ways an engineer — or
+an LLM acting as one — can produce real value from this repo today, followed by an honest statement of the
+adoption gap.
+
+**1. As a design discipline / guardrails (usable as-is, nothing to run).** Apply the four-layer law to classify
+every subsystem *before* building it; hold the cardinal invariant (replay-identical with the observer active
+and deliberately corrupted) as the definition of done; route every feature through the render Verification
+Record (`TYPE` / `EFFECT` / `NON-EFFECT` / `EVIDENCE`); and enforce the ladders — `observation → allocation`
+ALLOWED, `observation → truth` FORBIDDEN; `consequence ≠ mechanism → image ≠ generator → renderer ≠ oracle →
+correction ≠ cause`; plus *report your blind spot*. This is portable to any renderer / multiplayer / anti-cheat
+/ simulation codebase, independent of Ursprung's own modules. **Highest current value.**
+
+**2. As a pattern / reference library (adapt the working code).** The mechanisms are real, tested reference
+implementations to transplant and re-validate on your data: water-filling allocation + the resistance tensor
+(LOD / quality budgeting), transition & reaction debt (hitch / leak avoidance), the composition firewall +
+capability / access-control layers (anti-cheat information flow), `channel_discovery` (mutual-information leak
+auditing), `DisclosurePolicy` (intent → representation), and the privacy-funnel framing
+(`maximize utility − λ·leakage`). Port the *shape*; the constructed numbers do not transfer.
+
+**3. As a measurement / audit substrate (the nearest real win).** Point `channel_discovery` + the
+`DisclosurePolicy` auditor at a real telemetry or output stream to find *actual* leaks — *policy says reveal X;
+did the output contain only X?* This is the empirical phase and yields real results with modest work; it needs
+an estimator that handles continuous, coupled signals (the bundled one is discrete / symbolic), but the loop,
+the `MeasurementResult` boundary discipline, and the adversary-class sweep (`adversary_capacity`) are already
+here. Report findings as "found by estimator E over trace D against class A," never "safe."
+
+**4. As an LLM-on-track methodology (for any systems project).** The `observe → hypothesize → implement →
+verify → record` loop, the four LLM failure-mode guards (silent architectural drift, accidental authority
+leakage, unreplayable behavior, unmeasured optimization claims), and *preserve failed branches* keep an LLM
+coding partner disciplined on work that has nothing to do with rendering (`docs/LLM_ON_TRACK.md`).
+
+**The adoption gap (what it is NOT yet).** It does not run for a stranger out of the box. CORE
+(`world_core.py`) consumes the *sealed* `Reality_Engine` kernel via `URSPRUNG_WORKBENCH`, so a new project must
+**substitute its own deterministic world / sim** behind the snapshot contract. There are **no production
+backends**: `raster.py` emits a hashable *reference* framebuffer (not GPU pixels), `reality_harness.NetworkChannel`
+is a *simulated* socket, the adversary learners are toy, and `disclosure.compile_emission` is a lookup, not the
+funnel solve. The adoption path is therefore: (a) wire your own CORE / world behind the snapshot contract;
+(b) lower one real backend (GPU / audio / netcode / agent-observation); (c) re-run the relevant benches on real
+data — at which point the constructed numbers become measured ones and the discipline begins governing a live
+system. Until then, uses 1–4 apply; "Ursprung as a shipped feature" does not.
+
 ## Working with the sealed workbench
 
 `Reality_Engine` is immutable during this project. Ursprung imports it read-only via `ursprung/_workbench.py`
