@@ -270,7 +270,7 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 
 ## Status
 
-The full suite is **362 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
+The full suite is **373 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
 control, and an explicit "expires on real silicon" bound.
 
 - **M1 — foundation.** Invariant harness; the renderer is proven observer-only (`integrity ≠ truth`).
@@ -303,7 +303,11 @@ control, and an explicit "expires on real silicon" bound.
   **`Leakage(C)`**: the *same* representation leaks 0.39 bits to a memoryless observer and the *whole* secret to
   an accumulating one, so "low leakage" is undefined until the observer class is named. That curve only *defines
   the axis*; scaling `C` to a real model on a non-toy world is the genuine next frontier, deliberately not faked
-  here. World-side direction: [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
+  here. Finally `response.py` opens the **action channel**: reaction is itself a leakage channel (`I(S;A)`) — an
+  always-react actor leaks the whole secret through *what it does* even if disclosure was sealed; a **response
+  gate** (act iff `ΔU ≥ info+signaling cost`) makes **non-action a first-class, *attributable* output**
+  (optimal abstention vs ignorance), trading action-utility against action-leakage. World-side direction:
+  [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
 
 **The conceptual arc is complete; the remaining work is empirical, not more laws.** It lives behind the
 intentionally-unbuilt seams — `reality_harness.NetworkChannel` (point it at a real socket),

@@ -292,9 +292,22 @@ never a new invariant:
     scaling `C` to a real model on a non-toy world is the genuine frontier (a different *kind* of build), not
     attempted here.
 
+11. **The action channel — DONE; reaction is a leakage channel.** `ursprung/perception/response.py` adds the
+    second channel the disclosure work left untouched: the actor's own behaviour. Even with `I(S;O) ≈ 0`, the
+    *action* re-leaks — `I(S;A) > 0` (what you defend, avoid, prioritize). An always-react actor leaks the whole
+    secret (2 bits) through its action alone; a **response gate** (act iff `ΔU_action ≥ C_information +
+    C_signaling`, the signaling cost being the action-leakage) makes **non-action a first-class output** and
+    collapses action-leakage (2.0 → 0.81 → 0) while preserving the high-value action — a coupled tradeoff (not
+    a free lunch). And a no-op is **attributable**: an *optimal abstention* (`ΔU` computed, below the gate) is
+    distinguishable from *ignorance* — the action-channel parallel to refusing the word "safe." The mature state
+    is *minimum necessary reaction*, not maximum intelligence. `I(S;A)` matters as much as `I(S;O)`.
+
 The remaining honest gaps (so this is not over-read): the compiler is still a *lookup / greedy channel select*,
 not a continuous funnel *solve*; the world, the learner, and the leakage estimator are constructed; the utility
-models are declared conventions; the capacity axis is a memory-horizon *proxy*, not real model capacity. The "participation *rarely* needs full knowledge" claim is now a *per-task
+models are declared conventions; the capacity axis is a memory-horizon *proxy*, not real model capacity; and the
+action-channel tradeoff is coupled by construction in a toy. The open frontier where the technical and
+governance problems become one (§11) is *verifiable claims about adaptive observers without revealing the
+protected state* — empirical and cryptographic, not another conceptual layer. The "participation *rarely* needs full knowledge" claim is now a *per-task
 empirical question* (separable → free lunch; non-separable → an irreducible measured frontier), not a settled
 thesis. The next increments are empirical — a real learner class, a real trace — not another conceptual layer.
 

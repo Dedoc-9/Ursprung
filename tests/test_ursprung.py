@@ -1042,6 +1042,24 @@ def test_perception_leakage_is_a_function_of_observer_capacity():
     check(r["leakage_undefined_without_observer_class"], "the same fixed representation has capacity-dependent leakage — 'leakage' is undefined without naming the observer class")
 
 
+def test_perception_response_action_is_a_channel():
+    r = perc.response.crucible()
+    # reaction is itself a leakage channel: the action alone leaks the secret even if disclosure was sealed
+    check(r["reaction_is_a_channel"], "the actor's action carries information about the secret (I(S;A) > 0)")
+    check(r["reactive_leaks_full_secret"], "an always-react policy leaks the whole secret through the action (2 bits)")
+    check(r["reactive_utility"] == 1.0, "the reactive policy achieves full task utility (but at full action leakage)")
+    # the response gate collapses action-leakage while preserving the high-value action
+    check(r["gate_reduces_leakage"], "the response gate reduces action-leakage versus reacting to everything")
+    check(r["gate_preserves_high_value"], "the gate still defends the high-value zone (utility on the action that matters)")
+    # non-action is a coherent, first-class output
+    check(r["silent_zero_leak"] and r["silent_zero_utility"], "never reacting is a coherent policy: zero action-leak, zero utility")
+    # the response frontier is a coupled tradeoff (reducing the leak costs utility — not a free lunch)
+    check(r["frontier_monotone"], "utility and action-leakage both fall as the response gate rises — a tradeoff curve")
+    check(r["coupled_tradeoff"], "you cannot keep full utility at lower action-leakage — the action channel couples them")
+    # a no-op is attributable: optimal abstention vs ignorance are distinguishable
+    check(r["non_action_not_ignorance"], "a gated no-op is an attributable optimal abstention, distinguishable from ignorance")
+
+
 def main():
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):
