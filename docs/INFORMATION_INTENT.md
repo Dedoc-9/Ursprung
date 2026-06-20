@@ -228,7 +228,9 @@ never a new invariant:
 
 1. **A `DisclosurePolicy` object** — the committed signaling scheme `π`, as a content-addressed convention with
    per-observer scope, resolution, purpose, and a leakage ceiling. (The generative dual of
-   `capability.py`/`causal_access.py`.)
+   `capability.py`/`causal_access.py`.) **— STARTED:** the embarrassingly-small first brick exists as
+   `ursprung/disclosure.py` (`DisclosurePolicy` + a toy compiler + the M10–M21 firewall as auditor: *policy
+   says reveal X; did the output contain only X?*). Still toy; the compiler is a lookup, not yet a funnel solve.
 2. **A `participation_utility` term** — value-of-information for a toy POMDP observer (bits that change the
    optimal action), so the §3 objective is benchable with a negative control, like every prior milestone.
 3. **The privacy-funnel bench** — solve `maximize U − λL s.t. cost` over a constructed world; show the frontier,

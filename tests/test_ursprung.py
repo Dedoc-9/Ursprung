@@ -58,6 +58,7 @@ from ursprung import behavioral_harness as bh
 from ursprung import adversary_harness as ah
 from ursprung import adversary_capacity as ac
 from ursprung import channel_discovery as cd
+from ursprung import disclosure as disc
 from ursprung.registry import Registry, LayerViolation, CORE, VIEW, ALLOCATOR, OBSERVER
 
 _n = 0
@@ -923,6 +924,25 @@ def test_channel_discovery_finds_the_unmodeled_channel():
     check(r["result_carries_its_boundary"], "every MeasurementResult names its estimator class and coverage boundary, never a bare 'safe'")
     ps = cd.measure("accumulation_events", cd.accumulation_channel, cd.slow_secret, "per_sample")
     check(ps.estimator_class == "C_marginal" and ps.coverage_boundary, "a MeasurementResult carries its estimator class and blind spot")
+
+
+def test_disclosure_policy_compiles_and_audits():
+    r = disc.crucible()
+    # the committed compiler emits exactly the purpose-need ∩ allowed: compliant AND sufficient
+    check(r["compiled_channels"] == ["threat_direction", "timing_window"], "the compiler emits the purpose's needed channels within the allowed set")
+    check(r["compiled_compliant"], "the compiled emission discloses nothing forbidden or unauthorized")
+    check(r["compiled_sufficient"], "the compiled emission meets the purpose's participation floor")
+    # negative controls — the M10–M21 firewall, pointed at the emission, catches violations
+    check(r["over_disclosure_caught"], "an emission leaking a forbidden channel (exact_position) is caught (not compliant)")
+    check(r["outside_allowed_caught"], "an emission outside the allowed set (server_state) is caught (not compliant)")
+    check(r["under_provision_flagged"], "an emission missing a needed channel is compliant but NOT sufficient (participation floor)")
+    # the policy is a committed, content-addressed convention, never a truth claim
+    check(r["policy_hash_deterministic"], "the disclosure policy is content-addressed (deterministic hash)")
+    check(r["policy_not_a_truth_claim"], "a disclosure policy chooses what to reveal; it is not a truth claim")
+    # the audit reports its own boundary — 'compliant' is w.r.t. the audited channels, never 'safe'
+    check(r["audit_carries_boundary"], "the audit names its coverage boundary (declared channels only)")
+    p = disc.DisclosurePolicy("player", "survival", ["threat_direction"], ["exact_position"])
+    check(p.permits("threat_direction") and not p.permits("exact_position"), "permits() respects allowed and forbidden")
 
 
 def main():
