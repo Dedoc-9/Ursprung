@@ -1201,6 +1201,11 @@ def test_perception_model_relativity_necessity_is_model_relative():
     check(r["robust_generator_is_g"], "the robust generator = ⋂ over admissible models = {g}")
     check(r["c_causal_under_model_not_across"], "c is causal under a model but not across models — a model-relative artifact")
     check(r["single_model_insufficient"], "a single model cannot separate causal from artifact; the model class can")
+    # the knife edge: the intersection is only as good as the chosen model class
+    check(r["too_small_keeps_confounder"], "a model class too small lets the confounder c survive")
+    check(r["right_class_recovers_g"], "a well-chosen model class recovers exactly the generator {g}")
+    check(r["too_large_erases_generator"], "a model class too large collapses the intersection — the generator g is erased")
+    check(r["knife_edge_monotone_collapse"], "the robust set shrinks monotonically as the class grows: {g,c} ⊋ {g} ⊋ {} — correct only in the middle")
 
 
 def main():

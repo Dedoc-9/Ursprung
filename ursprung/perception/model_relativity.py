@@ -81,6 +81,21 @@ def F2_richer(z, horizon=HORIZON):
     return out
 
 
+_DELTA = (Z["g"] + Z["c"]) % N  # the per-step advance, seen purely on the observable
+
+
+def F3_overrich(z, horizon=HORIZON):
+    """Over-rich model: autoregressive on the OBSERVABLE alone — reads neither g nor c. It fits the data by
+    advancing `visible` by the observed per-step delta, so BOTH latents look redundant under it. This is the
+    other blade of the knife edge: a class rich enough to model the observable directly absorbs the generator."""
+    z = dict(z)
+    out = []
+    for _ in range(horizon):
+        out.append(z["visible"])
+        z = {**z, "visible": (z["visible"] + _DELTA) % N}
+    return out
+
+
 MODELS = {"F1_restricted": F1_restricted, "F2_richer": F2_richer}
 
 
@@ -110,6 +125,33 @@ def robust_generator():
     return set.intersection(*admissible) if admissible else set()
 
 
+# --- the knife edge: the intersection is only as good as the model class you chose ------------------
+# ⋂ over models removes model-relative explanations — but the choice of which models are admissible is the
+# whole game. Too SMALL a class and confounders survive; too LARGE a class and the intersection collapses,
+# erasing real mechanisms. The same knife edge appears in causal discovery, scientific modeling, and
+# cryptographic attestation: the separator is only as good as the space of alternatives it rules out.
+
+_ALL_MODELS = {"F1_restricted": F1_restricted, "F2_richer": F2_richer, "F3_overrich": F3_overrich}
+
+
+def _G_F_over(model_fn):
+    return {c for c in CANDIDATES if fits(model_fn) and necessary_under(model_fn, c)}
+
+
+def robust_over(model_names):
+    """Robust generator as the intersection of G_F over a CHOSEN admissible class (a subset of _ALL_MODELS)."""
+    sets = [_G_F_over(_ALL_MODELS[n]) for n in model_names if fits(_ALL_MODELS[n])]
+    return set.intersection(*sets) if sets else set()
+
+
+def knife_edge():
+    """Exhibit both failure modes of the model-class choice on one bench."""
+    too_small = robust_over(["F1_restricted"])                                    # only the naive model
+    right = robust_over(["F1_restricted", "F2_richer"])                           # the well-chosen class
+    too_large = robust_over(["F1_restricted", "F2_richer", "F3_overrich"])        # includes the over-rich model
+    return {"too_small": too_small, "right": right, "too_large": too_large}
+
+
 # --- the crucible -----------------------------------------------------------------------------------
 
 def crucible():
@@ -130,6 +172,13 @@ def crucible():
     out["c_causal_under_model_not_across"] = "c" in gf1 and "c" not in robust
     # a single model cannot separate them; the model class can (same lesson as ≥2 contexts in confounder.py)
     out["single_model_insufficient"] = gf1 != robust and robust == (gf1 & gf2)
+    # the knife edge: the intersection is correct only for a well-chosen class
+    k = knife_edge()
+    out["too_small"], out["right_class"], out["too_large"] = sorted(k["too_small"]), sorted(k["right"]), sorted(k["too_large"])
+    out["too_small_keeps_confounder"] = "c" in k["too_small"]                 # class too small → confounder survives
+    out["right_class_recovers_g"] = k["right"] == {"g"}                       # well-chosen → exactly the generator
+    out["too_large_erases_generator"] = k["too_large"] == set()              # class too large → generator erased
+    out["knife_edge_monotone_collapse"] = k["too_small"] > k["right"] > k["too_large"]  # ⋂ shrinks as class grows
     return out
 
 
@@ -147,8 +196,16 @@ def demo():
           % r["c_causal_under_model_not_across"])
     print("  · 'g' survives every admissible model → the robust generator: %s" % r["robust_generator_is_g"])
     print("  · a single model cannot separate them; the model CLASS can: %s" % r["single_model_insufficient"])
-    print("\n  the same invariance principle, one layer deeper: causal-under-a-model ≠ causal-across-models.")
-    print("  the model class is the A_C choice — 'necessary to which F?' is the next boundary.")
+    print()
+    print("  the knife edge — the intersection is only as good as the model class you chose:")
+    print("    too small {F1}:        %s   → the confounder c survives" % r["too_small"])
+    print("    well-chosen {F1,F2}:   %s        → exactly the generator" % r["right_class"])
+    print("    too large {F1,F2,F3}:  %s         → the generator g is erased (an over-rich model absorbs it)" % r["too_large"])
+    print("    monotone collapse as the class grows: %s" % r["knife_edge_monotone_collapse"])
+    print()
+    print("  the same invariance principle, one layer deeper: causal-under-a-model ≠ causal-across-models.")
+    print("  the model class is the A_C choice — 'necessary to which F?' is the next boundary, and CHOOSING")
+    print("  the admissible class is the open hard problem (too small: confounders survive; too large: collapse).")
     return r
 
 

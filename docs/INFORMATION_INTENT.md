@@ -406,9 +406,17 @@ never a new invariant:
     contribution into a parameter and never reads it (so `c` reads redundant) — both fit the data, `G_F(F1) =
     {g,c}`, `G_F(F2) = {g}`, robust `= {g}`. `c` was *causal under a model, not across models*. A single model
     cannot separate generator from model-relative artifact; a model *class* can (the same lesson as ≥2 contexts
-    in `confounder.py`). This is the `A_C` loop made concrete — "necessary to which `F`?" is the next boundary,
-    and the honest open hardness is that `⋂` over a richer model class can shrink the recovered generator toward
-    nothing. New separator: `causal-under-a-model ≠ causal-across-models`.
+    in `confounder.py`). This is the `A_C` loop made concrete — "necessary to which `F`?" is the next boundary.
+    The module also exhibits **the knife edge** (`knife_edge()`): `⋂ G_F(F)` is correct only for a well-chosen
+    class. Add a third, *over-rich* model `F3` (autoregressive on the observable alone — reads neither latent,
+    yet fits the data) and the robust set collapses monotonically as the class grows: `{g,c}` (class too small —
+    the confounder `c` survives) `⊋ {g}` (well-chosen — exactly the generator) `⊋ {}` (class too large — the
+    generator `g` is *erased*, absorbed by a model that explains the observable directly). So choosing the
+    admissible model class is the open hard problem: too small and confounders survive, too large and real
+    mechanisms are erased — the same knife edge that appears in causal discovery, scientific modeling, and
+    cryptographic attestation (*the separator is only as good as the space of alternatives it rules out*). The
+    compact closing form: `generator = invariant ∧ necessary ∧ model-robust`. New separator:
+    `causal-under-a-model ≠ causal-across-models`.
 
 The remaining honest gaps (so this is not over-read): the compiler is still a *lookup / greedy channel select*,
 not a continuous funnel *solve*; the world, the learner, and the leakage estimator are constructed; the utility
