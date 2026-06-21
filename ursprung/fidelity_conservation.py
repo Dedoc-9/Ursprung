@@ -1,6 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 """
-ursprung/fidelity_conservation.py — the Temporal Fidelity Conservation Law (the synthesis).
+ursprung/fidelity_conservation.py — the Temporal Fidelity Accounting Law (the synthesis).
+
+(The module keeps its filename; the law was stated earlier as "Conservation." The conserved-quantity framing
+is a fixed-budget ACCOUNTING MODEL, not a physical conservation law — "conservation" names the bookkeeping, not
+a conserved quantity of nature: model ≠ verified structure.)
 
 THE LAW:
 
@@ -8,7 +12,7 @@ THE LAW:
     Therefore the objective is not maximum detail — it is MINIMUM CONSEQUENTIAL DISCONTINUITY under a fixed
     budget.
 
-Fidelity is not created; it is **transferred** — across space, across time, across representation:
+Fidelity is treated as not created but **transferred** — across space, across time, across representation:
 
     more fidelity here   = less fidelity somewhere else
     more fidelity now    = less fidelity later

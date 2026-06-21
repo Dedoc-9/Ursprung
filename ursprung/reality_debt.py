@@ -7,9 +7,10 @@ THE LAW:
     Every approximation incurs reality debt. The role of predictive allocation is not to eliminate debt, but
     to ensure debt accumulates where future consequence is lowest and repayment cost is smallest.
 
-    Debt = Approximation × Persistence × Consequence
+    Debt = Approximation × Persistence × Consequence   (a bookkeeping MODEL — a chosen weighting, not a
+                                                         derived necessity of reality: model ≠ verified structure)
 
-The pioneering reframing: **fidelity is conserved, but debt is accumulated.** So PFAL/TCFF are not merely
+The pioneering reframing: **fidelity is treated as conserved, but debt is accumulated.** So PFAL/TCFF are not merely
 allocating fidelity — they are allocating DEBT REPAYMENT. The renderer becomes a financial system for
 approximation. Every optimization is one of two things, and the distinction is the whole point:
 

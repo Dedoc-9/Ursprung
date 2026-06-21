@@ -99,17 +99,20 @@ engines, assets), not an ontological commitment. The triple: **polygons = compat
 = execution mechanism · predictive allocation (PFAL/TCFF) = fidelity multiplier.** The engineering task is not
 to prove polygons correct nor to replace them with a "purer" representation (voxels, point clouds, neural
 fields, Gaussian splats, SDFs, hybrid scene graphs — all recorded as rejected *replacements*), but to manage
-where their approximations fail. The decision is a deterministic rule over declared costs —
+where their approximations fail. The decision is a deterministic rule over **declared** costs —
 `reconcile(abandonment_cost, approximation_error)` keeps polygons iff `abandonment_cost ≥ approximation_error`
-— never a truth claim about representation.
+— never a truth claim about representation, and never a *measured* cost: the inputs must carry their provenance,
+because a cost estimate without lineage is just another unaccounted number (`declared ≠ verified`).
 
-### Temporal Fidelity Conservation Law (the synthesis)
+### Temporal Fidelity Accounting Law (the synthesis; stated earlier as "Conservation")
 
 > A renderer does not create fidelity. It distributes finite fidelity across competing uncertainties.
 > Therefore the objective is not maximum detail — it is **minimum consequential discontinuity under a fixed
 > budget.**
 
-Fidelity is **transferred**, never created: more here = less elsewhere; more now = less later; more spatial =
+Fidelity is **transferred**, never created — *a fixed-budget accounting model, not a physical conservation law
+(`model ≠ verified structure`; "conservation" names the bookkeeping, not a conserved quantity of nature)*: more
+here = less elsewhere; more now = less later; more spatial =
 less temporal; more shading = less geometry. Every optimization is a zero-sum transfer on a fixed (~4.13 ms)
 budget (`ursprung/fidelity_conservation.py`): `is_conserved(alloc, budget)` (Σ = budget), `transfer()` (zero-
 sum, fail-closed), and the quantity to minimize, `consequential_discontinuity(regions, alloc)`. This bridges
@@ -128,6 +131,8 @@ WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → RASTERIZATION → 
 > to ensure debt accumulates where future consequence is lowest and repayment cost is smallest.
 >
 > **Debt = Approximation × Persistence × Consequence**
+>
+> *(The product is a bookkeeping model — a chosen weighting relationship, not a derived necessity of reality.)*
 
 The reframing: **fidelity is conserved, but debt is accumulated** — so PFAL/TCFF allocate *debt repayment*,
 and the renderer is a financial system for approximation (`ursprung/reality_debt.py`). Every optimization is
@@ -148,6 +153,11 @@ The one-line philosophy Ursprung is built to be known for: **arbitrary boundarie
 handling, and finite fidelity should be allocated by expected future failure cost, not present visual
 complexity.**
 
+Each of these five is the **Provenance Principle applied to approximation**: every approximation, boundary
+choice, and tradeoff must carry the history and assumptions that make it interpretable. The kernel did not add
+this to the laws; the laws acknowledge the contract the kernel now enforces. Their equations are bookkeeping
+models (chosen weightings), not derived invariants — `model ≠ verified structure`.
+
 The standing risk: too many interesting capabilities competing to become the center of gravity. Success may
 be **more than one result in a pool** of composable features that each stay on their side of the membrane —
 not a single dominant technique. `docs/LLM_ON_TRACK.md` is the counterweight.
@@ -164,7 +174,8 @@ being wrong** — never where it merely "looks important." The chain (full treat
   response, never a world change (`ursprung/temporal_membrane.py`, ALLOCATOR).
 - The **Temporal Reality Budget** allocates a fixed budget by `uncertainty × consequence` (consequence is an
   input from `causal_runtime`), not by visible complexity.
-- **PFAL**: `R = U × C × P × S` (uncertainty · consequence · persistence · sensitivity). Carefully worded
+- **PFAL**: `R = U × C × P × S` (a weighting model — uncertainty · consequence · persistence · sensitivity —
+  not a derived law). Carefully worded
   claim: *the renderer spends computation where its current approximation has the highest expected failure
   cost* — not "knows what matters." A measurable hypothesis, with a comparative bench + negative control
   (`ursprung/pfal_bench.py`); constructed-world numbers that **expire on real silicon**.

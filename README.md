@@ -108,17 +108,24 @@ backend* of a committed, leakage-bounded **perception compiler**
 
 ## The five laws (the philosophy layer — the ontology of fidelity)
 
-1. **Reality Debt Law** *(underneath)* — every approximation incurs debt: `Debt = Approximation ×
-   Persistence × Consequence`. Fidelity is conserved, but debt is accumulated; allocation places debt where
-   future consequence is lowest. (`reality_debt.py`)
+1. **Reality Debt Law** *(underneath)* — every approximation incurs debt, modelled as `Debt = Approximation ×
+   Persistence × Consequence`. Fidelity is treated as conserved while debt is accumulated; allocation places
+   debt where future consequence is lowest. *(The product is a bookkeeping model — a chosen weighting, not a
+   derived necessity: `model ≠ verified structure`.)* (`reality_debt.py`)
 2. **Arbitrary-Boundary Law** — representation choices (pixel coverage, float format, LOD threshold, tick
    rate, polygons) are deterministic *conventions*, never truth claims. (`conventions.py`)
-3. **Predictive Fidelity Law (PFAL / TCFF)** — spend computation where future failure cost is highest:
-   `R = U × C × P × S × τ`. (`prediction.py`, `temporal_membrane.py`, `pfal_bench.py`, `tcff.py`)
+3. **Predictive Fidelity Law (PFAL / TCFF)** — spend computation where future failure cost is highest, scored
+   by `R = U × C × P × S × τ`. *(The product is a weighting model, not a measured law; the comparative bench
+   result is constructed-world and expires on real silicon.)* (`prediction.py`, `temporal_membrane.py`,
+   `pfal_bench.py`, `tcff.py`)
 4. **Polygon Reconciliation Law** — keep polygons iff abandoning them costs more than their approximation
-   error; rasterization is transport, allocation is strategy. (`polygon_reconciliation.py`)
-5. **Temporal Fidelity Conservation Law** — fidelity is transferred, not created; the objective is *minimum
-   consequential discontinuity under a fixed budget*, not maximum detail. (`fidelity_conservation.py`)
+   error; rasterization is transport, allocation is strategy. *(The rule runs over **declared** costs that
+   carry their provenance — a cost without lineage is an unaccounted number: `declared ≠ verified`.)*
+   (`polygon_reconciliation.py`)
+5. **Temporal Fidelity Accounting Law** — under a fixed budget, fidelity gained in one dimension creates
+   pressure elsewhere; the objective is *minimum consequential discontinuity under a fixed budget*, not maximum
+   detail. *(Stated earlier as "Conservation"; the conserved-quantity framing is a fixed-budget accounting
+   model, not a physical conservation law. Implemented as `fidelity_conservation.py`.)*
 
 ```
 WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT → RASTERIZATION → IMAGE
@@ -129,7 +136,10 @@ invariant, and that deepest one is deliberately *not* numbered as a sixth law, b
 category: a law of the **runtime**, not of the world. (`observation ≠ intervention` is true whether this system
 exists or not; *identity includes provenance* is a design requirement the runtime *chooses* to enforce.) It is
 treated on its own terms below in *The Provenance Principle* — and **Law 2 (Arbitrary-Boundary) is its earliest
-instance**, which is why the rest of the architecture fell out of it.
+instance**, which is why the rest of the architecture fell out of it. More generally, each fidelity law can be
+read as the **Provenance Principle applied to approximation**: every approximation, boundary choice, and
+tradeoff must carry the history and assumptions that make it interpretable. The kernel did not add this to the
+laws; it made explicit a contract they already obey.
 
 ## Rendering economics — priority ≠ allocation (the discovered hierarchy)
 
@@ -337,7 +347,7 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 | `ursprung/pfal_bench.py` | **OBSERVER** | PFAL `R=U×C×P×S` + falsification bench (uniform / distance-vis / PFAL, negative control) |
 | `ursprung/tcff.py` | **ALLOCATOR** | TCFF `F=U×C×P×S×τ` proactive pre-warming + Perceptual Continuity per Joule bench |
 | `ursprung/polygon_reconciliation.py` | **OBSERVER** | Polygon Reconciliation Law: polygons as deterministic convention; `reconcile()` not replace |
-| `ursprung/fidelity_conservation.py` | **OBSERVER** | Temporal Fidelity Conservation Law: fidelity is transferred, not created; minimize consequential discontinuity |
+| `ursprung/fidelity_conservation.py` | **OBSERVER** | Temporal Fidelity Accounting Law (was "Conservation"): under a fixed budget, fidelity transferred between dimensions is a bookkeeping model, not a physical conservation law; minimize consequential discontinuity |
 | `ursprung/reality_debt.py` | **OBSERVER** | Reality Debt Law: `Debt = Approximation × Persistence × Consequence`; place debt where consequence is lowest |
 | `ursprung/causal_continuity.py` | **OBSERVER** | Causal Continuity *Hypothesis* (provisional): allocate ∝ expected future causal loss `U×C×P`; PFAL⇄Debt duality |
 | `ursprung/raster.py` | **VIEW** | deterministic reference rasterizer: projection→coverage→sampling→raster, each a declared convention; hashable framebuffer |
@@ -386,7 +396,8 @@ control, and an explicit "expires on real silicon" bound.
 
 - **M1 — foundation.** Invariant harness; the renderer is proven observer-only (`integrity ≠ truth`).
 - **M2 — the five laws.** Reality Debt · Arbitrary-Boundary · Predictive Fidelity (PFAL/TCFF) · Polygon
-  Reconciliation · Temporal Fidelity Conservation, each encoded as data/rule.
+  Reconciliation · Temporal Fidelity Accounting (was "Conservation"), each encoded as data/rule — the product
+  forms are bookkeeping models, not derived invariants.
 - **M3 / 3.1 — rendering economics.** VIEW raster slice + the Causal Continuity Hypothesis, which **failed**
   the equal-budget bench (recorded, not hidden) and became the *ranking ≠ allocation* refinement;
   `ranked_waterfill` strictly beat every control.

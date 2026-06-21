@@ -6,11 +6,11 @@ verified, and its honest bound. Modeled on the workbench's `GENEALOGY.md`. `inte
 ## The five laws (the philosophy layer)
 
 ```
-Reality Debt Law          (underneath)  every approximation incurs debt = approx × persistence × consequence
+Reality Debt Law          (underneath)  every approximation incurs debt ≈ approx × persistence × consequence (a model)
    └─ Arbitrary-Boundary Law            representation choices are deterministic conventions, not truth
-   └─ Predictive Fidelity Law (PFAL/TCFF) spend where future failure cost is highest (U·C·P·S·τ)
-   └─ Polygon Reconciliation Law        keep polygons iff abandonment cost ≥ approximation error
-   └─ Temporal Fidelity Conservation    fidelity is transferred, not created; minimize consequential discontinuity
+   └─ Predictive Fidelity Law (PFAL/TCFF) spend where future failure cost is highest (U·C·P·S·τ, a weighting model)
+   └─ Polygon Reconciliation Law        keep polygons iff declared abandonment cost ≥ approximation error
+   └─ Temporal Fidelity Accounting      fixed-budget transfer (a bookkeeping model, not physical conservation); minimize consequential discontinuity
 ```
 
 One line: **arbitrary boundaries require deterministic handling, and finite fidelity should be allocated by
@@ -45,11 +45,11 @@ WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT �
   - [x] Three divergence classes (world / representation / observation) — `divergence.py`
   - [x] Dini-style prediction observer; ghost = max(0, observed − predicted) — `prediction.py`
   - [x] Temporal Prediction Membrane + Temporal Reality Budget (U × C) — `temporal_membrane.py`
-  - [x] PFAL R = U×C×P×S + falsification bench w/ negative control — `pfal_bench.py`
+  - [x] PFAL R = U×C×P×S (a weighting model) + falsification bench w/ negative control — `pfal_bench.py`
   - [x] TCFF F = U×C×P×S×τ proactive + Perceptual Continuity per Joule — `tcff.py`
-  - [x] Polygon Reconciliation Law; `reconcile()` not replace — `polygon_reconciliation.py`
-  - [x] Temporal Fidelity Conservation Law; transfer is zero-sum — `fidelity_conservation.py`
-  - [x] Reality Debt Law; Debt = approx × persistence × consequence — `reality_debt.py`
+  - [x] Polygon Reconciliation Law; `reconcile()` over declared costs, not replace — `polygon_reconciliation.py`
+  - [x] Temporal Fidelity Accounting Law (was "Conservation"); transfer is a fixed-budget bookkeeping model — `fidelity_conservation.py`
+  - [x] Reality Debt Law; Debt = approx × persistence × consequence (a bookkeeping model) — `reality_debt.py`
   - [x] Live loop wiring (prediction → membrane budget → PFAL → TCFF/PCJ → render record) — `loop.py`
   - [x] Docs: `LLM_ON_TRACK.md`, `PREDICTIVE_FIDELITY.md`, `RENDER_VERIFICATION_RECORD.md`, this file.
 
