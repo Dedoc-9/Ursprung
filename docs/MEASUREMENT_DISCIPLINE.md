@@ -228,6 +228,17 @@ causal relevance   ≠ causal position   (Phase 2's separation, the crisp form: 
                                         does it sit in the graph?" (position). A root and a mediator are both
                                         relevant; only position distinguishes them. The intervention gate
                                         answers relevance; topology answers position.)
+created coherence  ≠ discovered coherence   (the re-anthropomorphism / "provenance collapse" failure: a
+                                        designer imposes a constraint, the system adapts coherently, and the
+                                        AUTHORED coherence is re-read as DISCOVERED structure — the mirror
+                                        mistaken for an observer. "behavior under declared constraints" ≠
+                                        "invariant structure across constraints"; what survives a change of
+                                        encoder/environment/intervention is discovered, what does not was
+                                        authored. Demonstrated in latent_phase4: the confounder reconstructs and
+                                        correlates with the outcome BECAUSE it was written that way, yet do(c)=0
+                                        so its edge can only be assumption_load_bearing — the system cannot
+                                        mistake what the developer imposed for what it found. identity includes
+                                        provenance keeps the creator from disappearing into the creation.)
 recovered topology  ≠ discovered ontology   (Phase 2: the intervention asymmetries recover a partial order
                                         (root/mediator/sink/isolated) that separates root from mediator — but
                                         even a perfectly recovered graph is a graph over LATENT FACTORS created
