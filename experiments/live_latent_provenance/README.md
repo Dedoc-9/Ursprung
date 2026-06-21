@@ -159,6 +159,31 @@ The clean staircase this preserves, with no leap between steps: **Python** prove
 survives compression; **Rust** proves the mechanism survives real concurrency primitives;
 **GPU/runtime** proves the world loop survives a real substrate.
 
+### Iteration — first-class channels + deadline pacing (`channels.py`, `run_channels.py`)
+
+Two follow-ups, each scoped by the boundary above. First, the policy *drop resolve requests, never
+commits* was lifted from a runtime check into the **type boundary**: a `Commit` cannot be constructed
+without provenance, state advances only through `CommitChannel.apply` (which has no drop surface and
+refuses an untraceable commit), and `ResolveRing` (which may drop, counted) has no `apply`. So the
+danger the probe named — *buffer full → drop event → world advances → UNACCOUNTED* — is now an
+unreachable program state, not a discouraged one (7/7, `run_channels.py`).
+
+Second, the probe's reversal said the real variable was clock discipline, so `probe.py` gained a
+`sleep` vs spin-to-`deadline` pacing A/B. Measured (sandbox Linux):
+
+```
+240 Hz (budget 4.167 ms)   sleep:    interval p50 4.267, jitter 0.047, 234 frames
+                           deadline: interval p50 4.167, jitter 0.004, 240 frames   (~12× tighter, on budget)
+```
+
+Deadline pacing hit the budget exactly and cut jitter ~12×, while commits flowed 1200/0 with zero
+drops — confirming the runtime can hold its temporal contract without confusing scheduler behaviour
+for simulation behaviour. **Non-transfer caveat (named, not measured):** this cheapness is
+Linux-relative. Windows timer granularity (~15 ms) exceeds a 4.167 ms frame, so the coarse-sleep step
+would overshoot every frame; a sub-granularity budget there requires spinning the whole frame (a full
+core) or raising OS timer resolution. New separator: **`Linux scheduler result ≠ Windows scheduler
+result`** — `deadline pacing is cheap` holds only where sleep granularity is below the budget.
+
 ## Honest bounds — the narrow claim
 
 The claim is **provenance-preserving compression under runtime constraints**, *not*

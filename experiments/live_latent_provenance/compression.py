@@ -116,6 +116,11 @@ class ProvenanceStore:
     def is_traceable(self, obj: LiveObject) -> bool:
         return self.resolve(obj)["status"] == "resolved"
 
+    def resolve_digest(self, digest: Optional[str]) -> Dict[str, Any]:
+        """Resolve a bare digest (not wrapped in a LiveObject) — used by the commit path, where the
+        thing being checked is an event's provenance reference, not a hot-path object."""
+        return self.resolve(LiveObject(state=None, transform=None, provenance_digest=digest))
+
 
 # --- Optimizations as plugins: one compresses, one severs. The contract distinguishes them. -------
 

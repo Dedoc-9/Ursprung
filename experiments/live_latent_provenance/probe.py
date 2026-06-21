@@ -36,51 +36,18 @@ import threading
 import time
 from typing import List, Optional
 
+from channels import Commit, CommitChannel, ResolveRing
 from compression import LiveObject, ProvenanceStore, UNRECORDED
-
-
-# --- A single-producer/single-consumer ring. NOT lock-free under the GIL; see HONEST BOUNDS. --------
-class SPSCRing:
-    """Pre-allocated, fixed-capacity ring for hot→background handoff of RESOLVE REQUESTS only.
-
-    Commits never travel this path. A full ring drops a resolve request (latent inspection deferred —
-    compression, counted) and NEVER drops a commit (which would create an UNACCOUNTED object —
-    severance, forbidden). `compression ≠ severance`, enforced at the buffer.
-    """
-
-    def __init__(self, capacity: int = 4096):
-        self._buf: List[Optional[str]] = [None] * capacity
-        self._cap = capacity
-        self._w = 0
-        self._r = 0
-        self.dropped = 0  # resolve requests dropped under backpressure (allowed; counted)
-
-    def offer(self, digest: str) -> bool:
-        nxt = (self._w + 1) % self._cap
-        if nxt == self._r:               # full: drop the resolve request, do not block the frame
-            self.dropped += 1
-            return False
-        self._buf[self._w] = digest
-        self._w = nxt
-        return True
-
-    def poll(self) -> Optional[str]:
-        if self._r == self._w:
-            return None
-        d = self._buf[self._r]
-        self._r = (self._r + 1) % self._cap
-        return d
-
-    def empty(self) -> bool:
-        return self._r == self._w
 
 
 # --- The probe ------------------------------------------------------------------------------------
 class Probe:
-    def __init__(self, mode: str, target_hz: float, duration_s: float, n_objects: int = 200,
-                 store_size: int = 5000, seed: int = 1):
+    def __init__(self, mode: str, target_hz: float, duration_s: float, pacing: str = "sleep",
+                 n_objects: int = 200, store_size: int = 5000, seed: int = 1):
         assert mode in ("ring", "queue")
+        assert pacing in ("sleep", "deadline")
         self.mode = mode
+        self.pacing = pacing
         self.target = 1.0 / target_hz
         self.duration = duration_s
         self.rng = random.Random(seed)
@@ -88,10 +55,12 @@ class Probe:
         self.objects: List[LiveObject] = []
         self.running = False
 
-        # background handoff path
-        self.ring = SPSCRing(4096)
+        # background handoff path (inspection only; may drop) + the never-drop commit path
+        self.ring = ResolveRing(4096)
         self.q: "queue.Queue[str]" = queue.Queue(maxsize=4096)
         self.q_dropped = 0
+        self.commits = CommitChannel(self.store)
+        self.world: dict = {}
 
         # telemetry
         self.frame_work: List[float] = []      # time spent doing hot-path work (s)
@@ -147,6 +116,25 @@ class Probe:
             except queue.Full:
                 self.q_dropped += 1
 
+    def _pace(self, deadline: float):
+        """Hold the frame's temporal contract until `deadline`.
+        sleep:    one coarse time.sleep — cheap, but inherits scheduler granularity (the jitter source).
+        deadline: coarse sleep up to a small slack window, then busy-spin to the deadline — trades CPU
+                  in the slack window for a tighter cadence. Tests whether the runtime can control its
+                  temporal contract without confusing scheduler behaviour for simulation behaviour.
+        """
+        if self.pacing == "sleep":
+            s = deadline - time.perf_counter()
+            if s > 0:
+                time.sleep(s)
+        else:
+            SLACK = 0.0008  # 0.8 ms spin window
+            s = deadline - time.perf_counter() - SLACK
+            if s > 0:
+                time.sleep(s)
+            while time.perf_counter() < deadline:
+                pass
+
     def run(self):
         self.running = True
         bg = threading.Thread(target=self._bg, daemon=True)
@@ -160,7 +148,7 @@ class Probe:
             last_start = frame_start
 
             # --- HOT PATH: carry only the digest; enforce the contract in-frame; deflect resolves ---
-            for obj in self.objects:
+            for idx, obj in enumerate(self.objects):
                 d = obj.provenance_digest
                 if d == UNRECORDED:
                     self.unaccounted_caught += 1
@@ -168,15 +156,18 @@ class Probe:
                 if d is None:
                     self.severed_caught += 1
                     continue                       # structure remains; provenance severed; flagged
-                obj.state += obj.transform         # the only real work the frame does
+                obj.state += obj.transform         # the lightweight carry+transform — measured clean
                 if self.rng.random() < 0.05:       # occasional inspect/debug request → latent path
                     self._request_resolve(d)
 
+            # a bounded batch of state changes goes through the never-drop, provenance-required path
+            # (exercised under the clock, but rate-capped so commit-apply cost does not swamp the carry)
+            for obj in self.objects[:5]:
+                self.commits.apply(Commit("c", obj.state, obj.provenance_digest), self.world)
+
             work = time.perf_counter() - frame_start
             self.frame_work.append(work)
-            sleep = self.target - work
-            if sleep > 0:
-                time.sleep(sleep)
+            self._pace(frame_start + self.target)
         self.running = False
         bg.join(timeout=1.0)
 
@@ -190,8 +181,11 @@ class Probe:
         iv = self.frame_interval
         return {
             "mode": self.mode,
+            "pacing": self.pacing,
             "target_ms": ms(self.target),
             "frames": len(self.frame_work),
+            "commits_applied": self.commits.applied,
+            "commits_refused": self.commits.refused,
             "work_p50_ms": ms(statistics.median(self.frame_work)) if self.frame_work else 0,
             "work_max_ms": ms(max(self.frame_work)) if self.frame_work else 0,
             "interval_p50_ms": ms(statistics.median(iv)) if iv else 0,
@@ -208,25 +202,25 @@ class Probe:
 
 
 def _line(r: dict) -> str:
-    return ("  %-5s | work p50/max %6.3f/%6.3f | interval p50/p99/max %6.3f/%6.3f/%7.3f "
-            "| jitter %5.3f | over-budget %4d/%d | resolve p50 %5.1fus drop %d | sev/unacc %d/%d") % (
-        r["mode"], r["work_p50_ms"], r["work_max_ms"], r["interval_p50_ms"], r["interval_p99_ms"],
-        r["interval_max_ms"], r["interval_jitter_ms"], r["over_budget_frames"], r["frames"],
-        r["resolve_latency_p50_us"], r["dropped_resolve_requests"],
-        r["severed_caught_per_frame"], r["unaccounted_caught_per_frame"])
+    return ("  %-8s | interval p50/p99/max %6.3f/%6.3f/%7.3f | jitter %5.3f | over-budget %3d/%d "
+            "| work p50 %5.3f | commits ok/refused %d/%d | drop %d") % (
+        r["pacing"], r["interval_p50_ms"], r["interval_p99_ms"], r["interval_max_ms"],
+        r["interval_jitter_ms"], r["over_budget_frames"], r["frames"], r["work_p50_ms"],
+        r["commits_applied"], r["commits_refused"], r["dropped_resolve_requests"])
 
 
 def main():
-    print("REAL-SILICON PROBE — live/latent provenance under a real clock (sandbox Linux; NOT Windows)\n")
+    print("REAL-SILICON PROBE — live/latent under a real clock (sandbox Linux; NOT Windows)")
+    print("A/B: sleep pacing vs spin-to-deadline pacing; ring handoff; the commit path is exercised\n")
     for hz in (240.0, 60.0):
         print(f"target {hz:.0f} Hz  (budget {1000.0/hz:.3f} ms)")
-        for mode in ("queue", "ring"):
-            r = Probe(mode=mode, target_hz=hz, duration_s=1.0).run_and_report()
+        for pacing in ("sleep", "deadline"):
+            r = Probe(mode="ring", target_hz=hz, duration_s=1.0, pacing=pacing).run_and_report()
             print(_line(r))
         print()
-    print("contract held in-frame: severed and unaccounted objects are caught every frame, never")
-    print("silently processed. The A/B is CPython machinery only (GIL ⇒ not a lock-free result);")
-    print("cadence jitter is dominated by time.sleep granularity, not by the handoff path.")
+    print("contract held every frame: severed/unaccounted caught; commits never dropped (refused if")
+    print("untraceable). Deadline pacing trades CPU in a spin window for a tighter cadence; the")
+    print("residual is scheduler/clock behaviour, not provenance — and the real numbers are silicon's.")
 
 
 # small convenience so main reads cleanly
