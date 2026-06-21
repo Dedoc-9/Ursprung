@@ -174,8 +174,14 @@ structure (an instrument is valid, an invariance holds, a natural experiment is 
 graph's floor *grows exactly as intervention access shrinks*. The honest system's job there is not to recover
 more; it is to keep every assumption-recovered edge a *declared* floor, and to report how much of the topology
 is intervention-grounded vs assumption-load-bearing — never letting an assumed edge wear the confidence of an
-intervened one (`chosen ≠ derived`, at the level of the causal graph). That is a research-grade phase with its
-own bounds, deliberately not folded into a toy. The compact statement of the arc so far:
+intervened one (`chosen ≠ derived`, at the level of the causal graph). The **discipline layer** of this is
+built — `experiments/latent_phase3/`, *before* any estimator: a `CausalEdge` carries its support
+(`intervention_grounded` | `assumption_load_bearing` with a declared, content-addressed assumption from `𝓐`);
+the graph `digest` covers edges *including* their support (two graphs with identical adjacency but different
+provenance are different objects — the `graph_digest` analogue of `floor_digest`); and the `𝓐`-invariant core
+(edges surviving every admissible `𝓐`) is exactly the intervention-grounded subgraph. What stays research-grade
+and *not* built is the **estimator** — *verifying* an assumption holds (which IV, which invariance test); the
+provenance object records the claimed support, it does not certify it. The compact statement of the arc so far:
 *Phase 1 — observational success cannot certify causation; Phase 2 — causal relevance cannot certify causal
 position; next — how much topology survives when intervention access is constrained.*
 
