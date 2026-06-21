@@ -161,6 +161,29 @@ survives a change of encoder family (a change of `𝓕`); `ledgers` separates *r
 (epistemic) from *adequacy of the learned representation* (ontological); and every result is emitted as a
 `GroundedClaim` that must declare architecture, objective, data distribution, and training regime as its floor.
 
+## Toward an efficient codebase — orthogonal projection gates & masking matrices (forward note, not built)
+
+The Phase-1 harness measures recoverability and gauge-invariance with `lstsq` and explicit rotations — correct
+but not cheap, and it scores *factors* rather than *carving the latent*. The efficient form, for when this
+becomes a real codebase: an **orthogonal projection-gate layer**. Hold a declared (or learned) orthonormal
+basis `Q` (so `QᵀQ = I` — gauge transformations are exactly the orthogonal group, so the basis change is free,
+invertible, and norm-preserving), and a set of **masking matrices** `M_k = Q · diag(m_k) · Qᵀ` that project the
+latent onto candidate subspaces. Then:
+
+- a **mask is gauge-fixing made explicit** — it names which subspace a claim lives in, and the orthogonality of
+  `Q` is what makes "does this survive a latent rotation?" a property you *construct* rather than test by
+  sampling rotations;
+- the **causal subspace is the one whose mask survives intervention** — `do(·)` moves the outcome through `M_g`
+  and not through `M_c`; isolating it is a projection, not a search;
+- composing masks gives a cheap **information-firewall**: zero out the subspaces a downstream module is not
+  entitled to read (`reconstruction`/`capability` over latents, as a linear projection).
+
+Honest caveat, in the same spirit as everything above: an orthogonal projection only cleanly separates subspaces
+when the factors are **linearly mixed and the split is real** — the moment the generator and confounder share a
+nonlinear, entangled manifold (or the backdoor is unobserved), no projection matrix resolves it and you are back
+at `observation ≠ intervention`. The gate makes the *resolvable* part efficient; it does not make the
+*unresolvable* part resolvable. `projection ≠ disentanglement`.
+
 ## "Trust the dark" — the discipline that makes this honest
 
 The horizon is an **Arbitrary Boundary** in the project's exact sense: declared, content-addressed, carrying its
