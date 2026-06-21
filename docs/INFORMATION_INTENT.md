@@ -479,6 +479,19 @@ never a new invariant:
     ledgers — it names the direction of motion, it does not certify its cause, and it inherits the toy adequacy
     axis.
 
+24. **Acceleration — DONE; Δvelocity, the regime of the motion.** `ursprung/perception/acceleration.py` adds the
+    second derivative, because velocity under-determines the situation: `t1=(0.2,0.2)→(0.4,0.4)` and
+    `t2=(0.8,0.8)→(1.0,1.0)` share a velocity `(+0.2,+0.2)` but are different regimes (fragile-early vs
+    consolidating-late) — `velocity ≠ regime`. Acceleration distinguishes **stabilizing** (motion slowing —
+    acceleration opposes velocity, converging) from **diverging** (speeding up), which share a velocity sign;
+    and **accelerating_crisis** (`Δcorrespondence < 0` AND `Δ²correspondence < 0`) from **steady_decline**
+    (`Δ²corr ≈ 0`), which share a velocity sign — so `declining ≠ accelerating-decline`. The danger it catches:
+    a result pinned at accountability 1.0 whose correspondence is falling *faster each step* — a confident model
+    losing the world at a worsening rate. HONEST: kinematic bookkeeping one derivative past `trajectory`; it
+    describes the *shape* of the motion (speeding up / slowing down), it does not explain or predict it — a
+    dynamical model of *why* a claim accelerates would itself be an `F`, with all the model-relativity caveats.
+    Separators: `velocity ≠ regime`; `declining ≠ accelerating-decline`.
+
 The remaining honest gaps (so this is not over-read): the compiler is still a *lookup / greedy channel select*,
 not a continuous funnel *solve*; the world, the learner, and the leakage estimator are constructed; the utility
 models are declared conventions; the capacity axis is a memory-horizon *proxy*, not real model capacity; the

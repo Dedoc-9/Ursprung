@@ -1270,6 +1270,19 @@ def test_perception_trajectory_motion_through_confidence_space():
     check(r["endpoint_dictates_action"], "the destination quadrant dictates the next action (reproducible_error → challenge the model)")
 
 
+def test_perception_acceleration_regime_and_crisis():
+    r = perc.acceleration.crucible()
+    check(r["acceleration_is_delta_velocity"], "acceleration is the change in velocity (the second derivative of the path)")
+    check(r["same_velocity_different_regime"], "two claims can share a velocity yet be different regimes — velocity ≠ regime")
+    check(r["steady_decline_classified"], "constant-rate adequacy decline is steady_decline (Δ²corr ≈ 0)")
+    check(r["accelerating_crisis_classified"], "adequacy declining at a worsening rate is accelerating_crisis (Δ²corr < 0)")
+    check(r["declining_not_equal_accelerating_decline"], "both are declining; only acceleration separates them — declining ≠ accelerating-decline")
+    check(r["stabilizing_classified"], "decelerating motion (speed falling) is stabilizing — converging toward a settle")
+    check(r["diverging_classified"], "accelerating motion (speed rising) is diverging")
+    check(r["regime_needs_acceleration"], "stabilizing and diverging cannot be told apart by velocity alone — the regime needs acceleration")
+    check(r["zero_acceleration_is_steady"], "constant velocity → zero acceleration → a steady regime")
+
+
 def main():
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):

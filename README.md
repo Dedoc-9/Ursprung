@@ -300,7 +300,7 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 
 ## Status
 
-The full suite is **486 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
+The full suite is **495 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
 control, and an explicit "expires on real silicon" bound.
 
 - **M1 — foundation.** Invariant harness; the renderer is proven observer-only (`integrity ≠ truth`).
@@ -393,8 +393,12 @@ control, and an explicit "expires on real silicon" bound.
   pair `(1.0,0.2)` / `(0.2,1.0)` is Pareto-incomparable until a goal is declared), and named vectors
   (`accumulating_support`, `entering_crisis`, …). The path matters: the same integrity gain can end in
   *accounted-and-supported* or in *reproducible-error*. `position ≠ ranking`; `integrity-gain ≠ progress`; and
-  crisis is declining adequacy regardless of integrity — `integrity ≠ immunity`. World-side direction:
-  [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
+  crisis is declining adequacy regardless of integrity — `integrity ≠ immunity`. And `acceleration.py` adds the
+  second derivative: two claims can share a *velocity* and be in different regimes (fragile-early vs
+  consolidating-late), so `velocity ≠ regime` — acceleration tells **stabilizing** (motion slowing) from
+  **diverging** (speeding up), and **accelerating crisis** (`Δ²correspondence < 0`) from steady decline; a
+  confident model can lose the world at a *worsening rate*. `declining ≠ accelerating-decline`. World-side
+  direction: [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
 
 **The conceptual arc is complete; the remaining work is empirical, not more laws.** It lives behind the
 intentionally-unbuilt seams — `reality_harness.NetworkChannel` (point it at a real socket),
