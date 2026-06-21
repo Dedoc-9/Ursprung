@@ -50,7 +50,8 @@ LOD = "lod"
 TICK = "tick"
 CULLING = "culling"
 COLOR = "color"
-DOMAINS = (RASTERIZATION, FLOATING_POINT, LOD, TICK, CULLING, COLOR)
+ATTRIBUTION = "attribution"   # the admissible explanation space (the floor where the attribution regress stops)
+DOMAINS = (RASTERIZATION, FLOATING_POINT, LOD, TICK, CULLING, COLOR, ATTRIBUTION)
 
 
 class Convention:
@@ -152,7 +153,7 @@ def boundary_ghost(convention, detail, category=None, magnitude=None):
 def _domain_category(domain):
     return {
         RASTERIZATION: gr.SPATIAL, FLOATING_POINT: gr.NUMERICAL, LOD: gr.PERCEPTUAL,
-        TICK: gr.TEMPORAL, CULLING: gr.PERCEPTUAL, COLOR: gr.PERCEPTUAL,
+        TICK: gr.TEMPORAL, CULLING: gr.PERCEPTUAL, COLOR: gr.PERCEPTUAL, ATTRIBUTION: gr.CAUSAL,
     }.get(domain, gr.PERCEPTUAL)
 
 
@@ -196,6 +197,25 @@ def default_ledger():
         deterministic_rule="truth advances in integer tick indices; frame f maps to n + rem/den, lerp is "
                            "integer-exact",
         alternatives_rejected=["variable wall-clock dt integration", "frame-rate-coupled simulation"])
+    L.declare(
+        "admissible_model_class", ATTRIBUTION,
+        rule="the set 𝓕 of explanatory models attribution quantifies over is a DECLARED investigation "
+             "boundary; the robust generator is ⋂ over 𝓕 of {x : invariant under Π ∧ necessary under F}",
+        purpose="terminate the attribution regress (justify 𝓕 → derive 𝓕 → justify the derivation → …) at an "
+                "explicit floor, since necessity is model-relative (perception/model_relativity.py) and the "
+                "choice of 𝓕 cannot be derived from within the system without smuggling the answer in",
+        selected_reason="every attribution system has a floor; making 𝓕 a declared convention (with its "
+                        "rejected alternatives and scope) makes the stopping rule auditable and contestable "
+                        "rather than silently smuggled in and later mistaken for a discovery — the project's "
+                        "first law (Arbitrary-Boundary) answering its last problem (choosing 𝓕)",
+        deterministic_rule="𝓕 is an explicit, content-addressed list of admissible models + its scope of "
+                           "validity; attribution computes ⋂ G_F(F) over exactly that list and reports the "
+                           "list alongside the result; 𝓕 is never expanded implicitly at evaluation time",
+        alternatives_rejected=[
+            "derive 𝓕 from within the system (→ infinite epistemic regress; the separator needs its own separator)",
+            "𝓕 = all possible models (→ explanatory collapse: every mechanism becomes optional, generator → ∅)",
+            "𝓕 = a single model (→ false certainty: confounders survive as model-relative artifacts)",
+            "leave 𝓕 implicit (→ the floor is smuggled in and later treated as discovered)"])
     return L
 
 

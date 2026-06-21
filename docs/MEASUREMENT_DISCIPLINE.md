@@ -174,7 +174,32 @@ causal-across-chosen-𝓕 ≠ causal-across-all-possible-F   (the dangerous edge
                                         generator). There is no purely internal certificate — "why is THIS the
                                         right space of models?" is epistemology, not a pipeline layer. The
                                         separator needs its own separator.)
+derived boundary    ≠ declared boundary   (𝓕 cannot be derived from within the system without regress; it is
+                                        DECLARED as an Arbitrary-Boundary convention — see conventions.py
+                                        `admissible_model_class` — with its rejected alternatives and scope,
+                                        the project's FIRST law answering its LAST problem)
+declared boundary   ≠ truth          (a declared 𝓕 is an accountability object: it answers "why did attribution
+                                        stop here?", never "why is this the uniquely correct place to stop?")
+auditable           ≠ derived; derived ≠ true   (the stopping rule can be recorded, reproducible, content-
+                                        addressed, contestable — and still not the uniquely correct explanatory
+                                        boundary; a declared 𝓕 ALLOCATES investigation, it does not VALIDATE
+                                        ontology. The framework makes the floor visible; it cannot remove the
+                                        need for one.)
 ```
+
+## The floor (where the regress terminates)
+
+Every attribution system has a floor; the floor is **assumed, not derived**; the assumption is **declared**; the
+declaration is **auditable**. The regress (justify 𝓕 → derive 𝓕 → justify the derivation → …) does not vanish —
+it **terminates at a declared boundary rather than being mistaken for a derivation.** This is the project's
+opening move (the Arbitrary-Boundary Law: *arbitrary boundaries require deterministic handling, not claims of
+truth*) applied to its deepest object — the admissible explanation space `𝓕` is registered in the Boundary
+Ledger (`conventions.admissible_model_class`) exactly like pixel coverage or tick rate: explicit, deterministic,
+content-addressed, carrying its rejected alternatives, `truth_claim = False`. The successor object is therefore
+not a generator-finder but **an attribution system with an explicit, inspectable uncertainty boundary around its
+admissible explanation space** — its one structural advantage over a floor that is merely lived-in (a grammar, a
+culture, an axiom set) is that it can say *here is the model class, the observer class, the projection, the
+evidence, and here is where we chose to stop.*
 
 ## The one absolute, and everything else
 
