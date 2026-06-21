@@ -149,10 +149,19 @@ order, where each tier is a stronger test than the last and reconstruction is me
 
 ```
 1. reconstruction              can the decoder rebuild the observable?         (necessary, weakest — entry gate)
-2. intervention sensitivity    do latent dims that matter CHANGE the trajectory under F? (attribution: necessity)
-3. model-class robustness      does a latent feature survive across encoder families?    (model_relativity: ⋂ over 𝓕)
-4. gauge-invariant evaluation  does the metric survive latent rotations/relabelings?      (gauge: invariance)
+2. intervention relevance      do latent dims that matter CHANGE the trajectory under F? (attribution: necessity)
+3. topology recovery           WHERE in the intervention graph does the factor sit?      (root vs mediator vs sink)
+4. model-class robustness      does a latent feature survive across encoder families?    (model_relativity: ⋂ over 𝓕)
+5. gauge-invariant evaluation  does the metric survive latent rotations/relabelings?      (gauge: invariance)
 ```
+
+Tier 3 (topology) sits between intervention and robustness because intervention-relevance alone cannot tell a
+**root from a mediator** — both move the outcome. A latent that passes Tier 2 but fails Tier 3 is exactly the
+mediator case. Built and run: **Phase 2** (`experiments/latent_phase2/`) recovers the order `g→x→y` from
+intervention asymmetries (`do(g)` moves x,y; `do(x)` moves y not g; `do(y)` moves nothing) — `g` root, `x`
+mediator, `y` sink, `c` isolated; `g` and `x` are both Tier-2 relevant and only the topology separates them.
+`survives intervention ≠ root generator`. Honest bound: `recovered topology ≠ discovered ontology` (a graph
+over declared latent factors under `𝓕`, assuming a real `do()` — not a final description of reality).
 
 Only a feature that clears tiers 2–4 is a *recovered generator* rather than a well-fit confounder. Tier 1 alone
 would reward the artifact. This is where the existing machinery stops being illustrative and starts paying rent:

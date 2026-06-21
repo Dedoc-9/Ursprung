@@ -223,6 +223,12 @@ survives intervention ≠ (root) generator   (passing the intervention gate mean
                                         does not move g), which a single outcome test does not capture. And the
                                         verdict is a GATE (pass/fail), never a confidence scalar — any composite
                                         is explicitly secondary, or the one-dimensional confidence object returns.)
+recovered topology  ≠ discovered ontology   (Phase 2: the intervention asymmetries recover a partial order
+                                        (root/mediator/sink/isolated) that separates root from mediator — but
+                                        even a perfectly recovered graph is a graph over LATENT FACTORS created
+                                        by a declared representation family 𝓕, assuming a real do(). It is a
+                                        surviving explanation under 𝓕, not a final description of reality;
+                                        relabel the factors and you relabel the graph. experiments/latent_phase2.)
 ```
 
 ## The four questions (the spine the whole arc separates)
