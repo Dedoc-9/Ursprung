@@ -97,15 +97,29 @@ def gate4_gauge(Z, target, n_rotations=8):
 
 # --- the composite ------------------------------------------------------------------------------
 
-def generator_score(world, factor, latents, intervention_fn, reference_encoder):
-    """GeneratorScore = intervention · robustness · gauge_invariance. A factor that reconstructs and even
-    correlates with the outcome still scores ~0 if intervening on it does not move the outcome."""
+def generator_gate(world, factor, latents, intervention_fn, reference_encoder,
+                   interv_thresh=0.5, robust_thresh=0.9):
+    """The verdict is a GATE, not a scalar. A factor is a *robust causal candidate* only if it passes all three
+    gates; the composite number is explicitly SECONDARY and must never be read as a confidence ranking (that is
+    the one-dimensional object the rest of the project spent itself dismantling — see ledgers/trajectory).
+
+    HONEST, and load-bearing (the deepest caveat): passing the gate means *causally-relevant ∧ robust ∧
+    gauge-invariant* — it does NOT mean "the deepest generator." A mediator on the path `g → x → y` survives the
+    intervention gate too: it is causally relevant and may be encoder-robust, yet `x ≠ g`. Telling a root cause
+    from a mediator needs the *intervention topology* (do(g) moves x; do(x) does not move g), which a single
+    outcome-intervention test does not capture. So this gate yields **generator candidates**, not generators.
+    `survives intervention ≠ (root) generator`."""
     interv = gate2_intervention(world, factor, intervention_fn)
     robust = gate3_robustness(latents, world[factor])
     Zref = latents[reference_encoder][0]
     gauge_ok, _spread = gate4_gauge(Zref, world[factor])
-    score = round(interv * robust * (1.0 if gauge_ok else 0.0), 3)
-    return {"intervention": interv, "robustness": robust, "gauge_invariant": gauge_ok, "GeneratorScore": score}
+    passes = {"intervention_pass": interv >= interv_thresh,
+              "robustness_pass": robust >= robust_thresh,
+              "gauge_pass": bool(gauge_ok)}
+    return {"passes": passes,
+            "all_pass": all(passes.values()),               # the PRIMARY verdict (a boolean gate)
+            "intervention": interv, "robustness": robust, "gauge_invariant": bool(gauge_ok),
+            "composite_secondary": round(interv * robust * (1.0 if gauge_ok else 0.0), 3)}  # secondary, NOT a ranking
 
 
 def report(world, latents, intervention_fn, factors=("g", "c"), reference_encoder=None):
@@ -117,5 +131,5 @@ def report(world, latents, intervention_fn, factors=("g", "c"), reference_encode
     for n, (Z, _Xh, _X) in lat3.items():
         out["recoverability"][n] = {f: round(recover_r2(world[f], Z), 3) for f in factors}
     for f in factors:
-        out["factors"][f] = generator_score(world, f, lat3, intervention_fn, reference_encoder)
+        out["factors"][f] = generator_gate(world, f, lat3, intervention_fn, reference_encoder)
     return out

@@ -204,17 +204,25 @@ integrity           ≠ immunity       (a perfectly reproducible result whose ad
                                         is declining adequacy regardless of integrity. position ≠ ranking;
                                         integrity-gain ≠ progress — the destination quadrant decides, not the
                                         direction of integrity. perception/trajectory.py.)
-observation         ≠ intervention   (THE pioneering result: when a backdoor path is unobserved or the
-                                        observation map is non-invertible, the causal question is PHYSICALLY
-                                        UNRESOLVABLE from observation — no reconstruction, recoverability,
-                                        correlation, or model-fit can cross it; only an active causal operation,
-                                        do(·), can. Observation defines the horizon; intervention crosses it.
-                                        Demonstrated in experiments/latent_phase1: a confounder that
-                                        reconstructs, is recoverable across all encoders, is gauge-invariant, and
-                                        correlates with the outcome at ≈0.6 still scores GeneratorScore=0 because
-                                        do(c) does not move the outcome. When the causal graph is UNKNOWN, the
-                                        crossing needs a real intervention mechanism, not a ground-truth oracle —
-                                        the open frontier.)
+observation         ≠ intervention   (THE pioneering result, architecture-independent: when a backdoor path is
+                                        unobserved or the observation map is non-invertible, the causal question
+                                        is NOT IDENTIFIABLE from observation alone — observationally
+                                        underdetermined relative to the available variables/observation map (NOT
+                                        "physically undecidable"; the limit is the data, not physics). No
+                                        reconstruction, recoverability, correlation, or model-fit crosses it;
+                                        only an active causal operation, do(·), can. Demonstrated in
+                                        experiments/latent_phase1: a confounder that reconstructs, is recoverable
+                                        across all encoders, is gauge-invariant, and correlates with the outcome
+                                        at ≈0.6 still FAILS the gate because do(c) does not move the outcome.
+                                        When the causal graph is UNKNOWN, the crossing needs a real intervention
+                                        mechanism, not a ground-truth oracle — the open frontier.)
+survives intervention ≠ (root) generator   (passing the intervention gate means causally-relevant ∧ robust ∧
+                                        gauge-invariant — a "generator CANDIDATE", not the deepest cause. A
+                                        mediator on g→x→y survives the outcome-intervention test too; telling
+                                        root from mediator needs the intervention TOPOLOGY (do(g) moves x; do(x)
+                                        does not move g), which a single outcome test does not capture. And the
+                                        verdict is a GATE (pass/fail), never a confidence scalar — any composite
+                                        is explicitly secondary, or the one-dimensional confidence object returns.)
 ```
 
 ## The four questions (the spine the whole arc separates)

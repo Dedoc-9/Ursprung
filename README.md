@@ -34,19 +34,25 @@ backend* of a committed, leakage-bounded **perception compiler**
 
 > ### The pioneering result — observation cannot resolve a backdoor; only intervention can
 >
-> The load-bearing novelty, and the one not to undervalue: **some causal structure is *observationally
-> unresolvable*.** When a confounding (backdoor) path is unobserved, or the observation map is non-invertible,
-> *no* amount of reconstruction, recoverability, correlation, or model-fit can separate a generator from a
-> confounder — the question is not hard, it is **physically undecidable from observation alone.** Most systems
-> hide this behind a high score; Ursprung makes it a **measured boundary**: observation *defines the horizon*,
-> and the only thing that crosses it is an **active causal operation** — an intervention, `do(·)`. This is the
-> renderer's deepest separator, `observation ≠ intervention`, and it is demonstrated, not asserted: in the
-> Phase-1 latent benchmark ([`experiments/latent_phase1/`](experiments/latent_phase1/)) a confounder that
-> reconstructs perfectly, is recoverable across every encoder family, is gauge-invariant, **and** correlates
-> with the outcome at ≈0.6 still scores **GeneratorScore = 0**, because `do(c)` does not move the outcome. The
-> generator scores ≈1. Observation said "generator" five different ways; only intervention disagreed, and it was
-> right. The honest frontier this exposes: when the causal graph is *unknown*, that crossing requires a real
-> intervention mechanism, not a ground-truth oracle — which is the open problem the next phases face, not fake.
+> The load-bearing novelty, and the one not to undervalue: **some causal structure is *not identifiable from
+> observation alone*.** When a confounding (backdoor) path is unobserved, or the observation map is
+> non-invertible, *no* amount of reconstruction, recoverability, correlation, or model-fit can separate a
+> generator from a confounder — the question is **observationally underdetermined** (relative to the available
+> variables and observation map, not to physics). Most systems hide this behind a high score; Ursprung makes it
+> a **measured boundary**: observation *defines the horizon*, and the only thing that crosses it is an **active
+> causal operation** — an intervention, `do(·)`. This is the renderer's deepest separator, `observation ≠
+> intervention`, and it is architecture-independent — it does not depend on any encoder, optimizer, or gauge
+> family (those are *candidates inside* the frame, never foundations beneath it). It is demonstrated, not
+> asserted: in the Phase-1 latent benchmark ([`experiments/latent_phase1/`](experiments/latent_phase1/)) a
+> confounder that reconstructs perfectly, is recoverable across every encoder family, is gauge-invariant, **and**
+> correlates with the outcome at ≈0.6 still **fails the gate**, because `do(c)` does not move the outcome.
+> Observation said "generator" five different ways; only intervention disagreed, and it was right. Two honest
+> bounds kept in view: the verdict is a **gate (pass/fail), never a confidence scalar** — the project spent
+> hundreds of checks dismantling the one-dimensional confidence object and will not quietly rebuild it; and
+> passing the gate means *robust causal **candidate***, not "the deepest generator" — a mediator on `g → x → y`
+> survives intervention too (`survives intervention ≠ root generator`). When the causal graph is *unknown*, the
+> crossing requires a real intervention mechanism, not a ground-truth oracle — the open problem the next phases
+> face, not fake.
 
 ## The five laws (the philosophy layer)
 

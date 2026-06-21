@@ -166,9 +166,13 @@ survives a change of encoder family (a change of `𝓕`); `ledgers` separates *r
 The Phase-1 harness measures recoverability and gauge-invariance with `lstsq` and explicit rotations — correct
 but not cheap, and it scores *factors* rather than *carving the latent*. The efficient form, for when this
 becomes a real codebase: an **orthogonal projection-gate layer**. Hold a declared (or learned) orthonormal
-basis `Q` (so `QᵀQ = I` — gauge transformations are exactly the orthogonal group, so the basis change is free,
-invertible, and norm-preserving), and a set of **masking matrices** `M_k = Q · diag(m_k) · Qᵀ` that project the
-latent onto candidate subspaces. Then:
+basis `Q` (so `QᵀQ = I`), and a set of **masking matrices** `M_k = Q · diag(m_k) · Qᵀ` that project the latent
+onto candidate subspaces. A caveat stated up front so it does not become a hidden floor: **the orthogonal group
+is the *first tractable* gauge family, not the gauge family.** Real latent symmetries are often non-orthogonal —
+scaling, permutation, affine, or nonlinear reparameterizations — and treating "gauge = orthogonal" as a
+foundation would bake a convenience assumption into the base (exactly the floor-hiding move the framework
+catches). Orthogonality is chosen here because it is cheap, invertible, and norm-preserving, and it is *declared*
+as such. With that caveat, the orthogonal case buys:
 
 - a **mask is gauge-fixing made explicit** — it names which subspace a claim lives in, and the orthogonality of
   `Q` is what makes "does this survive a latent rotation?" a property you *construct* rather than test by

@@ -18,6 +18,24 @@ from encoders import model_class
 from benchmark import report
 
 
+def mediator_caveat(n=4000, seed=7):
+    """g → x → y: a mediator x is causally relevant to the outcome and survives the intervention gate, yet
+    x ≠ g. Returns (do(g)→outcome, do(x)→outcome); both move the outcome, so the gate alone cannot crown the
+    root. (The root/mediator distinction lives in the intervention topology: do(g) moves x; do(x) does not move
+    g — not captured by a single outcome-intervention test.)"""
+    rng = np.random.default_rng(seed)
+    g = rng.standard_normal(n)
+    x = g + 0.3 * rng.standard_normal(n)        # mediator carries g's effect
+    y = x.copy()                                # outcome depends on x (hence on g, through x)
+    def do_outcome(factor):
+        if factor == "g":                       # do(g): x follows, y follows
+            g2 = rng.standard_normal(n); x2 = g2 + 0.3 * rng.standard_normal(n); y2 = x2
+        else:                                   # do(x): y follows directly
+            x2 = rng.standard_normal(n); y2 = x2
+        return float(min(1.0, np.std(y2 - y) / (np.std(y) + 1e-9)))
+    return do_outcome("g"), do_outcome("x")
+
+
 def main():
     world = make_world(seed=0)
     latents = model_class(world["X"])
@@ -30,17 +48,27 @@ def main():
     print("\ngauge-invariant recoverability R²(factor | Z), per encoder:")
     for n, d in r["recoverability"].items():
         print("   %-14s g=%.3f  c=%.3f" % (n, d["g"], d["c"]))
-    print("\nGates 2–4 + GeneratorScore (intervention · robustness · gauge):")
+    print("\nGates 2–4 — the verdict is a GATE (pass/fail), the composite is SECONDARY (never a ranking):")
     for f, d in r["factors"].items():
-        print("   factor %s: intervention=%.2f  robustness=%.3f  gauge_invariant=%s  →  GeneratorScore=%.3f"
-              % (f, d["intervention"], d["robustness"], d["gauge_invariant"], d["GeneratorScore"]))
+        p = d["passes"]
+        print("   factor %s: intervention_pass=%s robustness_pass=%s gauge_pass=%s  →  all_pass=%s   (composite_secondary=%.3f)"
+              % (f, p["intervention_pass"], p["robustness_pass"], p["gauge_pass"], d["all_pass"], d["composite_secondary"]))
 
     g, c = r["factors"]["g"], r["factors"]["c"]
     print("\nVERDICT")
-    print("  g is the recovered generator: found across every encoder family, responds to do(g), gauge-invariant.")
-    print("  c is the confounder TRAP: it reconstructs, is fully recoverable, and correlates with the outcome —")
-    print("  yet GeneratorScore(c)=%.2f, because do(c) does not move the outcome. Caught by the intervention gate." % c["GeneratorScore"])
-    print("\n  good reconstruction ≠ recovered generator;  generator = invariant ∧ necessary ∧ model-robust.")
+    print("  g is a robust causal CANDIDATE: recovered across every encoder family, responds to do(g), gauge-invariant.")
+    print("  c is the confounder TRAP: it reconstructs, is fully recoverable, gauge-invariant, and correlates with")
+    print("  the outcome — yet it FAILS the gate, because do(c) does not move the outcome. Caught by intervention.")
+
+    # --- the deepest caveat (#4): survives intervention ≠ (root) generator ---
+    sg, sx = mediator_caveat()
+    print("\nMEDIATOR CAVEAT (g → x → y): a mediator x survives the outcome-intervention gate too.")
+    print("  do(g) moves the outcome: %.2f ;  do(x) moves the outcome: %.2f  → BOTH pass." % (sg, sx))
+    print("  So passing the gate = 'robust causal candidate', NOT 'the deepest generator'.")
+    print("  Telling root from mediator needs the intervention TOPOLOGY (do(g) moves x; do(x) does not move g),")
+    print("  which a single outcome-intervention test does not capture. survives intervention ≠ root generator.")
+
+    print("\n  good reconstruction ≠ recovered generator;  observation ≠ intervention;  the gate yields candidates.")
 
     # --- self-check (the verification; numpy-dependent, hence outside the stdlib suite) ---
     checks = {
@@ -49,7 +77,8 @@ def main():
         "intervention_separates_them": g["intervention"] >= 0.9 and c["intervention"] <= 0.1,
         "both_robust_so_robustness_alone_cannot_separate": g["robustness"] >= 0.9 and c["robustness"] >= 0.9,
         "gauge_invariant_recoverability": g["gauge_invariant"] and c["gauge_invariant"],
-        "generator_score_separates": g["GeneratorScore"] >= 0.9 and c["GeneratorScore"] <= 0.1,
+        "gate_separates_candidate_from_confounder": g["all_pass"] is True and c["all_pass"] is False,
+        "mediator_also_passes_so_gate_yields_candidates_not_roots": sg >= 0.9 and sx >= 0.9,
     }
     print("\nself-check:")
     for k, v in checks.items():
