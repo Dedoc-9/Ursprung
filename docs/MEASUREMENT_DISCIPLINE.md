@@ -271,6 +271,18 @@ compression       ≠ severance   (a real system MUST compress, so compression i
                                         principle — same word, different object. "The world may become faster,
                                         smaller, learned, generated, distributed, or optimized; it may not become
                                         untraceable." live_latent_provenance.)
+declared runtime constraint ≠ silicon guarantee   (the first real-clock probe: "4.13 ms" is a TARGET, an
+                                        observable, until real hardware reports otherwise — never a property the
+                                        architecture owns. live_latent_provenance/probe.py is a measurement, not a
+                                        claim; it earns the contract under a real clock, nothing about the silicon.)
+Python timing result ≠ hardware architecture result   (the probe's honest blindness: under the GIL a ring vs a
+                                        locked queue is a CPython-machinery observation, not a lock-free silicon
+                                        result; a Python dict hides cache-miss cost (resolve latency stayed flat as
+                                        the store grew); time.sleep granularity — not provenance metadata — dominated
+                                        cadence jitter. The REVERSAL the bench actually produced: provenance carry was
+                                        near-free at tested scale; uncontrolled time sources, not provenance, are the
+                                        first-order threat to a frame budget. lock-free / cache / GPU viability remain
+                                        the un-faked native frontier. live_latent_provenance/probe.py.)
 created coherence  ≠ discovered coherence   (the re-anthropomorphism / "provenance collapse" failure: a
                                         designer imposes a constraint, the system adapts coherently, and the
                                         AUTHORED coherence is re-read as DISCOVERED structure — the mirror

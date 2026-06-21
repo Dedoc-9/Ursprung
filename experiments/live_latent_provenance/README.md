@@ -90,6 +90,75 @@ the frame admits the traceable, refuses the severed   (the contract boundary enf
 
 Earned separators: **`full provenance ≠ hot-path representation`** and **`compression ≠ severance`**.
 
+## Bench record — first real-silicon contact (`probe.py`)
+
+```bash
+python3 experiments/live_latent_provenance/probe.py     # a MEASUREMENT, not a claim
+```
+
+The deterministic `run.py` proves the contract; `probe.py` puts it under a real monotonic clock to
+find where the abstraction leaks into hardware. The point is not "4.13 ms achieved" — it is to record
+exactly what the measurement did and did not license, so a later optimization pass cannot quietly
+promote a scoped observation into a generalized claim.
+
+```
+Question
+    Can provenance survive runtime COMPRESSION under a real clock?
+
+Measured (the contract, under a fixed-Hz loop)
+    hot path carries state + transform + provenance_digest, nothing more
+    full lineage resolves from the digest, off the frame budget
+    severed provenance is detected in-frame, never treated as `unknown`
+    latent resolve requests may be dropped / deferred under backpressure (counted)
+    commits may NOT be dropped
+
+Results (this sandbox's Linux clock — NOT the user's Windows)
+    provenance lookup overhead was small at the tested scale
+        (~0.06 ms hot-path work for 200 objects; ~0.3 us/object — the digest carry is near-free here)
+    timing jitter was dominated by scheduler / clock behaviour, not by provenance metadata
+        (240 Hz target 4.167 ms; interval p50 ~4.29 ms; worst frame 5.02 ms on the locked-queue path)
+    CPython ring-vs-queue differences are implementation observations only
+        (ring jitter 0.040 vs queue 0.075 ms — real, but GIL-bound; not a lock-free silicon result)
+    the contract held every frame: planted severed + unaccounted objects caught, zero drops
+
+Not established (do not let the next pass assume these)
+    lock-free behaviour            (GIL serializes; the ring is not a lock-free demonstration)
+    cache-locality behaviour       (a Python dict hides it; resolve latency stayed flat under store growth)
+    silicon-level frame guarantees
+    GPU runtime viability
+
+Frontier
+    a native implementation where atomics, the cache hierarchy, and allocation behaviour are
+    actually OBSERVABLE — the only place these four can be measured rather than assumed.
+```
+
+### The reversal (the strongest finding, because the data falsified the expectation)
+
+The bench was built on the worry that *provenance might threaten performance*. The measurement says
+the opposite: **provenance metadata is not the first-order threat to the frame budget — uncontrolled
+time sources are.** The hot-path provenance carry was near-free at this scale; the timeline raggedness
+came from `time.sleep` granularity (mild on Linux, expected ~15 ms and budget-breaking on Windows).
+This is a project-consistent result precisely because it came from letting the measurement overturn
+the prior, not confirm it. The ghosts, classified by origin:
+
+```
+cadence overshoot / jitter   timing origin        (time.sleep granularity; OS-dependent; the real variable)
+flat resolve latency vs size measurement-limit     (Python dict O(1) hides the cache cost; Rust will expose it)
+ring < queue jitter delta    implementation        (CPython machinery only; not generalizable to silicon)
+```
+
+### Separators this bench adds
+
+```
+provenance_digest in hot path  ≠  performance collapse   (measured: near-free carry at tested scale)
+declared runtime constraint    ≠  silicon guarantee       (4.13 ms is a target until real hardware says so)
+Python timing result           ≠  hardware architecture result   (GIL/sleep ⇒ CPython behaviour, not silicon)
+```
+
+The clean staircase this preserves, with no leap between steps: **Python** proves the contract
+survives compression; **Rust** proves the mechanism survives real concurrency primitives;
+**GPU/runtime** proves the world loop survives a real substrate.
+
 ## Honest bounds — the narrow claim
 
 The claim is **provenance-preserving compression under runtime constraints**, *not*
