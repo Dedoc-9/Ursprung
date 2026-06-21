@@ -185,6 +185,13 @@ auditable           ≠ derived; derived ≠ true   (the stopping rule can be re
                                         boundary; a declared 𝓕 ALLOCATES investigation, it does not VALIDATE
                                         ontology. The framework makes the floor visible; it cannot remove the
                                         need for one.)
+proven              ≠ surviving       ("the evidence proves X" is floor-hiding; "given observer class A,
+                                        projection Π, model class 𝓕, evidence E, X is the best SURVIVING
+                                        explanation" is floor-exposing — a different epistemic type. Confidence
+                                        is conditional on the declared floor, not a scalar of the evidence:
+                                        same E under a different declared 𝓕 yields a different conclusion. Made
+                                        a runtime object in perception/grounded_claim.py — a conclusion that
+                                        cannot be stated without declaring its floor and never asserts truth.)
 ```
 
 ## The floor (where the regress terminates)

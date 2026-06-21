@@ -430,6 +430,23 @@ never a new invariant:
     separator needs its own separator.* This is named, not built: encoding a `𝓕`-justifier would be precisely
     the overclaim the project guards against.
 
+21. **Grounded claim — DONE; the axiom made runtime.** `ursprung/perception/grounded_claim.py` turns the whole
+    layered chain (`Π → F → 𝓕 → stopping rule → declared boundary`) into a single inspectable object. A
+    `GroundedClaim` cannot be constructed or stated while any chosen layer is undeclared, it never asserts truth
+    (`truth_claim = False`, like a `Convention`), and the only statement it emits is conditional: *"given
+    observer class A, projection Π, model class 𝓕, and evidence E, X is the best **surviving** explanation."* It
+    classifies an external bare *"the evidence proves X"* as **floor-hiding** (asserts truth, declares nothing)
+    versus the conditional, fully-declared form as **floor-exposing** — two genuinely different epistemic types.
+    The operational payoff (verified against the `model_relativity` knife edge): the *same* evidence under two
+    *different declared* `𝓕` yields *different* surviving conclusions (`{g,c}` vs `{g}`), so **confidence is
+    conditional on the declared floor, not a scalar of the evidence** — and provenance is identity (different
+    floor → different claim hash). This is the project's first rule (*arbitrary boundaries require deterministic
+    handling, not claims of truth*) become an epistemology, enforced at runtime. New separator: `proven ≠
+    surviving`. HONEST: a typing/accounting instrument that makes the floor visible and contestable — it does
+    not make the floor right; a grounded claim can be useful, predictive, robust, and still rest on a declared
+    boundary it did not derive. The realization is "every system has a floor that cannot be justified entirely
+    from within the system," **not** "everything is arbitrary."
+
 The remaining honest gaps (so this is not over-read): the compiler is still a *lookup / greedy channel select*,
 not a continuous funnel *solve*; the world, the learner, and the leakage estimator are constructed; the utility
 models are declared conventions; the capacity axis is a memory-horizon *proxy*, not real model capacity; the

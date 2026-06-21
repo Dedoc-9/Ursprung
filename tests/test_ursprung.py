@@ -1208,6 +1208,27 @@ def test_perception_model_relativity_necessity_is_model_relative():
     check(r["knife_edge_monotone_collapse"], "the robust set shrinks monotonically as the class grows: {g,c} ⊋ {g} ⊋ {} — correct only in the middle")
 
 
+def test_perception_grounded_claim_carries_its_floor():
+    r = perc.grounded_claim.crucible()
+    # a conclusion cannot be grounded while a chosen layer is undeclared
+    check(r["grounded_requires_all_layers"], "a grounded claim requires every chosen layer declared (none smuggled)")
+    check(r["undeclared_floor_blocks_statement"], "the runtime refuses to emit a statement while a floor layer is undeclared")
+    # the only statement it makes is conditional + 'surviving', naming every layer — never 'proven'
+    check(r["statement_is_conditional"], "the statement is conditional and says SURVIVING, never proven — proven ≠ surviving")
+    check(r["statement_names_every_layer"], "the statement names observer class, projection, model class, and evidence")
+    check(r["claim_never_asserts_truth"], "a grounded claim never asserts truth (truth_claim is False, like a Convention)")
+    # external-claim typing: bare 'evidence proves X' is floor-hiding; declared conditional is floor-exposing
+    check(r["bare_proof_is_floor_hiding"], "'the evidence proves X' is the canonical floor-hiding claim (asserts truth, declares nothing)")
+    check(r["declared_conditional_is_floor_exposing"], "a conditional claim that declares every layer is floor-exposing")
+    # the operational payoff: confidence is conditional on the declared floor, not a scalar of the evidence
+    check(r["confidence_depends_on_declared_floor"], "same evidence, different declared 𝓕 → different surviving conclusion: confidence is conditional")
+    check(r["different_floor_different_identity"], "provenance is identity — same evidence, different floor, different claim")
+    # the floor is not one undifferentiated thing: encountered (evidence) vs chosen (Π, A_C, 𝓕) vs declared (stopping rule)
+    check(r["floor_categories_partition"], "the floor partitions into encountered ⊔ chosen ⊔ declared — three distinct provenance kinds")
+    check(r["evidence_encountered_rest_not"], "evidence is encountered; projection/observer/model are chosen; the stopping rule is declared")
+    check(r["variation_attributable_to_a_choice"], "the conclusion's variation is attributable to a CHOSEN layer (𝓕) with the encountered evidence held identical — confidence = f(evidence, floor)")
+
+
 def main():
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):

@@ -300,7 +300,7 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 
 ## Status
 
-The full suite is **449 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
+The full suite is **461 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
 control, and an explicit "expires on real silicon" bound.
 
 - **M1 — foundation.** Invariant harness; the renderer is proven observer-only (`integrity ≠ truth`).
@@ -375,7 +375,15 @@ control, and an explicit "expires on real silicon" bound.
   Finally `model_relativity.py` turns the principle on the causal test itself: necessity is **model-relative**
   (`G_F(F₁) ≠ G_F(F₂)`) — a component can be necessary under a restricted model and redundant under a richer one
   that fits the same data, so the robust generator is what survives the *admissible model class* (`⋂ G_F(F)`).
-  *Causal-under-a-model ≠ causal-across-models* — the `A_C` loop, one layer deeper. World-side direction:
+  *Causal-under-a-model ≠ causal-across-models* — the `A_C` loop, one layer deeper. And `grounded_claim.py`
+  makes the whole chain a **runtime object**: a conclusion you cannot construct without declaring its floor
+  (evidence, projection `Π`, observer class `A_C`, model class `𝓕`, stopping rule), that never asserts truth
+  and emits only *"given (A, Π, 𝓕, E), X is the best **surviving** explanation"* — and that classifies a bare
+  *"the evidence proves X"* as **floor-hiding**. Its payoff is operational: the *same* evidence under two
+  *different declared* `𝓕` yields *different* surviving conclusions, so confidence is **conditional on the
+  declared floor, not a scalar of the evidence**. The project's first rule — *arbitrary boundaries require
+  deterministic handling, not claims of truth* — has become an epistemology: `proven ≠ surviving`; `declared ≠
+  derived`; the floor is exposed, not smuggled. World-side direction:
   [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
 
 **The conceptual arc is complete; the remaining work is empirical, not more laws.** It lives behind the
