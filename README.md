@@ -422,16 +422,156 @@ control, and an explicit "expires on real silicon" bound.
   confident model can lose the world at a *worsening rate*. `declining ≠ accelerating-decline`. World-side
   direction: [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
 
-**The conceptual arc is complete; the remaining work is empirical, not more laws.** It lives behind the
+**The conceptual arc is complete, and the empirical phase has begun** (see *The empirical phase* below): the
+ML transition is no longer a plan — `experiments/` carries six executed latent phases plus two runtimes, each a
+seeded, replayable bench with its own self-check. What stays deliberately un-faked lives behind the
 intentionally-unbuilt seams — `reality_harness.NetworkChannel` (point it at a real socket),
 `behavioral_harness.ExperimentLayer(channel="real")`, and the perception compiler's lookup compiler — plus:
 - A **real-silicon benchmark** — every constructed-world number expires there (equal GPU time; temporal
   artifacts, input-to-photon latency, reconstruction error, motion stability).
 - **Composing + calibrating the resistance tensor** — the 7-dimensional `resistance_tensor.py` already exists;
   what is open is using it as the resistance *everywhere* and tuning its weights against measured artifacts.
-- A **stronger adversary class** (replace the toy learners with a real ML/RL class), **channel discovery over
-  real telemetry traces**, and a **non-separable task** for the perception loop — the natural first experiments
-  of the empirical phase.
+- A **real estimator under intervention scarcity** — every experiment so far runs ground-truth `do()` on a
+  known synthetic world; recovering causal structure when the graph is *unknown* and interventions are
+  expensive (instrumental variables, invariance/ICP, counterfactual estimation) is the genuine frontier, and a
+  **real external anchor** (a verifiable delay function / proof-of-sequential-work / external clock) is the only
+  thing that would supply the irreversibility software cannot.
+
+## The empirical phase — provenance survives learning (`experiments/`)
+
+The conceptual arc ended at a claim it could not yet test: that the project's discipline would survive contact
+with a real, flexible learning system. `experiments/` is where that claim meets numbers. Each phase is a small,
+**seeded, replayable** bench (numpy or pure stdlib) kept *outside* the 495-check core so the verified renderer
+stays dependency-free; each has its own self-check, an explicit "expires on a non-toy world" bound, and reuses
+the prior phase's contract *unedited* — the reuse is the experiment. The organizing instruction was
+**"define the horizon, then trust the dark"** ([`docs/LATENT_SPACETIME.md`](docs/LATENT_SPACETIME.md)): demarcate
+what a representation can recover from what it structurally cannot, validate only on the lit side, and never
+fabricate the dark. The one thing never liquidated is the sealed core — `liquidate the schema ≠ liquidate the
+floor`.
+
+| Phase | Object | Measured result (seed 0) | Separator earned |
+|---|---|---|---|
+| **1** `latent_phase1/` | latent benchmark (PCA / linear-AE / MLP-AE) | a confounder reconstructs, is recoverable across every encoder, is gauge-invariant, **and** correlates with the outcome — yet `GeneratorScore = 0`; only `do(c)` (which doesn't move the outcome) catches it | `good reconstruction ≠ recovered generator` |
+| **2** `latent_phase2/` | topology discovery from intervention asymmetry | `do(g)` moves x,y; `do(x)` moves y not g → roles root/mediator/sink recovered; root and mediator are *both* relevant, only topology separates them | `causal relevance ≠ causal position` |
+| **3** `latent_phase3/` | edge provenance — support is part of a graph's identity | two graphs with identical adjacency but different support have different digests; removing an assumption removes an edge; the `𝓐`-invariant core *is* the intervention-grounded subgraph | `recovered topology ≠ discovered ontology` |
+| **4** `latent_phase4/` | the contract under a learned representation | g/m/c all recoverable ≥0.99 from the learned latent; the Phase-3 contract still refuses an assumption edge without its assumption — over learned-factor nodes | `created coherence ≠ discovered coherence` |
+| **5** `latent_phase5/` | provenance-preserving learning | two encoders with different latents (`[0.28,0.96,0.95]` vs `[0.95,0.71,0.81]`) yield the **same** provenance-qualified claim → equivalent; rescaling the input doesn't change it (the **scale gauge is closed**) | `latent coordinate ≠ the claim` |
+| **6** `latent_phase6/` | the inference contract — no edge without its price | the same edge via `do()` vs via assumption are *different objects*; `IdentificationCost` is a structured ledger (not a scalar); a cost-free or accuracy-only claim is rejected at construction | `accuracy ≠ identifiability` |
+
+**Two runtimes consolidate it.** Once the phases all produced the same shape — *a value bound to the
+conditions of its own existence* — they collapse into one object:
+
+- **`experiments/provenance_runtime/` — the runtime that *records*.** One `Artifact` (identity · provenance ·
+  evidence · status), and every prior phase becomes an artifact *type* sharing a single identity system. Two
+  digests: a `claim_digest` (what is asserted) and a full `digest` (including provenance — *identity includes
+  provenance*). `transform()` produces a child with inherited provenance, so a developer can **swap the model,
+  encoder, estimator, or assumptions without losing the history of what made the result admissible**; the model
+  is a plugin, the contract is not. `compare()` is over claims not representations; `audit()` separates
+  *demonstrated* from *assumed*. The creator enters as a named provenance source — neither hidden nor sovereign
+  — which blocks both anthropomorphism ("it discovered because it thinks like us") and technological projection
+  ("it discovered because it is outside us").
+- **`experiments/adversarial_runtime/` — the runtime that *attacks*.** The offensive complement: it
+  **weaponizes** `declared ≠ verified` (flagging any artifact that asserts a higher status than its evidence
+  backs — laundering), runs a **Paradox Engine** for structural contradiction (verified-without-evidence,
+  same-claim-at-two-statuses, provenance cycles), runs **adversarial survival tests** and a **Necro-Registry**
+  that buries falsified artifacts *with their cause of death* (a dead claim is information), and provides an
+  **External Anchor** — an append-only, tamper-evident commitment chain that grounds *ordering*. Its loudest
+  honest bound: a software anchor is `tamper-evident ordering ≠ physical irreversibility` (a fresh chain from
+  the same inputs reproduces), so a real anchor needs an irreversible external cost — the frontier.
+
+The whole ladder is generated by one principle — **`identity includes provenance`** — applied, in the end, even
+to the creator:
+
+```
+observation ≠ intervention  →  causal relevance ≠ causal position  →  edge ≠ edge-without-support
+→  latent ≠ discovered structure  →  coordinate ≠ claim  →  accuracy ≠ identifiability
+```
+
+**Honest scope of the empirical phase.** Every intervention is still a ground-truth `do()` on a *known*
+synthetic world: these phases prove the *discipline survives learning and consolidates into a runtime*, not
+that causal discovery is solved. The estimator that pays the identification price in valid coin (under
+scarcity, without a known graph) and a real external anchor are named, scoped, and intentionally not faked.
+
+## Pioneering methods (what is genuinely new here)
+
+Stated with the project's own calibration — much of this is *composition* of established research (quantitative
+information flow, information design, causal identifiability, gauge invariance), and the novelty is the fusion
+and the runtime, not a claim to have invented the pieces.
+
+- **Falsification-first engineering.** Every result ships with a negative control and an explicit
+  "expires on real silicon" bound, and a *failed* hypothesis (Causal Continuity) is preserved as a load-bearing
+  result rather than deleted. The deliverable is "a framework for discovering where our own assumptions fail,"
+  not a leaderboard number.
+- **`observation ≠ intervention` as a measured boundary.** A system that detects when a question is *not
+  identifiable from observation alone* and refuses to resolve it — exposing the boundary instead of hiding it
+  behind a high score. Most pipelines silently cross it; this one marks it and names the price of crossing.
+- **The provenance discipline / `identity includes provenance`.** An object is not fully specified until what
+  licenses it is attached: claim+floor, edge+support, representation+claim, inference+price — content-addressed,
+  so two artifacts with identical content but different provenance are different objects. This is the thread
+  that turns a pile of separators into one mechanism.
+- **The side-channel firewall family ("the defense is the leak").** Treating the renderer/netcode itself as a
+  sensor an adversary reads, and neutralizing timing, reaction, absence, hysteresis, execution-cost, and
+  rollback channels — each with an executable bench. No standard textbook hands you this for interactive
+  systems.
+- **The benchmark hierarchy (reconstruction is the weakest test).** A 5-tier gate — reconstruction →
+  intervention → topology → model-class robustness → gauge invariance — where a feature is only "real" if it
+  clears 2–4. It catches the confounder that fools accuracy.
+- **Confidence as structure, never a scalar.** Integrity ⟂ adequacy (two ledgers), a coordinate with quadrants
+  that allocate work, motion (`trajectory`) and acceleration (regime/crisis) — each step replaces a
+  one-dimensional score with a richer object because the scalar was collapsing distinctions that matter.
+- **Determinism as an executable epistemic, not a metaphysical claim.** Reproducibility is a property of the
+  *account* (same inputs + declared floor + procedure → same result), enforced by a sealed verification
+  substrate — distinct from any claim that the world is deterministic.
+- **The typed inference contract + the two runtimes.** A model/encoder/estimator that is a *plugin* beneath a
+  fixed contract: an estimator that cannot emit an edge without its identification cost, an artifact that
+  records its conditions of existence, and an adversarial runtime that attacks declarations and keeps the
+  corpses. The discipline is the asset; the model is replaceable.
+
+## Use cases — for developers and for investors
+
+Ursprung is a **specification + reference implementation + measurement discipline** (plus an early empirical ML
+layer), not a turnkey product — read the use cases through that frame.
+
+**For developers (concrete, usable now):**
+
+- **Anti-cheat / multiplayer disclosure.** Show enough of a partially-hidden world to be playable without
+  becoming an oracle: the access-control + composition firewall + accumulation + side-channel families, each a
+  transplantable, re-validatable reference (`causal_access`, `reconstruction`, `accumulation`, `side_channel`,
+  `execution_surface`, `convergence`).
+- **Renderer fidelity allocation.** Spend compute by expected future failure cost, not present complexity;
+  `ranking ≠ allocation` (water-filling under a resistance tensor), and turning shader/PSO hitches into a
+  prewarm allocation problem.
+- **A measurement / audit substrate.** Point `channel_discovery` + the `DisclosurePolicy` auditor at a real
+  telemetry or output stream — *"policy said reveal X; did the output contain only X?"* — and get a result that
+  names its estimator class and coverage boundary instead of declaring "safe."
+- **Causal attribution for residuals, anomalies, and ML features.** Given an unexplained signal, decide whether
+  it is a generator or a confounder/artifact by invariance + intervention + model-robustness + gauge — the
+  latent benchmark's procedure transfers even where its toy numbers do not.
+- **A provenance runtime for ML pipelines.** Wrap any learned artifact so it carries its conditions of
+  existence; swap the model without losing what made the result admissible; `audit()` what was *demonstrated*
+  vs *assumed*; weaponize `declared ≠ verified` to catch a result that asserts more than its evidence backs.
+- **LLM-on-track methodology.** `observe → hypothesize → implement → verify → record`, with guards against
+  silent architectural drift, accidental authority leakage, unreplayable behavior, and unmeasured optimization
+  claims — portable to any systems project ([`docs/LLM_ON_TRACK.md`](docs/LLM_ON_TRACK.md)).
+
+**For investors / strategic readers (honest framing):**
+
+- **Category.** Not a renderer, security tool, or AI-safety product alone — a horizontal **intent-aware
+  information-mediation / verifiable-representation-governance** architecture, of which a renderer is one
+  backend. The same contract applies to game engines, agent environments, robotics, collaborative software,
+  simulation, medical/scientific visualization, and AI evaluation.
+- **The moat is a contract, not a model.** The asset is *representation-invariant epistemic accounting* — it
+  survives model and representation churn, because the model is a plugin and the provenance contract is fixed.
+  As models commoditize, the durable layer is the one that says *under what declared conditions this result
+  exists.*
+- **Timing.** As generative and agentic systems proliferate, the scarce capability is not producing coherent
+  output (modern ML is excellent at that) but **telling created coherence from discovered structure** — the
+  exact failure (`created coherence ≠ discovered coherence`) this layer is built to prevent. Provenance is the
+  audit substrate that frontier will require.
+- **Defensibility & candor.** AGPL-3.0; built as honest composition of peer-reviewed disciplines into a
+  closed-loop, typed, falsification-first system. It does not claim to have solved causal discovery or to ship
+  GPU pixels; it claims to make every assumption visible, every result replayable, and every conclusion carry
+  its price — and it states its frontiers rather than papering over them.
 
 ## Toward a fidelity operating system (direction, not built)
 
@@ -469,10 +609,12 @@ experiments. [`docs/GENEALOGY.md`](docs/GENEALOGY.md) — the full genealogy & c
 measurement loop, closed-world failure, what a result means, and what NOT to claim.
 [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md) — the *next-gen direction* (research, not built):
 the world-side dual of the M10–M21 arc — a committed, leakage-bounded **Perception Compiler** of which the
-fidelity engine is one backend. [`docs/LATENT_SPACETIME.md`](docs/LATENT_SPACETIME.md) — the *real-ML pivot*
-(spec, not built): from a hardcoded schema to a learned latent substrate, organized around *define the horizon,
-then trust the dark* — gauge-invariant validation, a declared observable/unobservable boundary, and the sealed
-core that is never liquidated. [`AGENTS.md`](AGENTS.md) — the contract every change obeys.
+fidelity engine is one backend. [`docs/LATENT_SPACETIME.md`](docs/LATENT_SPACETIME.md) — the *real-ML pivot*: from a
+hardcoded schema to a learned latent substrate, organized around *define the horizon, then trust the dark*; the
+discipline layers are **built** in `experiments/` (Phases 1–6 + two runtimes), the estimator under scarcity and
+a real external anchor remain the frontier. [`experiments/`](experiments/) — the executed empirical phase
+(`latent_phase1`–`6`, `provenance_runtime`, `adversarial_runtime`), each a seeded, self-checking bench outside
+the core. [`AGENTS.md`](AGENTS.md) — the contract every change obeys.
 
 ## License
 
