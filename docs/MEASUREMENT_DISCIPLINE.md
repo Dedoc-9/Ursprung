@@ -334,6 +334,35 @@ admissible explanation space** — its one structural advantage over a floor tha
 culture, an axiom set) is that it can say *here is the model class, the observer class, the projection, the
 evidence, and here is where we chose to stop.*
 
+## The two absolutes (and why erasure is not a third)
+
+An observer extracts a cause `X` iff some available observable `Y` has `I(X;Y) > 0`. There are exactly **two**
+observer-independent ways that fails for *all* observers — the only boundaries that do not puncture against a
+richer adversary class:
+
+```
+severance (M21)        ABSENCE.    I(X;Y)=0 for every Y — the signal is not in the observable universe
+indistinguishability   COLLISION.  distinct {X, X'} give identical distributions over every Y, including every
+                                   intervention P(Y|do(X))=P(Y|do(X')) — present, but undecidable for infinite capacity
+```
+
+Everything else — cryptographic hardness, physical erasure, behavioral non-identifiability, generator-privacy —
+is **class-relative**: it holds against a stated observer class and dissolves against a richer one. A proposed
+"M22 — irreversible erasure" is **not** a third absolute: logical erasure that reaches `I=0` simply *is*
+severance; physical erasure (Landauer — the bit is dissipated into a heat/EM reservoir, not destroyed) is
+class-relative, so it belongs under `survived`. `logical erasure ≠ physical erasure`.
+
+**The verifiability asymmetry (do not call both "proved").** The two absolutes are symmetric as boundaries but
+not as claims you can establish. Severance is often **constructively** witnessed (`I=0` by construction).
+Indistinguishability generally **cannot be proved** — it needs identical distributions over every observable
+*and every intervention* across the admissibility set, the exhaustive intervention the project says you cannot
+run — so `indistinguishable` is almost always **declared**, not proved (`declared ≠ verified`; in
+`latent_phase1` the confounder was observationally indistinguishable until `do(c)` broke it). Enforced in
+`experiments/two_absolutes/`: an absolute requires its declared licensing witness, may not be conditioned on an
+adversary class, and is never marked verified-by-runtime (severance = constructive; indistinguishability =
+`requires_exhaustive_intervention`, the frontier). `severance ≠ indistinguishability`; `absolute-as-boundary ≠
+absolute-as-verified`.
+
 ## The one absolute, and everything else
 
 There is exactly one class-independent guarantee in the stack (M21):
