@@ -293,11 +293,13 @@ A deterministic replay can fail adequacy; a good predictor can fail attribution;
 model robustness; a robust explanation can still depend on a declared floor. The common thread across every
 layer is one move: refusing to let `chosen` be silently rewritten as `derived` and then mistaken for truth.
 
-## The meta-invariant — identity includes provenance (Law 6)
+## The meta-invariant — identity includes provenance (the Provenance Principle)
 
 Beneath every separator on this page is one mechanism, and it is the generator of all of them: **an object is
 not fully specified until the thing that licenses it is attached to it.** The separations are its special cases.
-This is promoted to **Law 6** in the README's law set — the generator beneath the five fidelity laws, of which
+In the README this is the **Provenance Principle** — deliberately *not* numbered as a sixth law, because it is a
+different category: a law of the **runtime**, not of the world (`observation ≠ intervention` is true whether the
+system exists or not; *identity includes provenance* is a design requirement the runtime chooses to enforce).
 Law 2 (Arbitrary-Boundary) is its earliest instance. The sharp form: *the license for a claim is part of the
 claim's identity* (not the over-broad "everything must have a history").
 

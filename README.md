@@ -54,7 +54,7 @@ backend* of a committed, leakage-bounded **perception compiler**
 > crossing requires a real intervention mechanism, not a ground-truth oracle — the open problem the next phases
 > face, not fake.
 
-## The five laws (and the generator beneath them)
+## The five laws (the philosophy layer — the ontology of fidelity)
 
 1. **Reality Debt Law** *(underneath)* — every approximation incurs debt: `Debt = Approximation ×
    Persistence × Consequence`. Fidelity is conserved, but debt is accumulated; allocation places debt where
@@ -72,26 +72,12 @@ backend* of a committed, leakage-bounded **perception compiler**
 WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT → RASTERIZATION → IMAGE
 ```
 
-**Law 6 — Identity includes provenance** *(the generator, a different order from the five above).* An object is
-not fully specified by its form or output alone; its identity includes the conditions, transformations,
-assumptions, and evidence that license it. The sharp form — *the license for a claim is part of the claim's
-identity* — not the over-broad "everything must have a history." The five laws govern fidelity economics; Law 6
-governs **what counts as a specified object at all**, and it earns law-status the way a generator does: it is
-not a new empirical claim, it does not depend on any model or estimator, and removing it detaches every other
-safeguard into floating metadata. It is not unprecedented in the set — **Law 2 (Arbitrary-Boundary) is its
-earliest instance** (a convention's identity includes that it is a *declared choice*, not a discovery) — Law 6
-is the generalization the second arc unfolded from. It is enforced in code (`grounded_claim`, `ledgers`,
-`causal_edge`/`reconstruction`, `EstimatorOutput`, and the `Artifact` runtime), and the whole separator ladder
-is its consequence:
-
-```
-identity includes provenance
-   → observation ≠ intervention → causal relevance ≠ causal position → edge ≠ edge-without-support
-   → latent ≠ discovered structure → coordinate ≠ claim → accuracy ≠ identifiability
-```
-
-(The capstone treatment is in [`docs/MEASUREMENT_DISCIPLINE.md`](docs/MEASUREMENT_DISCIPLINE.md), "the
-meta-invariant.")
+These five govern **fidelity economics** — how finite rendering is spent. They are not the project's deepest
+invariant, and that deepest one is deliberately *not* numbered as a sixth law, because it is a different
+category: a law of the **runtime**, not of the world. (`observation ≠ intervention` is true whether this system
+exists or not; *identity includes provenance* is a design requirement the runtime *chooses* to enforce.) It is
+treated on its own terms below in *The Provenance Principle* — and **Law 2 (Arbitrary-Boundary) is its earliest
+instance**, which is why the rest of the architecture fell out of it.
 
 ## Rendering economics — priority ≠ allocation (the discovered hierarchy)
 
@@ -458,6 +444,42 @@ intentionally-unbuilt seams — `reality_harness.NetworkChannel` (point it at a 
   **real external anchor** (a verifiable delay function / proof-of-sequential-work / external clock) is the only
   thing that would supply the irreversibility software cannot.
 
+## The Provenance Principle (the meta-invariant — the bridge from reality to development)
+
+The five laws are the **ontology** layer (what reality and observation permit). Everything the second arc and
+the empirical phase added is governed by something of a *different category* — not a law of the world but a law
+of the **runtime**, a design requirement the system chooses to enforce:
+
+> **Identity includes provenance.** An object is not fully specified until the conditions that license its
+> existence are attached. *Claims carry floors. Edges carry support. Inferences carry costs. Worlds carry
+> histories.*
+
+This is the bridge between *reality* and *development*: it is what lets a system not merely observe a world but
+**build in one without mistaking what it authored for what it found**. It is enforced in code, not asserted —
+`grounded_claim`, `floor_digest`/`graph_digest`, `CausalEdge`, `EstimatorOutput`, the `Artifact` runtime — and
+the entire separator chain is its consequence (`observation ≠ intervention → causal relevance ≠ causal position
+→ edge ≠ edge-without-support → latent ≠ discovered structure → coordinate ≠ claim → accuracy ≠
+identifiability`). The **Runtime Corollary**, almost a theorem of it, is the one the developable-reality work
+turns on: *an edit is an event with identity.*
+
+The full stack the project now spans, each layer with the question it answers and the invariant that governs it:
+
+| Layer | Core question | Invariant |
+|---|---|---|
+| **Reality** | what exists? | the Five Laws |
+| **Knowledge** | what can be justified? | identity includes provenance |
+| **Causality** | what supports this edge? | edge provenance |
+| **Learning** | what supports this latent? | representation humility |
+| **Inference** | what paid for this conclusion? | the identification ledger |
+| **Authoring** | how did this world become this way? | an edit is an event |
+
+The consequence for a developable digital reality is the one ordinary engines don't have: **the world itself
+becomes provenance-bearing.** Most engines store *state*; this runtime stores *state + history + source +
+admissibility conditions* — the world is never merely what it is, it remembers how it became what it is. The
+Reality Authoring Runtime (`experiments/reality_authoring/`, below) is the **first architectural realization**
+of this meta-invariant, not another entry in the separator list. (Capstone treatment:
+[`docs/MEASUREMENT_DISCIPLINE.md`](docs/MEASUREMENT_DISCIPLINE.md), "the meta-invariant.")
+
 ## The empirical phase — provenance survives learning (`experiments/`)
 
 The conceptual arc ended at a claim it could not yet test: that the project's discipline would survive contact
@@ -479,7 +501,7 @@ floor`.
 | **5** `latent_phase5/` | provenance-preserving learning | two encoders with different latents (`[0.28,0.96,0.95]` vs `[0.95,0.71,0.81]`) yield the **same** provenance-qualified claim → equivalent; rescaling the input doesn't change it (the **scale gauge is closed**) | `latent coordinate ≠ the claim` |
 | **6** `latent_phase6/` | the inference contract — no edge without its price | the same edge via `do()` vs via assumption are *different objects*; `IdentificationCost` is a structured ledger (not a scalar); a cost-free or accuracy-only claim is rejected at construction | `accuracy ≠ identifiability` |
 
-**Two runtimes consolidate it.** Once the phases all produced the same shape — *a value bound to the
+**Three runtimes consolidate it.** Once the phases all produced the same shape — *a value bound to the
 conditions of its own existence* — they collapse into one object:
 
 - **`experiments/provenance_runtime/` — the runtime that *records*.** One `Artifact` (identity · provenance ·
@@ -499,9 +521,19 @@ conditions of its own existence* — they collapse into one object:
   **External Anchor** — an append-only, tamper-evident commitment chain that grounds *ordering*. Its loudest
   honest bound: a software anchor is `tamper-evident ordering ≠ physical irreversibility` (a fresh chain from
   the same inputs reproduces), so a real anchor needs an irreversible external cost — the frontier.
+- **`experiments/reality_authoring/` — the runtime that *authors*.** The first architectural realization of the
+  meta-invariant: a world where **an edit is an event with identity**, not a mutation. `Edit(target, old→new,
+  source, justification, scope, survival_tests)` makes the world remember *how* it became what it is, so the
+  runtime answers what ordinary engines cannot — *was this behaviour designed or did it emerge? which structure
+  came from which source? if I remove this edit, what collapses? which parts are stable under the world's own
+  transformations* (the **discovered** constraints, vs the **authored** rules and the **emergent** patterns).
+  The non-anthropocentric invariant: it is the *source of structure* that stays inspectable — `{developer,
+  algorithm, learned_model, external_data, environment}`, **no origin privileged, none erased** — so a world
+  can be authored and generated without quietly starting to look autonomous. The bridge from "renderer + a
+  provenance discipline" toward "a world a developer develops *in*."
 
-The whole ladder is generated by one principle — **`identity includes provenance`** — applied, in the end, even
-to the creator:
+The whole ladder is generated by one principle — **`identity includes provenance`** (the Provenance Principle
+above) — applied, in the end, even to the creator:
 
 ```
 observation ≠ intervention  →  causal relevance ≠ causal position  →  edge ≠ edge-without-support
