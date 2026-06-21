@@ -4,7 +4,8 @@ experiments/reality_authoring/reality.py — Reality Authoring Runtime: an edit 
 
 Not a game engine, not a world simulator. A system where **every change to reality is itself a first-class
 object, and every object carries the conditions under which it came to exist.** This is the layer where
-`identity includes provenance` (Law 6) stops being an epistemic discipline and becomes an architecture.
+`identity includes provenance` (the Provenance Principle — the meta-invariant, a law of the runtime, not a
+numbered world-law) stops being an epistemic discipline and becomes an architecture.
 
 The question this runtime answers is not "can the system preserve provenance?" (established) but:
 

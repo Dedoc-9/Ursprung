@@ -45,6 +45,12 @@ on real silicon" bound; nothing here is asserted without a runnable check.
   measured to 5×10⁵ commits with zero lineage lost, where discarding lineage for a still-live digest is *caught
   as severance*, never silently allowed.
 
+*"Verified" here means the runtime's **distinctions survived a substrate transition** — not that the runtime is
+complete. Proven: the kernel invariants, semantic preservation across implementations, the tested failure
+distinctions, and lineage preservation within the benchmark envelope. Frontier (below): broader scale,
+distributed persistence, learned-world verification, and a real-time world substrate. The narrower claim is the
+stronger one.*
+
 **What you get** — a **specification + reference implementation + measurement discipline**, not a turnkey
 engine. Concretely: a *provenance-preserving execution substrate* (the kernel) with a verified Rust core that
 refuses to let state outlive its explanation; a transplantable, re-validatable *information-firewall /
