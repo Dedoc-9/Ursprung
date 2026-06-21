@@ -255,6 +255,28 @@ A deterministic replay can fail adequacy; a good predictor can fail attribution;
 model robustness; a robust explanation can still depend on a declared floor. The common thread across every
 layer is one move: refusing to let `chosen` be silently rewritten as `derived` and then mistaken for truth.
 
+## The meta-invariant — identity includes provenance
+
+Beneath every separator on this page is one mechanism, and it is the generator of all of them: **an object is
+not fully specified until the thing that licenses it is attached to it.** The separations are its special cases.
+
+```
+claim       + floor            → claim identity      (grounded_claim.floor_digest)
+coordinate  + ledger           → confidence identity (ledgers: integrity ⟂ adequacy)
+graph edge  + support          → edge identity       (provenance: intervention-grounded vs assumption-backed)
+graph       + edge provenance  → graph identity       (provenance.graph_digest)
+```
+
+So the project's question is not the usual one. Most systems ask *"what is true?"*; this one asks **"under what
+declared conditions does this object continue to exist?"** — and the robust object is always an intersection
+over the admissibility set: `robust claim = ⋂ over 𝓕`, `robust edge = ⋂ over 𝓐`. The center of gravity is
+**epistemic provenance**, not epistemology: not eliminating assumptions, but refusing to let them detach from
+the objects they license. This is the lens that generated the list above (it does not replace the individual
+facts — `observation ≠ intervention` still stands on its own; this is *why* such facts kept appearing). The
+contract is enforced as a type, not a convention: a `CausalEdge` recovered under an assumption cannot be
+constructed without declaring it, so any estimator — present or future — emits `edge + provenance +
+admissibility boundary` or it emits nothing. `identity includes provenance`.
+
 ## The floor (where the regress terminates)
 
 Every attribution system has a floor; the floor is **assumed, not derived**; the assumption is **declared**; the
