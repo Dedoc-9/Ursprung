@@ -1229,6 +1229,23 @@ def test_perception_grounded_claim_carries_its_floor():
     check(r["variation_attributable_to_a_choice"], "the conclusion's variation is attributable to a CHOSEN layer (𝓕) with the encountered evidence held identical — confidence = f(evidence, floor)")
 
 
+def test_perception_ledgers_keep_integrity_and_truth_apart():
+    r = perc.ledgers.crucible()
+    # the three canonical cases land where the argument says
+    check(r["reproducible_but_wrong"], "the buggy calculator is integrity-high, adequacy-low — flawless accounting, false conclusion")
+    check(r["true_but_poorly_accounted"], "the prescient intuition is adequacy-high, integrity-low — right answer, no provenance")
+    check(r["reproducible_and_adequate"], "mature science scores high in BOTH ledgers — and earns each separately")
+    # neither ledger implies the other
+    check(r["integrity_does_not_imply_truth"], "high integrity does not imply high adequacy (integrity ≠ truth)")
+    check(r["truth_does_not_imply_integrity"], "high adequacy does not imply high integrity (truth ≠ accounting)")
+    # the axes are independent functions
+    check(r["integrity_ignores_ontology"], "the epistemic ledger ignores ontological inputs — integrity is computed from the floor alone")
+    check(r["adequacy_ignores_floor"], "the ontological ledger ignores the declared floor — adequacy is computed from worldly performance alone")
+    # the load-bearing control: one scalar cannot preserve the distinction
+    check(r["one_scalar_cannot_distinguish"], "a single integrity scalar cannot tell reproducible-but-wrong from reproducible-and-adequate")
+    check(r["collapse_launders_wrong_as_trustworthy"], "collapsing to one 'confidence' crowns the buggy calculator — so the ledgers must stay separate")
+
+
 def main():
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):

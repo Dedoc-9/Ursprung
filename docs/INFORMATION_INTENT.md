@@ -447,6 +447,22 @@ never a new invariant:
     boundary it did not derive. The realization is "every system has a floor that cannot be justified entirely
     from within the system," **not** "everything is arbitrary."
 
+22. **Two ledgers — DONE; integrity and truth are tracked separately.** `ursprung/perception/ledgers.py`
+    refuses the last fusion the framework still allowed: collapsing *can we reproduce/audit this?* (epistemic)
+    and *does it correspond to the world?* (ontological) into one "confidence." It keeps two objects: an
+    `EpistemicLedger` scoring **integrity** (reproducible AND fully-declared floor) and an `OntologicalLedger`
+    scoring **adequacy** (predicts, survives intervention, robust across contexts). The fixtures are the
+    proof they come apart: a *buggy calculator* (`2+2=5`, deterministically, fully declared) scores integrity
+    1.0 / adequacy 0.0 — *reproducible but wrong*; a *prescient intuition* scores 0.0 / 0.9 — *true but
+    unaccounted*; *mature science* scores high in both, earning each separately. The load-bearing control: a
+    single integrity scalar cannot tell the buggy calculator from real science (same 1.0, opposite adequacy),
+    so collapsing the ledgers *launders a reproducible-but-wrong account into a trustworthy one*. This is
+    `integrity ≠ truth` made a runtime — integrity belongs to the epistemic ledger (same account → same
+    result), truth to the ontological (account ↔ world); the link between them is explicit, never a collapse.
+    HONEST: the adequacy score is a toy stand-in (declared 0..1 inputs) — the ontological ledger is exactly
+    where the project's numbers are weakest (`simulation ≠ physics`); the instrument keeps the truth question
+    from being silently answered by the accounting question, it does not itself measure truth.
+
 The remaining honest gaps (so this is not over-read): the compiler is still a *lookup / greedy channel select*,
 not a continuous funnel *solve*; the world, the learner, and the leakage estimator are constructed; the utility
 models are declared conventions; the capacity axis is a memory-horizon *proxy*, not real model capacity; the
