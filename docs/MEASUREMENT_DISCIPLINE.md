@@ -206,6 +206,25 @@ integrity           ≠ immunity       (a perfectly reproducible result whose ad
                                         direction of integrity. perception/trajectory.py.)
 ```
 
+## The four questions (the spine the whole arc separates)
+
+The project reads, end to end, as the progressive separation of four questions that are usually collapsed into
+one word ("confidence"). Each is a different object, answered by a different layer, and a high score on one says
+nothing about the others:
+
+```
+question                                         object        a system can fail it while passing the rest
+─────────────────────────────────────────────── ───────────── ───────────────────────────────────────────
+Can we replay the account?                       integrity     a deterministic replay can still be wrong
+Does it correspond to the world?                 adequacy      a good predictor can still be a confounder
+What caused it?                                  attribution   a causal fit can fail across model classes
+What assumptions made the explanation possible?  floor         a robust explanation still rests on a 𝓕
+```
+
+A deterministic replay can fail adequacy; a good predictor can fail attribution; a causal explanation can fail
+model robustness; a robust explanation can still depend on a declared floor. The common thread across every
+layer is one move: refusing to let `chosen` be silently rewritten as `derived` and then mistaken for truth.
+
 ## The floor (where the regress terminates)
 
 Every attribution system has a floor; the floor is **assumed, not derived**; the assumption is **declared**; the

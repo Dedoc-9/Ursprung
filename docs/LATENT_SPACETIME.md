@@ -127,6 +127,30 @@ Each target: **mechanism** (the real thing), **analogy** (the metaphor it came i
 
 ---
 
+## Phase 1 first — and the benchmark is NOT reconstruction
+
+The temptation is to measure a learned latent by reconstruction error. That rewards the wrong thing: a
+sufficiently expressive model reconstructs almost anything, and a latent that tracks the **confounder** `c`
+perfectly while missing the **generator** `g` can score excellent reconstruction. This is `confounder.py`
+reappearing inside representation learning — *fitting the observable is not recovering the mechanism.*
+
+**New separator: `good reconstruction ≠ recovered generator`.** So Phase 1's benchmark is a *hierarchy*, run in
+order, where each tier is a stronger test than the last and reconstruction is merely the entry gate:
+
+```
+1. reconstruction              can the decoder rebuild the observable?         (necessary, weakest — entry gate)
+2. intervention sensitivity    do latent dims that matter CHANGE the trajectory under F? (attribution: necessity)
+3. model-class robustness      does a latent feature survive across encoder families?    (model_relativity: ⋂ over 𝓕)
+4. gauge-invariant evaluation  does the metric survive latent rotations/relabelings?      (gauge: invariance)
+```
+
+Only a feature that clears tiers 2–4 is a *recovered generator* rather than a well-fit confounder. Tier 1 alone
+would reward the artifact. This is where the existing machinery stops being illustrative and starts paying rent:
+`attribution` asks whether a latent dimension is causal or confounded; `model_relativity` asks whether it
+survives a change of encoder family (a change of `𝓕`); `ledgers` separates *reproducibility of the training run*
+(epistemic) from *adequacy of the learned representation* (ontological); and every result is emitted as a
+`GroundedClaim` that must declare architecture, objective, data distribution, and training regime as its floor.
+
 ## "Trust the dark" — the discipline that makes this honest
 
 The horizon is an **Arbitrary Boundary** in the project's exact sense: declared, content-addressed, carrying its
@@ -153,6 +177,7 @@ trust the dark         ≠ know the dark
 gauge-dependent        ≠ real
 compressed             ≠ complete
 latent                 ≠ truth                  (Z is a representation, not the world)
+good reconstruction    ≠ recovered generator    (a latent can fit the confounder c and miss the generator g)
 ```
 
 ## Build sequence (real-ML, phased — every number measured, none illustrative)
