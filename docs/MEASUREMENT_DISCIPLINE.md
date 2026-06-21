@@ -255,6 +255,22 @@ latent coordinate ≠ the claim   (Phase 5, "representation is free, epistemic s
                                         is expressed, not the discovery. Standardizing the encoder input CLOSES
                                         an unintended scale gauge, so magnitude cannot manufacture coherence.
                                         latent_phase5.)
+full provenance   ≠ hot-path representation   (the runtime stress test: the hot loop carries only a
+                                        provenance DIGEST — O(1), independent of lineage depth — while the full
+                                        lineage lives in a latent store that resolves on demand. "execution is
+                                        compressed, provenance is conserved." This is Phase 5 at a different
+                                        pressure: latent coordinate / execution representation can change, claim /
+                                        provenance identity cannot. live_latent_provenance.)
+compression       ≠ severance   (a real system MUST compress, so compression is allowed; severance is not.
+                                        Nulling a digest must NOT degrade to `unknown` — the structure remains, the
+                                        history was destroyed: a distinct runtime mode, PROVENANCE_SEVERED, never a
+                                        silent fallback. It is a fourth, runtime-level failure mode beside
+                                        UNACCOUNTED (never recorded), resource_limit, and assumption_limit. NOTE it
+                                        is NOT the epistemic `severance` (signal absent in the world, I(X;O)=0,
+                                        absolute): runtime PROVENANCE_SEVERED is class-relative and repairable in
+                                        principle — same word, different object. "The world may become faster,
+                                        smaller, learned, generated, distributed, or optimized; it may not become
+                                        untraceable." live_latent_provenance.)
 created coherence  ≠ discovered coherence   (the re-anthropomorphism / "provenance collapse" failure: a
                                         designer imposes a constraint, the system adapts coherently, and the
                                         AUTHORED coherence is re-read as DISCOVERED structure — the mirror
