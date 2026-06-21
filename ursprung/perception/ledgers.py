@@ -88,7 +88,32 @@ CASES = {
     "mature_science": {  # reproducible procedure AND empirical adequacy — earns trust in both ledgers, separately
         "epistemic": {**{k: "declared" for k in FLOOR}, "reproducible": True},
         "ontological": {"predictive_accuracy": 0.90, "survives_intervention": 0.88, "cross_context_robustness": 0.86}},
+    "rumor": {  # unaccounted AND unsupported — the fourth quadrant: neither
+        "epistemic": {**{k: "" for k in FLOOR}, "reproducible": False},
+        "ontological": {"predictive_accuracy": 0.10, "survives_intervention": 0.0, "cross_context_robustness": 0.05}},
 }
+
+# Confidence is not a scalar — it is a coordinate (integrity, adequacy) with four quadrants. A single number
+# would project these onto a line and fuse situations that are opposite in kind.
+HI = 0.5
+QUADRANTS = {
+    ("hi", "hi"): "accounted_and_supported",     # both — the only one that earns trust twice, separately
+    ("hi", "lo"): "reproducible_error",           # well-accounted, wrong (the buggy calculator)
+    ("lo", "hi"): "under_documented_success",      # right, but no provenance (the prescient intuition)
+    ("lo", "lo"): "neither",                        # unaccounted and unsupported (the rumor)
+}
+
+
+def coordinate(case_name):
+    """Confidence as a 2-D coordinate (integrity, adequacy) — not a scalar."""
+    c = CASES[case_name]
+    return (EpistemicLedger().integrity(c["epistemic"]), OntologicalLedger().adequacy(c["ontological"]))
+
+
+def quadrant(integrity, adequacy, hi=HI):
+    """Which of the four kinds of situation: accounted_and_supported / reproducible_error /
+    under_documented_success / neither. A scalar cannot name these; a coordinate can."""
+    return QUADRANTS[("hi" if integrity >= hi else "lo", "hi" if adequacy >= hi else "lo")]
 
 
 def score_all():
@@ -131,6 +156,20 @@ def crucible():
     # and collapsing to integrity-only crowns the buggy calculator (laundering accounting into truth)
     coll = collapsed_confidence(s, "integrity_only")
     out["collapse_launders_wrong_as_trustworthy"] = coll["buggy_calculator"] == max(coll.values()) and s["buggy_calculator"]["adequacy"] == 0.0
+    # confidence is a COORDINATE, not a scalar — and the four quadrants are all real, distinct situations
+    coords = {n: coordinate(n) for n in CASES}
+    quads = {n: quadrant(*coords[n]) for n in CASES}
+    out["quadrants"] = quads
+    out["confidence_is_a_coordinate"] = all(isinstance(c, tuple) and len(c) == 2 for c in coords.values())
+    out["four_quadrants_all_distinct"] = len(set(quads.values())) == 4
+    out["neither_quadrant_exists"] = quads["rumor"] == "neither"                                  # the 4th, low/low
+    out["reproducible_error_quadrant"] = quads["buggy_calculator"] == "reproducible_error"        # hi/lo
+    out["under_documented_success_quadrant"] = quads["prescient_intuition"] == "under_documented_success"  # lo/hi
+    # neither single axis separates all four → the coordinate genuinely needs both dimensions
+    I = {n: coords[n][0] for n in CASES}
+    A = {n: coords[n][1] for n in CASES}
+    out["two_dimensions_required"] = (I["buggy_calculator"] == I["mature_science"]               # integrity-only fuses these two
+                                      and abs(A["prescient_intuition"] - A["mature_science"]) < 0.1)  # adequacy-only fuses these two
     return out
 
 

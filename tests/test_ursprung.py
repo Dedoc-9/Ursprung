@@ -1244,6 +1244,13 @@ def test_perception_ledgers_keep_integrity_and_truth_apart():
     # the load-bearing control: one scalar cannot preserve the distinction
     check(r["one_scalar_cannot_distinguish"], "a single integrity scalar cannot tell reproducible-but-wrong from reproducible-and-adequate")
     check(r["collapse_launders_wrong_as_trustworthy"], "collapsing to one 'confidence' crowns the buggy calculator — so the ledgers must stay separate")
+    # confidence is a coordinate (integrity, adequacy) with four quadrants, not a scalar
+    check(r["confidence_is_a_coordinate"], "confidence is a 2-D coordinate (integrity, adequacy), not a scalar")
+    check(r["four_quadrants_all_distinct"], "the four fixtures occupy four distinct quadrants — well-accounted, well-supported, both, neither")
+    check(r["neither_quadrant_exists"], "the fourth quadrant exists: a rumor is neither accounted nor supported (low/low)")
+    check(r["reproducible_error_quadrant"], "the buggy calculator is the reproducible_error quadrant (hi integrity, lo adequacy)")
+    check(r["under_documented_success_quadrant"], "the prescient intuition is the under_documented_success quadrant (lo integrity, hi adequacy)")
+    check(r["two_dimensions_required"], "no single axis separates all four quadrants — confidence genuinely needs both dimensions")
 
 
 def main():
