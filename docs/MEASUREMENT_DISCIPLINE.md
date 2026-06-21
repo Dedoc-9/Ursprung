@@ -223,6 +223,11 @@ survives intervention ≠ (root) generator   (passing the intervention gate mean
                                         does not move g), which a single outcome test does not capture. And the
                                         verdict is a GATE (pass/fail), never a confidence scalar — any composite
                                         is explicitly secondary, or the one-dimensional confidence object returns.)
+causal relevance   ≠ causal position   (Phase 2's separation, the crisp form: "does changing this factor
+                                        change the outcome?" (relevance) is a different question from "where
+                                        does it sit in the graph?" (position). A root and a mediator are both
+                                        relevant; only position distinguishes them. The intervention gate
+                                        answers relevance; topology answers position.)
 recovered topology  ≠ discovered ontology   (Phase 2: the intervention asymmetries recover a partial order
                                         (root/mediator/sink/isolated) that separates root from mediator — but
                                         even a perfectly recovered graph is a graph over LATENT FACTORS created

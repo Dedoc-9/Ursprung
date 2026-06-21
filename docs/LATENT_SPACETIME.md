@@ -163,6 +163,22 @@ mediator, `y` sink, `c` isolated; `g` and `x` are both Tier-2 relevant and only 
 `survives intervention ≠ root generator`. Honest bound: `recovered topology ≠ discovered ontology` (a graph
 over declared latent factors under `𝓕`, assuming a real `do()` — not a final description of reality).
 
+**The frontier: topology under intervention scarcity.** The Phase-2 toy grants two privileges — the graph
+exists explicitly, and interventions are free. Real systems deny at least one, usually both: interventions are
+expensive, partial, impossible, or only observational proxies. The problem then changes character — from
+*recovering topology from interventions* to *recovering topology under intervention scarcity* (natural
+experiments, instrumental variables, invariance across environments / ICP, active learning, counterfactual
+estimation). The discipline's warning, and the reason this is the hard part: **scarcity is where the
+floor-hiding temptation is maximal.** You can only recover an edge you cannot intervene on by *assuming*
+structure (an instrument is valid, an invariance holds, a natural experiment is as-if-random) — so the recovered
+graph's floor *grows exactly as intervention access shrinks*. The honest system's job there is not to recover
+more; it is to keep every assumption-recovered edge a *declared* floor, and to report how much of the topology
+is intervention-grounded vs assumption-load-bearing — never letting an assumed edge wear the confidence of an
+intervened one (`chosen ≠ derived`, at the level of the causal graph). That is a research-grade phase with its
+own bounds, deliberately not folded into a toy. The compact statement of the arc so far:
+*Phase 1 — observational success cannot certify causation; Phase 2 — causal relevance cannot certify causal
+position; next — how much topology survives when intervention access is constrained.*
+
 Only a feature that clears tiers 2–4 is a *recovered generator* rather than a well-fit confounder. Tier 1 alone
 would reward the artifact. This is where the existing machinery stops being illustrative and starts paying rent:
 `attribution` asks whether a latent dimension is causal or confounded; `model_relativity` asks whether it
