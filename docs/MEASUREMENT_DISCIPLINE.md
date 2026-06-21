@@ -303,6 +303,22 @@ system exists or not; *identity includes provenance* is a design requirement the
 Law 2 (Arbitrary-Boundary) is its earliest instance. The sharp form: *the license for a claim is part of the
 claim's identity* (not the over-broad "everything must have a history").
 
+The full compression — **presence and absence are both first-class objects**, neither allowed to exist without
+its license:
+
+```
+RealityModel = Structure + Provenance + Ignorance
+  Structure  = what the runtime currently represents          (Edit, CausalEdge, Representation, Graph)
+  Provenance = the declared conditions licensing it           (floor · support · cost · lineage)
+  Ignorance  = the declared conditions preventing it          (NonRecovery)
+```
+
+It claims *what is represented, why it is, and why something is not* — never *what exists / is true / is real*.
+**The honesty clause:** all provenance here is *declared* provenance unless independently verified; the system
+records the history of claims, assumptions, costs, edits, and failures — it does not guarantee their truth.
+`declared ≠ verified` — a notary of history, not an oracle of reality. This is *not* an ontology of reality; it
+is an ontology of declared provenance.
+
 ```
 claim       + floor            → claim identity      (grounded_claim.floor_digest)
 coordinate  + ledger           → confidence identity (ledgers: integrity ⟂ adequacy)

@@ -1,8 +1,9 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-only -->
 # Reality Authoring Runtime — an edit is an event with identity
 
-Not a game engine, not a world simulator. The layer where **`identity includes provenance` (Law 6) stops being
-an epistemic discipline and becomes an architecture.** The question is no longer "can the system preserve
+Not a game engine, not a world simulator. The layer where **`identity includes provenance` (the Provenance
+Principle — the meta-invariant, not a numbered law) stops being an epistemic discipline and becomes an
+architecture.** The question is no longer "can the system preserve
 provenance?" (established) but:
 
 > Can a world remain **editable** while preserving the distinction between **authored**, **learned**, and
@@ -24,7 +25,7 @@ The world remembers not just what it is, but how it became that way — a World 
 python3 experiments/reality_authoring/run.py     # stdlib only; deterministic
 ```
 
-## The reality-layer statement of Law 6
+## The reality-layer statement of the Provenance Principle
 
 > **A world object is not fully defined by its current state; its identity includes the transformations,
 > constraints, and sources that produced that state.** It applies to a rock, a physics rule, a creature

@@ -480,6 +480,47 @@ Reality Authoring Runtime (`experiments/reality_authoring/`, below) is the **fir
 of this meta-invariant, not another entry in the separator list. (Capstone treatment:
 [`docs/MEASUREMENT_DISCIPLINE.md`](docs/MEASUREMENT_DISCIPLINE.md), "the meta-invariant.")
 
+### Capstone — Structure, Provenance, Ignorance
+
+> **This is not an ontology of reality. It is an ontology of *declared provenance*.**
+
+The runtime does not treat presence as primary and absence as a void. **Presence and absence are both
+first-class objects, and neither is allowed to exist without the conditions that license it.** The whole arc
+compresses into three layers under one meta-invariant:
+
+| Layer | Question | Object |
+|---|---|---|
+| **Structure** | what is present? | `Edit`, `CausalEdge`, `Representation`, `Graph` |
+| **Provenance** | why is it present? | floor · support · identification cost · lineage |
+| **Ignorance** | why is it absent or unresolved? | `NonRecovery` |
+
+```
+RealityModel = Structure + Provenance + Ignorance
+  Structure  = what the runtime currently represents
+  Provenance = the declared conditions licensing that representation
+  Ignorance  = the declared conditions preventing representation
+```
+
+It never claims *what exists*, *what is true*, or *what reality is* — only *what is represented*, *why it is*,
+and *why something is not*. A narrower statement, and a more defensible one. The same meta-rule holds across
+every object — eight families, one invariant (*an object is incomplete until the thing that licenses it is
+attached*):
+
+| Family | Identity requires |
+|---|---|
+| Claim (`GroundedClaim`) | floor |
+| Coordinate (`ledgers`) | ledger (integrity + adequacy) |
+| Edge (`CausalEdge`) | support |
+| Graph (`ProvenanceGraph`) | edge provenance |
+| Representation | creator manifest + claim |
+| Inference (`EstimatorOutput`) | identification cost |
+| Edit (Reality Authoring) | source + lineage |
+| Ignorance (`NonRecovery`) | diagnosis + source |
+
+> **The honesty clause.** All provenance in the runtime is *declared* provenance unless independently verified.
+> The system records the history of claims, assumptions, costs, edits, and failures; it does not guarantee their
+> truth. `declared ≠ verified` — a **notary of history, not an oracle of reality.**
+
 ## The empirical phase — provenance survives learning (`experiments/`)
 
 The conceptual arc ended at a claim it could not yet test: that the project's discipline would survive contact
