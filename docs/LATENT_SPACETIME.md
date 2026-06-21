@@ -127,6 +127,16 @@ Each target: **mechanism** (the real thing), **analogy** (the metaphor it came i
 
 ---
 
+## Phase 1 — BUILT (the benchmark first, then the autoencoders)
+
+> **Status: built and run** — `experiments/latent_phase1/` (real numpy, seeded, outside the stdlib core).
+> The benchmark was built *first* and is encoder-agnostic; `𝓕 = {E1 PCA, E2 linear-AE, E3 MLP-AE}` are
+> candidates fed into it. Measured result (seed 0): reconstruction, recoverability, robustness, gauge-invariance
+> **and** correlation-with-outcome all fail to separate the generator `g` from the confounder `c`; only the
+> **intervention gate** does — `GeneratorScore(g)=0.99`, `GeneratorScore(c)=0.00` (`do(c)` does not move the
+> outcome though `c` reconstructs, is recoverable across all of `𝓕`, and correlates with the outcome at ≈0.6).
+> The confounder was caught by intervention, not by reconstruction. See `experiments/latent_phase1/README.md`.
+
 ## Phase 1 first — and the benchmark is NOT reconstruction
 
 The temptation is to measure a learned latent by reconstruction error. That rewards the wrong thing: a
