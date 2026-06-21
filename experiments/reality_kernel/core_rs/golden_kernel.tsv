@@ -1,0 +1,5 @@
+gravity	present	-	none_needed
+relation_R	absent	severance	none
+relation_S	unresolved	assumption_limit	declare:instrument_validity_A
+relation_T	unresolved	resource_limit	allocate
+relation_NEVER_ASKED	unaccounted	-	investigate
