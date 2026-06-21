@@ -16,6 +16,52 @@ The renderer never discovers truth; it manages where its approximations fail. It
 **arbitrary boundaries require deterministic handling, and finite fidelity should be allocated by expected
 future failure cost, not present visual complexity.**
 
+## What is proven, what you get, and where it goes next
+
+**What is proven** — each claim ships with an executable bench, a negative control, and an explicit "expires
+on real silicon" bound; nothing here is asserted without a runnable check.
+
+- **The renderer is observer-only.** Replay identity, view-perturbation invariance, and ordering invariance:
+  the VIEW layer cannot move the committed trajectory even when deliberately corrupted every tick
+  (`integrity ≠ truth`).
+- **Priority and allocation are different objects.** A *failed* hypothesis became the measured result that a
+  two-stage `ranked_waterfill` strictly beats proportional / uniform / distance / visibility on the
+  future-causal residual — *knowing what matters* is not *knowing where representation breaks*.
+- **Observation cannot resolve a backdoor; only intervention can.** A confounder that reconstructs perfectly,
+  is gauge-invariant, and correlates ≈0.6 with the outcome still fails the gate because `do(c)` does not move
+  it. `observation ≠ intervention`, made a *measured boundary* rather than hidden behind a score.
+- **The defense is the leak, and "secure" is class-relative.** The side-channel firewall family neutralizes
+  timing/reaction/absence/hysteresis/cost/rollback channels; the one *absolute* guarantee is severing the
+  secret from every channel (`I(secret;observable)=0`) — everything else is non-identifiable only relative to a
+  stated observer class.
+- **Identity includes provenance — and it survives learning, consolidation, and a real substrate.** Six latent
+  phases plus three runtimes show *a value bound to the conditions of its own existence*. The **RealityKernel**
+  consolidates them into four primitives — `Artifact / Event / CommitReceipt / Query` (a receipt is a *record*,
+  never an authorization) — reproducing the prior benches' diagnoses exactly (7/7, a real differential against
+  the Python oracle). Its **Rust CORE port is verified on real silicon** (`cargo test` 10/10: semantic
+  preservation + adversarial concurrency — many-producer commits collapse to one ordered transition, corruption
+  yields *unresolvable* not a guess, a panicking producer never publishes partial state). And the **lineage
+  closure test** proves the load-bearing rule — **optimization cannot erase history**: `compress ≠ sever`
+  measured to 5×10⁵ commits with zero lineage lost, where discarding lineage for a still-live digest is *caught
+  as severance*, never silently allowed.
+
+**What you get** — a **specification + reference implementation + measurement discipline**, not a turnkey
+engine. Concretely: a *provenance-preserving execution substrate* (the kernel) with a verified Rust core that
+refuses to let state outlive its explanation; a transplantable, re-validatable *information-firewall /
+disclosure-audit* family for partially-hidden shared worlds (anti-cheat, fog-of-war); a *fidelity-allocation
+economics* (priority ≠ allocation, the resistance tensor, shader/PSO prewarm); a *causal-attribution procedure*
+that separates a generator from a confounder/artifact for residuals, anomalies, and ML features; and an
+*LLM-on-track methodology* (`observe → hypothesize → implement → verify → record`). Every result names its
+estimator class and coverage boundary instead of declaring "safe."
+
+**Where it goes next** — the kernel is the minimal center; everything else is a **client**. A renderer, a
+physics step, an agent, and a world generator all *consume* the kernel — **transition history is the center,
+not the world**. The scoped, deliberately un-faked frontiers: the Rust CORE at real scale (1e6–1e8 lineage,
+frame-loop integration, and the Windows sub-granularity timing question — full-frame spin vs. raising OS timer
+resolution); the first world-loop client built *on top of* the kernel; a real estimator under intervention
+scarcity (unknown graph); a real external anchor (a verifiable delay function / proof-of-sequential-work); and
+the GPU real-silicon benchmark where every constructed-world number finally expires.
+
 What began as a renderer *philosophy* became, under benchmarking, a set of measurable **rendering economics**:
 finite fidelity is a budget, every approximation is debt, and the bench — not the manifesto — decides which
 allocation policy wins. The central result so far came from a *failed* hypothesis (see below): **priority and
@@ -429,11 +475,20 @@ control, and an explicit "expires on real silicon" bound.
   confident model can lose the world at a *worsening rate*. `declining ≠ accelerating-decline`. World-side
   direction: [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
 
-**The conceptual arc is complete, and the empirical phase has begun** (see *The empirical phase* below): the
-ML transition is no longer a plan — `experiments/` carries six executed latent phases plus two runtimes, each a
-seeded, replayable bench with its own self-check. What stays deliberately un-faked lives behind the
-intentionally-unbuilt seams — `reality_harness.NetworkChannel` (point it at a real socket),
-`behavioral_harness.ExperimentLayer(channel="real")`, and the perception compiler's lookup compiler — plus:
+**The conceptual arc is complete, the empirical phase ran, and it has now crossed into the substrate** (see
+*The empirical phase* below): `experiments/` carries six executed latent phases, the three provenance runtimes,
+the live/latent compression bench, and the **RealityKernel** consolidation — whose **Rust CORE port is verified
+on real silicon** (`cargo test` 10/10) and whose lineage-scale closure test proves *optimization cannot erase
+history* to 5×10⁵ commits. Each is a seeded, replayable bench with its own self-check. What stays deliberately
+un-faked lives behind the intentionally-unbuilt seams — `reality_harness.NetworkChannel` (point it at a real
+socket), `behavioral_harness.ExperimentLayer(channel="real")`, and the perception compiler's lookup compiler —
+plus:
+- The **Rust CORE at real scale** — the verified port proves *correctness* under real concurrency; behaviour at
+  1e6–1e8 lineage, under a frame budget, and under memory pressure (where the failure to hunt is *digest exists,
+  lineage gone*) is the next substrate rung, with the Windows sub-granularity timing question (full-frame spin
+  vs. raising OS timer resolution) attached.
+- The **first world-loop client** built *on top of* the kernel — the point where the substrate stops being
+  tested in isolation and starts carrying a world.
 - A **real-silicon benchmark** — every constructed-world number expires there (equal GPU time; temporal
   artifacts, input-to-photon latency, reconstruction error, motion stability).
 - **Composing + calibrating the resistance tensor** — the 7-dimensional `resistance_tensor.py` already exists;
@@ -573,6 +628,32 @@ conditions of its own existence* — they collapse into one object:
   can be authored and generated without quietly starting to look autonomous. The bridge from "renderer + a
   provenance discipline" toward "a world a developer develops *in*."
 
+**The consolidation and the substrate (the fourth movement).** Once the three runtimes shared one shape, the
+arc crossed from *what must be true* to *what must remain true under pressure*.
+
+- **`experiments/live_latent_provenance/` — provenance survives compression.** The hot path carries only a
+  provenance *digest*; the full lineage resolves on demand from a latent store; an optimization that *severs*
+  (drops the digest) is a caught runtime failure, never a silent fallback to `unknown` (`compress ≠ sever`,
+  `PROVENANCE_SEVERED ≠ UNACCOUNTED`). Its first real-clock probe produced a **reversal**: provenance carry is
+  near-free; *uncontrolled time sources*, not provenance, are what threaten a frame budget — so deadline pacing,
+  not metadata thrift, is the lever (jitter fell ~12× on Linux; the Windows sub-granularity case is named, not
+  faked).
+- **`experiments/reality_kernel/` — the organism, assembled.** Four immutable primitives —
+  `Artifact / Event / CommitReceipt / Query` — over the objects already earned, reusing the prior benches as
+  *evidence modules* (reuse, not reimplementation) and reproducing their diagnoses exactly. `Query` is the new
+  surface: existence *and* absence (`present / absent / unresolved / unaccounted`) with diagnosis and a
+  resolution path, a strict refinement of the old `explain()`. A receipt is a record, never an authorization
+  (`attestation ≠ authority`). 7/7, including a real differential against the Python oracle.
+- **`experiments/reality_kernel/core_rs/` — the substrate, verified.** The Rust CORE port as a *semantic
+  preservation* exercise (the Python kernel is the reference model; the differential asserts against a frozen
+  oracle). **Verified on real silicon** — `cargo test` 10/10: the typed `CommitPath` (never drops) /
+  `ResolveRing` (may drop) split, many-producer→single-ordered commits with no loss, corruption→unresolvable,
+  and a mid-write panic that never publishes partial state.
+- **`experiments/reality_kernel/lineage_scale/` — the closure test.** Optimization cannot erase history:
+  hot plane (state + digest) and cold plane (lineage) measured separately so a fast cache can't hide a missing
+  lineage; to 5×10⁵ commits, every digest resolves, and the forbidden transition (`digest present + lineage
+  unavailable = severance`) is *detected*, never guessed.
+
 The whole ladder is generated by one principle — **`identity includes provenance`** (the Provenance Principle
 above) — applied, in the end, even to the creator:
 
@@ -707,8 +788,9 @@ fidelity engine is one backend. [`docs/LATENT_SPACETIME.md`](docs/LATENT_SPACETI
 hardcoded schema to a learned latent substrate, organized around *define the horizon, then trust the dark*; the
 discipline layers are **built** in `experiments/` (Phases 1–6 + two runtimes), the estimator under scarcity and
 a real external anchor remain the frontier. [`experiments/`](experiments/) — the executed empirical phase
-(`latent_phase1`–`6`, `provenance_runtime`, `adversarial_runtime`), each a seeded, self-checking bench outside
-the core. [`AGENTS.md`](AGENTS.md) — the contract every change obeys.
+(`latent_phase1`–`6`, `provenance_runtime`, `adversarial_runtime`, `reality_authoring`, `live_latent_provenance`,
+and `reality_kernel/` — the four-primitive consolidation, its Rust CORE port `core_rs/` verified on real
+silicon, and the `lineage_scale/` closure test), each a seeded, self-checking bench outside the core. [`AGENTS.md`](AGENTS.md) — the contract every change obeys.
 
 ## License
 
