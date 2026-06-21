@@ -228,6 +228,17 @@ causal relevance   ≠ causal position   (Phase 2's separation, the crisp form: 
                                         does it sit in the graph?" (position). A root and a mediator are both
                                         relevant; only position distinguishes them. The intervention gate
                                         answers relevance; topology answers position.)
+accuracy           ≠ identifiability   (Phase 6, the inference contract: accuracy answers "does this fit the
+                                        regime I have?"; identifiability answers "what alternative worlds did I
+                                        rule out?" — different axes. A model can be 99% accurate and weakly
+                                        identified (the 99% holds only inside a narrow assumption set). So the
+                                        estimator's atomic output binds the edge to the PRICE it paid to
+                                        identify it (a structured IdentificationCost ledger — interventions /
+                                        assumptions / domain_restrictions / unverified_dependencies, NEVER a
+                                        scalar); cost is mandatory, accuracy optional+secondary and not part of
+                                        identity. same edge + different price = different object;
+                                        prediction ≠ inference identity. latent_phase6 — the contract; verifying
+                                        the price was paid in valid coin is the estimator frontier.)
 latent coordinate ≠ the claim   (Phase 5, "representation is free, epistemic status is conserved": a learned
                                         representation's identity is NOT its latent vector but its
                                         provenance-qualified claim (the Phase-3 graph_digest). Two encoders with
