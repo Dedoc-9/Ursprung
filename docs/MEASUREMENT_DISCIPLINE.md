@@ -239,6 +239,13 @@ accuracy           ≠ identifiability   (Phase 6, the inference contract: accur
                                         identity. same edge + different price = different object;
                                         prediction ≠ inference identity. latent_phase6 — the contract; verifying
                                         the price was paid in valid coin is the estimator frontier.)
+declared cost      ≠ verified cost   (the Phase-3↔Phase-6 calibration: a CausalEdge can require an assumption
+                                        be DECLARED but cannot prove it is true; an EstimatorOutput can require
+                                        an identification ledger but cannot prove the intervention/assumption
+                                        trade was legitimate. The system records the epistemic receipt; it does
+                                        NOT validate the currency. This is exactly what keeps the discipline
+                                        layer from quietly becoming a theorem prover — declaration is a contract,
+                                        not a proof. Verifying the coin is the estimator frontier, kept separate.)
 latent coordinate ≠ the claim   (Phase 5, "representation is free, epistemic status is conserved": a learned
                                         representation's identity is NOT its latent vector but its
                                         provenance-qualified claim (the Phase-3 graph_digest). Two encoders with
