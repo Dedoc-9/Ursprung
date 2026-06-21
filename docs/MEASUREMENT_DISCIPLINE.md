@@ -228,6 +228,15 @@ causal relevance   ≠ causal position   (Phase 2's separation, the crisp form: 
                                         does it sit in the graph?" (position). A root and a mediator are both
                                         relevant; only position distinguishes them. The intervention gate
                                         answers relevance; topology answers position.)
+latent coordinate ≠ the claim   (Phase 5, "representation is free, epistemic status is conserved": a learned
+                                        representation's identity is NOT its latent vector but its
+                                        provenance-qualified claim (the Phase-3 graph_digest). Two encoders with
+                                        different latent coordinates but the same claim are EQUIVALENT
+                                        (representation humility); one that cannot support the claims is not. The
+                                        latent is the coordinate system through which a provenance-bearing claim
+                                        is expressed, not the discovery. Standardizing the encoder input CLOSES
+                                        an unintended scale gauge, so magnitude cannot manufacture coherence.
+                                        latent_phase5.)
 created coherence  ≠ discovered coherence   (the re-anthropomorphism / "provenance collapse" failure: a
                                         designer imposes a constraint, the system adapts coherently, and the
                                         AUTHORED coherence is re-read as DISCOVERED structure — the mirror
