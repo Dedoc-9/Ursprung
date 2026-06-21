@@ -54,7 +54,7 @@ backend* of a committed, leakage-bounded **perception compiler**
 > crossing requires a real intervention mechanism, not a ground-truth oracle — the open problem the next phases
 > face, not fake.
 
-## The five laws (the philosophy layer)
+## The five laws (and the generator beneath them)
 
 1. **Reality Debt Law** *(underneath)* — every approximation incurs debt: `Debt = Approximation ×
    Persistence × Consequence`. Fidelity is conserved, but debt is accumulated; allocation places debt where
@@ -71,6 +71,27 @@ backend* of a committed, leakage-bounded **perception compiler**
 ```
 WORLD → SNAPSHOT → PREDICTION → FIDELITY ALLOCATION → DEBT MANAGEMENT → RASTERIZATION → IMAGE
 ```
+
+**Law 6 — Identity includes provenance** *(the generator, a different order from the five above).* An object is
+not fully specified by its form or output alone; its identity includes the conditions, transformations,
+assumptions, and evidence that license it. The sharp form — *the license for a claim is part of the claim's
+identity* — not the over-broad "everything must have a history." The five laws govern fidelity economics; Law 6
+governs **what counts as a specified object at all**, and it earns law-status the way a generator does: it is
+not a new empirical claim, it does not depend on any model or estimator, and removing it detaches every other
+safeguard into floating metadata. It is not unprecedented in the set — **Law 2 (Arbitrary-Boundary) is its
+earliest instance** (a convention's identity includes that it is a *declared choice*, not a discovery) — Law 6
+is the generalization the second arc unfolded from. It is enforced in code (`grounded_claim`, `ledgers`,
+`causal_edge`/`reconstruction`, `EstimatorOutput`, and the `Artifact` runtime), and the whole separator ladder
+is its consequence:
+
+```
+identity includes provenance
+   → observation ≠ intervention → causal relevance ≠ causal position → edge ≠ edge-without-support
+   → latent ≠ discovered structure → coordinate ≠ claim → accuracy ≠ identifiability
+```
+
+(The capstone treatment is in [`docs/MEASUREMENT_DISCIPLINE.md`](docs/MEASUREMENT_DISCIPLINE.md), "the
+meta-invariant.")
 
 ## Rendering economics — priority ≠ allocation (the discovered hierarchy)
 

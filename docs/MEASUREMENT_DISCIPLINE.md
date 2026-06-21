@@ -293,10 +293,13 @@ A deterministic replay can fail adequacy; a good predictor can fail attribution;
 model robustness; a robust explanation can still depend on a declared floor. The common thread across every
 layer is one move: refusing to let `chosen` be silently rewritten as `derived` and then mistaken for truth.
 
-## The meta-invariant — identity includes provenance
+## The meta-invariant — identity includes provenance (Law 6)
 
 Beneath every separator on this page is one mechanism, and it is the generator of all of them: **an object is
 not fully specified until the thing that licenses it is attached to it.** The separations are its special cases.
+This is promoted to **Law 6** in the README's law set — the generator beneath the five fidelity laws, of which
+Law 2 (Arbitrary-Boundary) is its earliest instance. The sharp form: *the license for a claim is part of the
+claim's identity* (not the over-broad "everything must have a history").
 
 ```
 claim       + floor            → claim identity      (grounded_claim.floor_digest)
