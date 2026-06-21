@@ -383,7 +383,17 @@ control, and an explicit "expires on real silicon" bound.
   *different declared* `𝓕` yields *different* surviving conclusions, so confidence is **conditional on the
   declared floor, not a scalar of the evidence**. The project's first rule — *arbitrary boundaries require
   deterministic handling, not claims of truth* — has become an epistemology: `proven ≠ surviving`; `declared ≠
-  derived`; the floor is exposed, not smuggled. World-side direction:
+  derived`; the floor is exposed, not smuggled. Then `ledgers.py` refuses the last fusion: it splits *can we
+  reproduce/audit this?* (**epistemic** integrity) from *does it correspond to the world?* (**ontological**
+  adequacy) into two separate objects, with the buggy calculator (integrity 1.0 / adequacy 0.0 — reproducible
+  but wrong) as proof they come apart. A single "confidence" scalar can't tell that calculator from real
+  science, so the ledgers stay separate — `integrity ≠ truth` made a runtime. Finally `trajectory.py` adds
+  **motion**: confidence is not a scalar or even a point but a coordinate `(integrity, adequacy)` with a
+  *direction of change* — four quadrants that each allocate a different next action, **no total order** (the
+  pair `(1.0,0.2)` / `(0.2,1.0)` is Pareto-incomparable until a goal is declared), and named vectors
+  (`accumulating_support`, `entering_crisis`, …). The path matters: the same integrity gain can end in
+  *accounted-and-supported* or in *reproducible-error*. `position ≠ ranking`; `integrity-gain ≠ progress`; and
+  crisis is declining adequacy regardless of integrity — `integrity ≠ immunity`. World-side direction:
   [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
 
 **The conceptual arc is complete; the remaining work is empirical, not more laws.** It lives behind the

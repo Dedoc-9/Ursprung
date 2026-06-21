@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 """
-ursprung/perception/trajectory.py — motion through confidence space (a coordinate moves; the motion is the story).
+ursprung/perception/trajectory.py — motion through claim-state space (a coordinate moves; the motion is the story).
+
+A note on naming: the space is NOT "confidence space" — that word pulls back toward the scalar this is built to
+destroy. The axes are **accountability** (integrity, from the epistemic ledger) and **correspondence**
+(adequacy, from the ontological ledger). So: `claim state = (accountability, correspondence)`, `claim motion =
+(Δaccountability, Δcorrespondence)`, and `claim maturity = the path through the space`.
 
 `ledgers.py` made confidence a coordinate `(integrity, adequacy)` with four quadrants instead of a scalar. Two
 consequences follow, and a third object falls out naturally.
@@ -146,7 +151,7 @@ def crucible():
 
 def demo():
     r = crucible()
-    print("Trajectory — motion through confidence space (the vector, not the point)\n")
+    print("Trajectory — motion through claim-state space: (accountability, correspondence), the vector not the point\n")
     print("  position allocates work:")
     for q, act in ACTION.items():
         print("    %-26s → %s" % (q, act))

@@ -192,6 +192,18 @@ proven              ≠ surviving       ("the evidence proves X" is floor-hiding
                                         same E under a different declared 𝓕 yields a different conclusion. Made
                                         a runtime object in perception/grounded_claim.py — a conclusion that
                                         cannot be stated without declaring its floor and never asserts truth.)
+integrity (epistemic) ≠ adequacy (ontological)   (two SEPARATE ledgers, not one "confidence": integrity =
+                                        reproducible + fully-declared floor (how we arrived); adequacy =
+                                        predicts + survives intervention + robust (does it match the world).
+                                        They come apart — a buggy calculator is integrity 1.0 / adequacy 0.0;
+                                        a single scalar launders reproducible-but-wrong into trustworthy.
+                                        perception/ledgers.py. Confidence is a COORDINATE with no total order —
+                                        ranking needs a declared goal.)
+integrity           ≠ immunity       (a perfectly reproducible result whose adequacy is falling is ENTERING
+                                        CRISIS — reproducibility does not shield against being overtaken; crisis
+                                        is declining adequacy regardless of integrity. position ≠ ranking;
+                                        integrity-gain ≠ progress — the destination quadrant decides, not the
+                                        direction of integrity. perception/trajectory.py.)
 ```
 
 ## The floor (where the regress terminates)
