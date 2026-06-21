@@ -225,6 +225,28 @@ new VIEW/ALLOCATOR/OBSERVER system as something an adversary will read, and obey
 Every such system is an **OBSERVER** (it measures, ranks, attributes; it never mutates the trajectory and
 never asserts truth). The cardinal invariant and the four-layer law above still bind it.
 
+## The provenance kernel — the constraint surface (judge new layers as clients)
+
+The empirical arc consolidated into a minimal runtime contract, `experiments/reality_kernel/`: four immutable
+primitives the rest of the system is now built *against*. The governing rule for any new layer — **it is a
+client of the kernel, not an extension of it:**
+
+- a renderer **asks `Query`** (existence *and* absence: `present / absent / unresolved / unaccounted`, with a
+  diagnosis and a resolution path);
+- a simulation step **emits an `Event`** (a transition with a named source — no silent mutation);
+- a state transition **produces a `CommitReceipt`** (a *record*, never an authorization — `attestation ≠
+  authority`; the runtime is a notary that enforces non-forgetting, not a sovereign that grants permission);
+- generated structure **produces an `Artifact`** (a thing with declared provenance);
+- a failure **produces a `NonRecovery`** (typed ignorance — never a bare "unknown").
+
+Two invariants the kernel adds, enforced *by type* in the Rust CORE port (`core_rs/`, verified on real silicon,
+`cargo test` 10/10 — semantic preservation + adversarial concurrency): **a dropped observation is allowed; a
+dropped transition is forbidden**, and **optimization may compress provenance but may not sever it**
+(`compress ≠ sever`; a digest that no longer resolves is severance, caught, never a silent fallback to
+`unknown`). New work is judged against this surface exactly as it is against the four-layer law and the
+cardinal invariant. *Verified* here is the narrow, stronger claim: the runtime's distinctions **survived a
+substrate transition** — not that the runtime is complete.
+
 ## Performance work
 
 Prefer measurable experiments: **baseline → change → replay → benchmark → compare**. Preserve failed
@@ -313,25 +335,33 @@ Weltlinie + monitored invariants intact. It does **not** mean the renderer is co
 
 ## Status
 
-The conceptual arc is **complete** (495-check suite). M1 foundation + invariant harness → M2 the five laws →
-M3/3.1 the VIEW raster slice and the *ranking ≠ allocation* result (from a recorded **failed** hypothesis) →
-M4–M9 fidelity-as-economy (resistance tensor, shader cache, readiness, providers, dependency integrity,
-compiler) → M10–M21 the information-firewall arc (see the section above) → Channel Discovery + the
-Measurement Discipline → the **perception loop** (`disclosure.py` + `ursprung/perception/`: the first
-privacy-funnel benchmark; `adversary.py` falsifies its per-frame leakage; `session_accounting.py` answers with
-*purpose-preserving disclosure under an accumulating observer* — utility preserved, session exploitability
-collapsed) → the **causal-attribution + epistemic-accounting capstone** (`attribution` / `model_relativity`:
-the ghost is a candidate set, necessity is model-relative, the floor is a *declared* convention; then
-`grounded_claim` makes a conclusion carry its floor, `ledgers` splits epistemic integrity from ontological
-adequacy, and `trajectory` turns confidence into a coordinate with a direction of motion — `integrity ≠ truth`,
-`integrity ≠ immunity`, `position ≠ ranking`). Run: `PYTHONHASHSEED=0 python3 loop.py`; suite
-`python3 tests/test_ursprung.py`.
+The conceptual arc is **complete** (495-check core suite), the empirical phase **ran**, and it has **crossed
+into the substrate.** The conceptual genealogy: M1 foundation + invariant harness → M2 the five laws → M3/3.1
+the VIEW raster slice and the *ranking ≠ allocation* result (from a recorded **failed** hypothesis) → M4–M9
+fidelity-as-economy (resistance tensor, shader cache, readiness, providers, dependency integrity, compiler) →
+M10–M21 the information-firewall arc → Channel Discovery + the Measurement Discipline → the **perception loop**
+(`ursprung/perception/`: the privacy-funnel benchmark; `adversary.py` falsifies its per-frame leakage;
+`session_accounting.py` answers with *purpose-preserving disclosure under an accumulating observer*) → the
+**causal-attribution + epistemic-accounting capstone** (`attribution` / `model_relativity` / `grounded_claim` /
+`ledgers` / `trajectory` — `integrity ≠ truth`, `integrity ≠ immunity`, `position ≠ ranking`). Governed by the
+meta-invariant **`identity includes provenance`** (the Provenance Principle — a law of the runtime, not a
+numbered world-law). Run: `PYTHONHASHSEED=0 python3 loop.py`; suite `python3 tests/test_ursprung.py`.
 
-**The remaining work is empirical, not more laws.** Do not add another conceptual milestone without explicit
-direction; the only sanctioned additions now are **better measurement substrates** or **stronger observer
-classes**, both *experiments*. The next builds live behind intentionally-unbuilt seams —
-`reality_harness.NetworkChannel` (wire to a real socket), `behavioral_harness.ExperimentLayer(channel="real")`,
-and the perception compiler's lookup compiler — plus a real-silicon benchmark (every constructed number expires
-there), calibrating the existing resistance tensor, a real ML/RL adversary class replacing the toy learners,
-channel discovery over real telemetry traces, and a **non-separable task** for the perception loop (which would
-turn the free lunch back into a genuine utility/leakage tradeoff).
+The empirical phase (`experiments/`, seeded benches *outside* the 495-check core): six latent phases → three
+provenance runtimes → live/latent compression → the **RealityKernel** consolidation (the constraint surface
+above), whose **Rust CORE port is verified on real silicon** (`cargo test` 10/10) and whose **lineage-scale
+closure** proves *optimization cannot erase history* to 5×10⁵ commits with zero lineage lost.
+
+**Verified means the distinctions survived a substrate transition — not that the runtime is complete.**
+*Proven:* kernel invariants, semantic preservation across implementations, the tested failure distinctions, and
+lineage preservation within the benchmark envelope. *Frontier:* broader scale, distributed persistence,
+learned-world verification, a real-time world substrate.
+
+**The remaining work is substrate and clients, not more laws.** Do not add another conceptual milestone without
+explicit direction; sanctioned work now is **better measurement substrates**, **stronger observer classes**, or
+**a client built on the kernel contract** — all *experiments*. The next builds: the Rust CORE at real scale
+(1e6–1e8 lineage, frame-loop integration, the Windows sub-granularity timing question), the **first world-loop
+client** on the kernel (where the substrate stops being tested in isolation and starts carrying a world), plus
+the standing seams — `reality_harness.NetworkChannel` (a real socket), `behavioral_harness.ExperimentLayer(channel="real")`,
+the perception compiler's lookup compiler, a real-silicon GPU benchmark (every constructed number expires
+there), a real ML/RL adversary class, and a real estimator under intervention scarcity (unknown graph).
