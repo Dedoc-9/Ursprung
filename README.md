@@ -447,7 +447,10 @@ experiments. [`docs/GENEALOGY.md`](docs/GENEALOGY.md) — the full genealogy & c
 measurement loop, closed-world failure, what a result means, and what NOT to claim.
 [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md) — the *next-gen direction* (research, not built):
 the world-side dual of the M10–M21 arc — a committed, leakage-bounded **Perception Compiler** of which the
-fidelity engine is one backend. [`AGENTS.md`](AGENTS.md) — the contract every change obeys.
+fidelity engine is one backend. [`docs/LATENT_SPACETIME.md`](docs/LATENT_SPACETIME.md) — the *real-ML pivot*
+(spec, not built): from a hardcoded schema to a learned latent substrate, organized around *define the horizon,
+then trust the dark* — gauge-invariant validation, a declared observable/unobservable boundary, and the sealed
+core that is never liquidated. [`AGENTS.md`](AGENTS.md) — the contract every change obeys.
 
 ## License
 
