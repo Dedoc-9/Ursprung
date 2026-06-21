@@ -363,6 +363,26 @@ adversary class, and is never marked verified-by-runtime (severance = constructi
 `requires_exhaustive_intervention`, the frontier). `severance ≠ indistinguishability`; `absolute-as-boundary ≠
 absolute-as-verified`.
 
+## The provenance of ignorance (the failure taxonomy)
+
+The downstream consequence of the two absolutes: a failed recovery must not report a generic `unknown` — it must
+name **why** the cause is unrecoverable, because the four kinds have different remedies (and two have none).
+
+```
+severance             ABSOLUTE   information ABSENT (I(X;O)=0) — INDEPENDENCE — "no path"; remedy: none
+indistinguishability  ABSOLUTE   present but non-discriminating — EQUIVALENCE X~X' — "paths collide"; remedy: none
+assumption_limit      RELATIVE   too little admissible structure — resolves under a richer 𝓐 (a stronger assumption)
+resource_limit        RELATIVE   observer boundedness — resolves under a richer observer class
+```
+
+The two absolutes resolve under *neither* axis (the failure is in the world's relation to the observables, not
+the observer); the two relative limits each resolve under exactly one axis, which distinguishes them. Severance
+and indistinguishability are different mathematical objects (independence vs equivalence) — *no signal* vs
+*ambiguous signal* — and must never collapse into one verdict. Enforced in `experiments/failure_taxonomy/`. The
+point: the right response to failure depends on its kind — look harder (resource), declare a stronger assumption
+(assumption), or **stop** (severance / indistinguishability). HONEST: it types the *declared* failure and its
+remedy, not a verified proof (`declared ≠ verified`).
+
 ## The one absolute, and everything else
 
 There is exactly one class-independent guarantee in the stack (M21):
