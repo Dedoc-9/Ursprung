@@ -54,6 +54,19 @@ under a perturbation, fragile). A developer can author and generate a world and 
 of its regularities they made, which a model learned, which the environment produced, and which survive
 everything — so the world cannot quietly start to look autonomous.
 
+## Provenance of non-recovery — ignorance as a first-class object (`nonrecovery.py`)
+
+`run_nonrecovery.py` closes the symmetry: a world makes *absent* and *unresolved* structure provenance-bearing
+too, not just present structure. `provenance_of(target)` answers "why does gravity exist? → developer edit";
+`provenance_of_nonrecovery(target)` answers "why is relation R *absent*? → severance" and "why is relation S
+*unresolved*? → assumption_limit, missing condition A" — reusing the failure taxonomy as the diagnosis. A
+`NonRecovery` is a historical object (digest + source) parallel to an `Edit`. The one thing forbidden is the
+silent gap: a structure neither present-with-provenance nor absent-with-a-diagnosis is `UNACCOUNTED`. Built
+object-first: the diagnosis is *stored*; `recommended_action()` (stop / declare / allocate) is a *derived view*
+over it — the object survives, the policy is replaceable (`preserve provenance first, derive behaviour second`).
+8/8 (`python3 experiments/reality_authoring/run_nonrecovery.py`). `identity includes provenance` — now for what
+cannot presently be known, as well as for what exists.
+
 ## Honest bounds
 
 This is the authoring and provenance layer, not a renderer or a physics solver: it records and classifies the
