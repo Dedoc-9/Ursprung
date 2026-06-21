@@ -1253,6 +1253,23 @@ def test_perception_ledgers_keep_integrity_and_truth_apart():
     check(r["two_dimensions_required"], "no single axis separates all four quadrants — confidence genuinely needs both dimensions")
 
 
+def test_perception_trajectory_motion_through_confidence_space():
+    r = perc.trajectory.crucible()
+    # the coordinate allocates work, and has no total order
+    check(r["quadrant_allocates_distinct_actions"], "each quadrant implies a distinct next action — the coordinate allocates work")
+    check(r["coordinates_have_no_total_order"], "a coordinate has no total order: (1.0,0.2) and (0.2,1.0) are Pareto-incomparable")
+    check(r["goal_decides_winner"], "ranking requires a declared goal — auditability→A, correspondence→B, maturity→neither")
+    # motion is a vector, and the path matters
+    check(r["velocity_is_a_vector"], "velocity is a vector (Δintegrity, Δadequacy)")
+    check(r["same_integrity_gain_different_destination"], "same +1.0 integrity gain, different destination quadrant → different event; the path matters")
+    # the named motions
+    check(r["accumulating_support"], "evidence rising with flat accounting → accumulating_support")
+    check(r["becoming_documented"], "accounting rising with flat adequacy → becoming_documented")
+    check(r["entering_crisis"], "adequacy falling → entering_crisis")
+    check(r["crisis_independent_of_integrity"], "crisis is declining adequacy even at integrity 1.0 — reproducibility does not shield against it")
+    check(r["endpoint_dictates_action"], "the destination quadrant dictates the next action (reproducible_error → challenge the model)")
+
+
 def main():
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):

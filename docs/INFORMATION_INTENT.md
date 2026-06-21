@@ -463,6 +463,22 @@ never a new invariant:
     where the project's numbers are weakest (`simulation ≠ physics`); the instrument keeps the truth question
     from being silently answered by the accounting question, it does not itself measure truth.
 
+23. **Trajectory — DONE; motion through confidence space.** `ursprung/perception/trajectory.py` follows the
+    coordinate from `ledgers.py` to its consequences. (a) The position **allocates work**: each quadrant implies
+    a distinct next action (`accounted_and_supported` → preserve/extend/stress-test; `reproducible_error` →
+    challenge the model; `under_documented_success` → improve provenance; `neither` → gather evidence first).
+    (b) A coordinate has **no total order**: `A=(1.0,0.2)` and `B=(0.2,1.0)` are Pareto-incomparable — ranking
+    needs a declared goal (auditability→A, correspondence→B, maturity→neither), so the ranking problem became a
+    *geometry* problem. (c) The dispute is often the **direction of motion**, not the point: `state =
+    (integrity, adequacy)`, `velocity = (Δintegrity, Δadequacy)`, with named vectors — `accumulating_support`,
+    `becoming_documented`, `maturing`, `entering_crisis`. The path matters: `rumor → under_documented_success →
+    accounted_and_supported` and `rumor → reproducible_error` share the *same* net integrity gain but reach
+    different destinations (and different next actions). And **crisis is declining adequacy regardless of
+    integrity** — a perfectly reproducible result can be entering crisis; reproducibility does not shield it.
+    Separators: `position ≠ ranking`; `integrity-gain ≠ progress`. HONEST: kinematic bookkeeping over the two
+    ledgers — it names the direction of motion, it does not certify its cause, and it inherits the toy adequacy
+    axis.
+
 The remaining honest gaps (so this is not over-read): the compiler is still a *lookup / greedy channel select*,
 not a continuous funnel *solve*; the world, the learner, and the leakage estimator are constructed; the utility
 models are declared conventions; the capacity axis is a memory-horizon *proxy*, not real model capacity; the
