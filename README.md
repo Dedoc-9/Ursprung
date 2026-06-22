@@ -1,9 +1,11 @@
 # Ursprung
 
 A deterministic high-fidelity renderer that treats rendering as a **perception layer over an authoritative
-world model**. Ursprung consumes the sealed `Reality_Engine` (Chronicle/Dentatus) workbench read-only as its
-verification substrate; the workbench supplies the deterministic kernel and the integrity discipline, and
-Ursprung is the renderer projected off the committed trajectory.
+world model** — and, underneath the renderer, a **provenance-centered runtime that refuses to let state outlive
+its explanation.** The renderer is the *first client* of that runtime, not the whole of it: a simulation, an
+agent, or a world generator are equally valid clients. Ursprung consumes the sealed `Reality_Engine`
+(Chronicle/Dentatus) workbench read-only as its verification substrate; the workbench supplies the deterministic
+kernel and the integrity discipline, and Ursprung is the renderer projected off the committed trajectory.
 
 ```
 authoritative world state → deterministic snapshot → visual interpretation → GPU execution → presented frame
@@ -15,6 +17,15 @@ authoritative world state → deterministic snapshot → visual interpretation �
 The renderer never discovers truth; it manages where its approximations fail. Its one-line philosophy:
 **arbitrary boundaries require deterministic handling, and finite fidelity should be allocated by expected
 future failure cost, not present visual complexity.**
+
+> **Status (current).** The conceptual arc is complete (a **502-check** stdlib suite), the empirical phase ran,
+> and it has **crossed onto real silicon**: the Rust CORE port is verified (`cargo test` 10/10) and the GPU
+> benchmark *apparatus* is verified on hardware — `experiments/bench_gpu_real`, **M1–M5** on an ASUS ROG Xbox
+> Ally X (Radeon 890M, Vulkan): the timestamp ruler exists, scales with real work, binds every measurement to a
+> stable world-identity digest across compute *and* render passes, and compares allocation policies *fairly* at
+> equal measured GPU-tick budget. The open summit is **M6** — whether the allocation policies actually win under
+> a *real perceptual-error measure*, the gate that would move the Causal Continuity hypothesis from
+> `supported_constructed` to an empirically-supported law. **No claim here exceeds what a runnable bench shows.**
 
 ## What is proven, what you get, and where it goes next
 
