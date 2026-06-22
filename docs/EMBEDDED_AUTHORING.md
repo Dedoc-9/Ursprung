@@ -76,7 +76,10 @@ it, a downstream computation commits against it, a human sees the result. Before
 be invisible; after it, you can only *compensate*, and compensation becomes part of history. Different
 observers cross the frontier at different times, which is exactly why distributed systems are hard: a local
 write is not necessarily a reality event. *Real* is relational — there is no global "moment it became true,"
-only a frontier of first dependencies.
+only a frontier of first dependencies. The criterion this yields is sharper than "when is the state
+committed?": it is **"when would pretending it never happened become false?"** A database write can be
+technically committed yet still inside a hidden correction window — until a replica receives it, a process
+acts on it, or a user sees it. The moment a dependent exists, history changes category.
 
 ## 6. Hyrum's Law and the conservatism premium
 
@@ -122,7 +125,17 @@ because everything observable accrues obligations); the lineage is cold and seal
 invisible, so it never becomes anyone's contract). *Observability is liability.* Minimize the observable
 surface; maximize the recoverable-but-sealed reserve; never let the hedge leak into the contract.
 
+But the phrase needs its dual, or it misleads: **observability creates liability; unobservable state creates
+unverifiability.** A system with no visible guarantees cannot be trusted. So the target is not *minimum*
+observability but **intentional** observability — the mistake is never exposure, it is *accidental* exposure.
+
 ## 8. Governance — the seal avoids Hyrum's Law but not authority
+
+First, the temptation to resist: `sealed ≠ safe`. The seal does not *eliminate* observability; it creates a
+*controlled* observability boundary — `sealed = fewer accidental contracts`, not none. A recovery mechanism
+still becomes a dependency the moment operators rely on its behaviour, auditors require a specific output, or
+tooling begins consuming it. So the reserve needs the same discipline as a public API — versioned, attributed,
+bounded, not casually expanded. The seal *moves* the boundary; it does not remove the boundary problem.
 
 A sealed reserve is also a concentration of power: who can open it, under what conditions, can it be audited
 without becoming public? That loops straight back into the authority recursion — capability grants are
@@ -162,12 +175,29 @@ Query` and its hot/cold `CommitChannel`/`ResolveRing`; `causal_access` / `capabi
 Open, and honestly unbuilt:
 
 - **Concurrency** — the common, lethal failure (many actors editing one region) arrives long before deep
-  recursion; the single-trajectory ideal trades against scale, and sharding reintroduces the Arbitrary-Boundary
-  Law (the seams are model constructs, not features of the world).
+  recursion. The first serious implementation question is whether multiple independent authors can create
+  events whose causal relationships stay *reconstructable without forcing a single global order*
+  (`A affects B`, `B affects C`, `C conflicts with D`). The single-trajectory ideal trades against scale, and
+  sharding reintroduces the Arbitrary-Boundary Law: a shard boundary must never be mistaken for a world
+  boundary, or optimization choices start masquerading as reality.
 - **Reflection depth** — a meta-editor (tools editing tools) is `recorder ∈ recorded` at depth ≥ 2; whether the
   coherent depth is bounded (collapse) or unbounded (strict) is the same interpreter-relative question raised in
   `BOUNDARY_MAP.md`. The embedded editor is the *instrument* that could measure it, not a solution to it.
 - **Break-glass observability** — §8's recovery-channel leak is unsolved.
+
+## The next step — the smallest adversarial prototype
+
+This note is a map, not an experiment; it stops being a map at the first *forced failure*. The minimal probe:
+
+1. one shared world,
+2. two editors,
+3. one authority change,
+4. one sealed recovery artifact,
+5. one forced failure.
+
+Then ask: *what became observable? when did it become irreversible? what had to be captured before that point?
+what accidentally became a contract?* That is the first place the design meets reality rather than argument —
+and it obeys the note's own rule: keep the claim surface small until reality forces it to grow.
 
 ## The principle it closes on
 
