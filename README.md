@@ -33,15 +33,17 @@ future failure cost, not present visual complexity.**
 
 ## What is proven, what you get, and where it goes next
 
-**What is proven** — each claim ships with an executable bench, a negative control, and an explicit "expires
-on real silicon" bound; nothing here is asserted without a runnable check.
+**What is proven** — each claim ships with an executable bench and a negative control. Constructed-world
+claims carry an explicit "expires on real silicon" bound; several have now *crossed* onto silicon (the Rust
+CORE port and the GPU ladder) rather than expired. Nothing here is asserted without a runnable check.
 
 - **The renderer is observer-only.** Replay identity, view-perturbation invariance, and ordering invariance:
   the VIEW layer cannot move the committed trajectory even when deliberately corrupted every tick
   (`integrity ≠ truth`).
 - **Priority and allocation are different objects.** A *failed* hypothesis became the measured result that a
   two-stage `ranked_waterfill` strictly beats proportional / uniform / distance / visibility on the
-  future-causal residual — *knowing what matters* is not *knowing where representation breaks*.
+  future-causal residual — *knowing what matters* is not *knowing where representation breaks*. (Constructed
+  bench; the silicon sequel below is what tested whether it survives a *neutral* metric.)
 - **Observation cannot resolve a backdoor; only intervention can.** A confounder that reconstructs perfectly,
   is gauge-invariant, and correlates ≈0.6 with the outcome still fails the gate because `do(c)` does not move
   it. `observation ≠ intervention`, made a *measured boundary* rather than hidden behind a score.
@@ -59,19 +61,32 @@ on real silicon" bound; nothing here is asserted without a runnable check.
   closure test** proves the load-bearing rule — **optimization cannot erase history**: `compress ≠ sever`
   measured to 5×10⁵ commits with zero lineage lost, where discarding lineage for a still-live digest is *caught
   as severance*, never silently allowed.
+- **The benchmark can reject its own hypothesis — on silicon.** The GPU ladder (`experiments/bench_gpu_real`,
+  **M1–M6c** on an ASUS ROG Xbox Ally X / Radeon 890M, Vulkan) builds a ruler that is fair *by construction* —
+  equal *measured* GPU-tick budget (over-spenders refused), error as a Pareto vector never a scalar, dominance
+  refused below the *measured* noise floor (ε-dominance) — and a **sealed observer**: a policy's type signature
+  cannot read the ruler it is scored against, so "optimize the metric" is structurally impossible. Pointed at
+  the project's *own* preferred allocation policy, it **falsified** it: at equal budget on a neutral perceptual
+  metric, causal-waterfill did not beat uniform; the sweep then showed its allocation exponent was wrong
+  (∝ difficulty¹ over-concentrates vs the variance-optimal ∝ difficulty^(2/3)), leaving a *conditional* result
+  (`conditional_on_neutral_ruler`), not a win. A bench that can catch its author being wrong is the asset —
+  `benchmark gain ≠ universal`, and neither does a benchmark loss.
 
 *"Verified" here means the runtime's **distinctions survived a substrate transition** — not that the runtime is
 complete. Proven: the kernel invariants, semantic preservation across implementations, the tested failure
-distinctions, and lineage preservation within the benchmark envelope. Frontier (below): broader scale,
-distributed persistence, learned-world verification, and a real-time world substrate. The narrower claim is the
-stronger one.*
+distinctions, lineage preservation within the benchmark envelope, and — on GPU silicon — that a fair, sealed
+benchmark falsifies an internally-coherent allocation claim rather than rubber-stamping it. Frontier (below):
+broader scale, distributed persistence, learned-world verification, a real-time world substrate, and the
+multi-frame test of the causal claim's temporal form. The narrower claim is the stronger one.*
 
 **What you get** — a **specification + reference implementation + measurement discipline**, not a turnkey
 engine. Concretely: a *provenance-preserving execution substrate* (the kernel) with a verified Rust core that
-refuses to let state outlive its explanation; a transplantable, re-validatable *information-firewall /
-disclosure-audit* family for partially-hidden shared worlds (anti-cheat, fog-of-war); a *fidelity-allocation
-economics* (priority ≠ allocation, the resistance tensor, shader/PSO prewarm); a *causal-attribution procedure*
-that separates a generator from a confounder/artifact for residuals, anomalies, and ML features; and an
+refuses to let state outlive its explanation; a *fair, falsification-grade GPU/perf metrology harness*
+(equal *measured* budget, Pareto-vector error, sealed observer — verified on silicon, and proven by rejecting
+the project's own hypothesis); a transplantable, re-validatable *information-firewall / disclosure-audit*
+family for partially-hidden shared worlds (anti-cheat, fog-of-war); a *fidelity-allocation economics*
+(priority ≠ allocation, the resistance tensor, shader/PSO prewarm); a *causal-attribution procedure* that
+separates a generator from a confounder/artifact for residuals, anomalies, and ML features; and an
 *LLM-on-track methodology* (`observe → hypothesize → implement → verify → record`). Every result names its
 estimator class and coverage boundary instead of declaring "safe."
 
@@ -91,8 +106,9 @@ and a real external anchor (a verifiable delay function / proof-of-sequential-wo
 
 What began as a renderer *philosophy* became, under benchmarking, a set of measurable **rendering economics**:
 finite fidelity is a budget, every approximation is debt, and the bench — not the manifesto — decides which
-allocation policy wins. The central result so far came from a *failed* hypothesis (see below): **priority and
-allocation are different mathematical objects.**
+allocation policy wins (and, on a neutral silicon ruler, which *doesn't* — see *Status*). The pivotal result
+of that arc came from a *failed* hypothesis (see below): **priority and allocation are different mathematical
+objects.**
 
 It then grew a **second arc**. Because a renderer of a partially-hidden world is also a *potential leak* of
 hidden state, rendering became an **information firewall** and finally a **measurement discipline** — a system
