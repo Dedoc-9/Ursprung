@@ -265,6 +265,17 @@ approaches and the reasons they failed — a failed branch carries architectural
 allocation/optimization claim is judged by *comparative utility at equal budget with a negative control*,
 never by correctness.
 
+**The sealed-observer rule (proven load-bearing in M6b/M6c).** When a policy is benchmarked against a metric,
+the policy must **not** be able to read the metric, the reference, or the ground truth it is scored against —
+enforce it *structurally* (the policy's function signature simply does not receive them), not by comment.
+Otherwise the bench silently becomes "optimize the metric" (Goodhart), which is exactly the failure this
+project exists to detect. A gate whose scoring metric is built from the same quantities the policy optimizes is
+**circular** (`attestation ≠ authority`): the constructed promotion gate read `supported_constructed` precisely
+because its metric was U·C·P-weighted; the sealed neutral ruler then **falsified** that on silicon. Two
+companion rules the same milestones earned: claim dominance only beyond the **measured noise floor**
+(ε-dominance — ε estimated from the data, never assumed), and **keep a benchmark loss as a result** — M6b's
+flat loss, refined by M6c into a measured boundary, is more valuable than a win would have been.
+
 ## Use cases — how to apply Ursprung in a real project
 
 Ursprung is a **specification + reference + measurement discipline**, not a turnkey product. Hold that framing
@@ -362,11 +373,18 @@ The empirical phase (`experiments/`, seeded benches *outside* the 502-check core
 provenance runtimes → live/latent compression → the **RealityKernel** consolidation (the constraint surface
 above), whose **Rust CORE port is verified on real silicon** (`cargo test` 10/10) and whose **lineage-scale
 closure** proves *optimization cannot erase history* to 5×10⁵ commits with zero lineage lost. Then the **GPU
-benchmark apparatus, verified on hardware** (`experiments/bench_gpu_real`, **M1–M5** on an ASUS ROG Xbox Ally X
-/ Radeon 890M, Vulkan): the timestamp ruler exists, measures real compute *and* render work, binds each
-measurement to a world-identity digest, and compares allocation policies *fairly* at equal measured GPU-tick
-budget (over-spenders refused) — **no policy yet declared superior** (that is M6, under a real perceptual-error
-measure → the gate for Causal Continuity → law).
+benchmark, verified on hardware through the summit** (`experiments/bench_gpu_real`, **M1–M6c** on an ASUS ROG
+Xbox Ally X / Radeon 890M, Vulkan): the timestamp ruler exists, measures real compute *and* render work, binds
+each measurement to a world-identity digest, compares allocation policies *fairly* at equal measured GPU-tick
+budget (over-spenders refused, M5), and on a **sealed, neutral perceptual ruler** (M6a) ran the genuine Causal
+Continuity gate (M6b/M6c). **The verdict is a measured boundary, not a win:** at equal budget on a neutral
+metric the causal policy as specified did *not* beat uniform (the strong claim **falsified**), and M6c showed
+its allocation exponent was wrong (∝ difficulty¹ over-concentrates vs the variance-optimal ∝ difficulty^(2/3));
+a **conditional** claim survives (informative priors + corrected exponent) → `causal_continuity.STATUS =
+conditional_on_neutral_ruler`. The one form still untested is the *temporal* one — M6 conflated causal
+consequence with present render difficulty, so dropping present-perception `S` to help the **future** needs a
+multi-frame scene where the two are decorrelated. The durable artifact is the apparatus that could tell the
+difference.
 
 **Verified means the distinctions survived a substrate transition — not that the runtime is complete.**
 *Proven:* kernel invariants, semantic preservation across implementations, the tested failure distinctions, and
@@ -377,7 +395,9 @@ learned-world verification, a real-time world substrate.
 explicit direction; sanctioned work now is **better measurement substrates**, **stronger observer classes**, or
 **a client built on the kernel contract** — all *experiments*. The next builds: the Rust CORE at real scale
 (1e6–1e8 lineage, frame-loop integration, the Windows sub-granularity timing question), the **first world-loop
-client** on the kernel (where the substrate stops being tested in isolation and starts carrying a world), plus
-the standing seams — `reality_harness.NetworkChannel` (a real socket), `behavioral_harness.ExperimentLayer(channel="real")`,
-the perception compiler's lookup compiler, a real-silicon GPU benchmark (every constructed number expires
-there), a real ML/RL adversary class, and a real estimator under intervention scarcity (unknown graph).
+client** on the kernel (where the substrate stops being tested in isolation and starts carrying a world), the
+**multi-frame causal test** (a scene where causal consequence and present render difficulty are decorrelated
+across frames — the rig M6 could not build, and the only way to test the *temporal* form of Causal Continuity),
+plus the standing seams — `reality_harness.NetworkChannel` (a real socket),
+`behavioral_harness.ExperimentLayer(channel="real")`, the perception compiler's lookup compiler, a real ML/RL
+adversary class, and a real estimator under intervention scarcity (unknown graph).

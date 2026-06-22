@@ -19,13 +19,17 @@ The renderer never discovers truth; it manages where its approximations fail. It
 future failure cost, not present visual complexity.**
 
 > **Status (current).** The conceptual arc is complete (a **502-check** stdlib suite), the empirical phase ran,
-> and it has **crossed onto real silicon**: the Rust CORE port is verified (`cargo test` 10/10) and the GPU
-> benchmark *apparatus* is verified on hardware — `experiments/bench_gpu_real`, **M1–M5** on an ASUS ROG Xbox
-> Ally X (Radeon 890M, Vulkan): the timestamp ruler exists, scales with real work, binds every measurement to a
-> stable world-identity digest across compute *and* render passes, and compares allocation policies *fairly* at
-> equal measured GPU-tick budget. The open summit is **M6** — whether the allocation policies actually win under
-> a *real perceptual-error measure*, the gate that would move the Causal Continuity hypothesis from
-> `supported_constructed` to an empirically-supported law. **No claim here exceeds what a runnable bench shows.**
+> and it has **crossed onto real silicon all the way through the summit**: the Rust CORE port is verified
+> (`cargo test` 10/10) and the GPU benchmark is verified on hardware — `experiments/bench_gpu_real`, **M1–M6c**
+> on an ASUS ROG Xbox Ally X (Radeon 890M, Vulkan): the timestamp ruler exists, scales with real work, binds
+> every measurement to a stable world-identity digest across compute *and* render passes, compares allocation
+> policies *fairly* at equal measured GPU-tick budget (M5), and finally — on a **sealed, neutral perceptual
+> ruler** (M6a) — put the Causal Continuity hypothesis through a genuine, non-circular gate (M6b/M6c). **The
+> verdict is a measured boundary, not a win:** the *strong* claim ("causal allocation generally beats uniform at
+> equal budget") was **falsified**; a *conditional* claim survives — causal helps only with informative priors
+> *and* the variance-optimal concentration exponent (`difficulty^(2/3)`, not `difficulty^1`) — so the status is
+> **`conditional_on_neutral_ruler`**, never a law. The durable artifact is the apparatus that could tell the
+> difference. **No claim here exceeds what a runnable bench shows.**
 
 ## What is proven, what you get, and where it goes next
 
@@ -73,12 +77,14 @@ estimator class and coverage boundary instead of declaring "safe."
 
 **Where it goes next** — the kernel is the minimal center; everything else is a **client**. A renderer, a
 physics step, an agent, and a world generator all *consume* the kernel — **transition history is the center,
-not the world**. First real silicon has already arrived: the GPU benchmark's *measurement apparatus* is now
-verified on hardware (`experiments/bench_gpu_real`, M1–M5 on an ASUS ROG Xbox Ally X — the ruler exists,
-measures real work, binds to world identity across compute and render passes, and compares policies fairly at
-equal measured budget). The scoped frontiers that remain genuinely un-faked: **M6** — whether the allocation
-policies (PFAL/TCFF) actually win under a *real perceptual-error measure* on real frames (the gate that would
-move Causal Continuity from `supported_constructed` to an empirically-supported law); the Rust CORE at real
+not the world**. Real silicon has arrived and the benchmark summit is *complete*: the GPU benchmark runs
+**M1–M6c** on an ASUS ROG Xbox Ally X — the ruler exists, measures real work, binds to world identity across
+compute and render passes, compares policies fairly at equal measured budget (M5), and on a sealed neutral
+perceptual ruler (M6a) ran the genuine Causal Continuity gate (M6b/M6c): the strong claim **falsified**, a
+conditional claim **supported** (`conditional_on_neutral_ruler`). The scoped frontiers that remain genuinely
+un-faked: a **multi-frame causal test** — M6 conflated causal-consequence with present render-difficulty, so
+the *original* claim (drop present-perception `S`, weight by future causal loss) is only meaningful in a scene
+where the two are *decorrelated* across frames, which the still-frame rig could not do; the Rust CORE at real
 scale (1e6–1e8 lineage, frame-loop integration, the Windows sub-granularity timing question); the first
 world-loop client built *on top of* the kernel; a real estimator under intervention scarcity (unknown graph);
 and a real external anchor (a verifiable delay function / proof-of-sequential-work).
@@ -181,15 +187,22 @@ beat** uniform, distance, visibility, proportional-causal, and a negative contro
 residual metric. The proportional allocator *knew what mattered*; the water-filling allocator *knew what
 mattered and where representation actually breaks.* (Constructed-world; expires on real silicon.)
 
-The **Causal Continuity Hypothesis** therefore advanced one tier, by the bench, not by assertion: the naive
-(proportional) form failed; the re-specified water-filling form (`samples ∝ √(U·C·P · resistance)`) **passed
-the re-run promotion gate** (`promotion_gate.py`, seeds 1..8), strictly beating uniform, distance, visibility,
-**PFAL**, and the structural-only optimum on the future-causal residual, with the negative control losing. Its
-status is now **`supported_constructed`** — and explicitly *not a law*: the candidate is the analytic optimum
-of the *declared* objective, so promotion to a law still requires the real-silicon benchmark. The two decisive
-isolations: beating PFAL means *dropping present-perception S helps the future-causal objective*, and beating
-structural-only means *the causal weight adds value beyond geometry*. Nothing is promoted to a law by a
-benchmark on a model world.
+The **Causal Continuity Hypothesis** advanced one tier on the *constructed* bench, then met the *neutral* one
+on silicon and came back down. On the model world: the naive (proportional) form failed; the re-specified
+water-filling form (`samples ∝ √(U·C·P · resistance)`) **passed the re-run promotion gate**
+(`promotion_gate.py`, seeds 1..8), beating uniform/distance/visibility/PFAL/structural with the negative
+control losing → `supported_constructed`. But that gate's metric was *itself* U·C·P-weighted — the allocator
+and the judge shared assumptions, a possible self-confirming loop. **M6b/M6c broke the loop on real silicon**
+(`experiments/bench_gpu_real`), comparing policies on a *sealed, policy-neutral* perceptual ruler at equal
+measured GPU budget. The result: the **strong claim is falsified** (at equal budget on a neutral metric, the
+causal policy as specified did *not* beat uniform — and M6c showed its allocation exponent was wrong, ∝
+difficulty¹ over-concentrates vs the variance-optimal ∝ difficulty^(2/3)); a **conditional claim survives** —
+causal allocation reaches and narrowly wins the ε-frontier only with informative priors *and* the corrected
+exponent. Status is therefore **`conditional_on_neutral_ruler`**, not a law. The honest residue: M6 conflated
+*causal consequence* with *present render difficulty*, so the deepest form of the claim (dropping present-
+perception `S` helps the **future**) is still **untested** — it needs a multi-frame scene where the two are
+decorrelated. Nothing is promoted to a law by a benchmark on a model world, and a neutral benchmark is exactly
+what stopped one from being.
 
 See [`docs/GENEALOGY.md`](docs/GENEALOGY.md) for the full genealogy & checklist of what is built, verified,
 and not yet built, and [`docs/PREDICTIVE_FIDELITY.md`](docs/PREDICTIVE_FIDELITY.md) for the prediction →
@@ -370,7 +383,7 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 | `ursprung/polygon_reconciliation.py` | **OBSERVER** | Polygon Reconciliation Law: polygons as deterministic convention; `reconcile()` not replace |
 | `ursprung/fidelity_conservation.py` | **OBSERVER** | Temporal Fidelity Accounting Law (was "Conservation"): under a fixed budget, fidelity transferred between dimensions is a bookkeeping model, not a physical conservation law; minimize consequential discontinuity |
 | `ursprung/reality_debt.py` | **OBSERVER** | Reality Debt Law: `Debt = Approximation × Persistence × Consequence`; place debt where consequence is lowest |
-| `ursprung/causal_continuity.py` | **OBSERVER** | Causal Continuity (now `supported_constructed`): the naive `∝ U×C×P` form failed; the re-specified water-filling form `∝ √(U·C·P·resistance)` passed the re-run gate (`promotion_gate.py`) — *not a law* (pending real silicon) |
+| `ursprung/causal_continuity.py` | **OBSERVER** | Causal Continuity (now `conditional_on_neutral_ruler`): naive `∝U×C×P` failed → water-filling `∝√(U·C·P·resistance)` passed the *constructed* gate → but M6b/M6c on a *neutral* silicon ruler **falsified the strong claim** and left a **conditional** one (informative priors + exponent `^(2/3)`) — *not a law*; see `SWEEP_M6C` |
 | `ursprung/raster.py` | **VIEW** | deterministic reference rasterizer: projection→coverage→sampling→raster, each a declared convention; hashable framebuffer |
 | `ursprung/raster_bench.py` | **OBSERVER** | equal-budget allocation bench + promotion gate (the hypothesis *failed* as stated — recorded with diagnosis) |
 | `ursprung/representation.py` | **OBSERVER** | Representation Resistance (difficulty to represent) + `DebtPressure = RealityDebt × RepresentationResistance` |
@@ -422,9 +435,10 @@ count is authoritative), every milestone carrying a verified demo, a negative co
   forms are bookkeeping models, not derived invariants.
 - **M3 / 3.1 — rendering economics.** VIEW raster slice + the Causal Continuity Hypothesis, which **failed**
   the equal-budget bench (recorded, not hidden) and became the *ranking ≠ allocation* refinement;
-  `ranked_waterfill` strictly beat every control. The re-specified water-filling form has since **passed the
-  re-run promotion gate** (`promotion_gate.py`, seeds 1..8: beats uniform/distance/visibility/PFAL/structural +
-  negative control) → status `supported_constructed`, *not a law* (law pending the real-silicon benchmark).
+  `ranked_waterfill` strictly beat every control. The re-specified water-filling form **passed the re-run
+  promotion gate** (`promotion_gate.py`, seeds 1..8) → `supported_constructed` — but that gate's metric was
+  U·C·P-weighted, so the real-silicon **M6b/M6c** gate on a *neutral* ruler later **falsified the strong claim**
+  and left only a conditional one → status now `conditional_on_neutral_ruler` (see below; never a law).
 - **M4–M9 — fidelity as an economy.** Stressors, transition debt, the resistance tensor + fidelity
   derivative, the shader cache (hitches → allocation), Causal Surface Area, the Readiness Layer, provider
   contracts, dependency surface/integrity, and the representation compiler.
@@ -520,11 +534,13 @@ count is authoritative), every milestone carrying a verified demo, a negative co
 *The empirical phase* below): `experiments/` carries six executed latent phases, the three provenance runtimes,
 the live/latent compression bench, and the **RealityKernel** consolidation — whose **Rust CORE port is verified
 on real silicon** (`cargo test` 10/10) and whose lineage-scale closure test proves *optimization cannot erase
-history* to 5×10⁵ commits. And the **GPU benchmark apparatus is verified on hardware** (`experiments/bench_gpu_real`,
-**M1–M5** on an ASUS ROG Xbox Ally X / Radeon 890M, Vulkan): the timestamp ruler exists, measures real compute
-*and* render work, binds every measurement to a stable world-identity digest, and compares allocation policies
-*fairly* at equal measured GPU-tick budget (over-spenders refused) — with no policy yet declared superior. Each
-is a seeded, replayable bench with its own self-check. What stays deliberately
+history* to 5×10⁵ commits. And the **GPU benchmark is verified on hardware through the summit**
+(`experiments/bench_gpu_real`, **M1–M6c** on an ASUS ROG Xbox Ally X / Radeon 890M, Vulkan): the timestamp
+ruler exists, measures real compute *and* render work, binds every measurement to a stable world-identity
+digest, compares allocation policies *fairly* at equal measured GPU-tick budget (over-spenders refused, M5),
+and on a sealed, neutral perceptual ruler (M6a) ran the genuine Causal Continuity gate (M6b/M6c) — which
+**falsified the strong claim and left a conditional one** (`conditional_on_neutral_ruler`). Each is a seeded,
+replayable bench with its own self-check. What stays deliberately
 un-faked lives behind the intentionally-unbuilt seams — `reality_harness.NetworkChannel` (point it at a real
 socket), `behavioral_harness.ExperimentLayer(channel="real")`, and the perception compiler's lookup compiler —
 plus:
@@ -534,12 +550,13 @@ plus:
   vs. raising OS timer resolution) attached.
 - The **first world-loop client** built *on top of* the kernel — the point where the substrate stops being
   tested in isolation and starts carrying a world.
-- **M6 — PFAL/TCFF on real silicon (the open summit).** The measurement apparatus is now verified on hardware
-  (M1–M5); what remains is whether the allocation policies actually *win* under a **real perceptual-error
-  measure** on real frames — the gate that would move Causal Continuity from `supported_constructed` to an
-  empirically-supported law (within the stated measurement domain). It needs a genuine perceptual-error metric
-  (a sloppy one would pre-decide the winner), so it is a deliberate scoping step, not a reflex. Constructed-world
-  numbers still expire here.
+- **M6 — the Causal Continuity gate on real silicon (summit reached; one form still untested).** Done through
+  M6c: a sealed, neutral perceptual ruler at equal measured budget **falsified** the strong claim and left a
+  **conditional** one (`conditional_on_neutral_ruler`) — see *rendering economics* above. The genuinely
+  un-faked remainder is a **multi-frame causal test**: M6 conflated *causal consequence* with *present render
+  difficulty*, so the original claim (dropping present-perception `S` pays off in the **future**) needs a scene
+  where consequence and difficulty are *decorrelated across frames* — the still-frame rig could not separate
+  them. That is a new rig, not a tweak. Constructed-world numbers already expired here, exactly as designed.
 - **Composing + calibrating the resistance tensor** — the 7-dimensional `resistance_tensor.py` already exists;
   what is open is using it as the resistance *everywhere* and tuning its weights against measured artifacts.
 - A **real estimator under intervention scarcity** — every experiment so far runs ground-truth `do()` on a
@@ -782,7 +799,8 @@ layer), not a turnkey product — read the use cases through that frame.
   budget** (a policy that spent more is *refused*, not crowned), report error as a **Pareto vector** never a
   summed score, bind every measurement to the identity of what it measured, and treat a zero/negative interval
   as a recorded ghost. Drop it onto any "policy A beats B" GPU question where a scalar score would smuggle the
-  conclusion (M1–M5 verified on an Ally X).
+  conclusion — and it earns its keep by *rejecting* a winner: M1–M6c on an Ally X, where the sealed neutral
+  ruler (M6b/M6c) **falsified** the project's own preferred allocation policy rather than rubber-stamping it.
 - **A provenance kernel for any stateful system.** `experiments/reality_kernel` (Artifact / Event /
   CommitReceipt / Query, with a Rust CORE verified under concurrency) is a domain-agnostic, event-sourced core:
   every transition emits a *receipt* (a record, never an authorization), and **absence is queryable** —
@@ -815,11 +833,12 @@ layer), not a turnkey product — read the use cases through that frame.
   closed-loop, typed, falsification-first system. It does not claim to have solved causal discovery or to ship
   GPU pixels; it claims to make every assumption visible, every result replayable, and every conclusion carry
   its price — and it states its frontiers rather than papering over them.
-- **Verified-on-silicon credibility (M1–M5).** The first hardware results aren't performance boasts — they're
+- **Verified-on-silicon credibility (M1–M6c).** The hardware results aren't performance boasts — they're
   *metrology*: the project proved its own measuring instrument is trustworthy (ruler exists, scales, binds to
-  identity, compares fairly) before making a single performance claim. That ordering — instrument before
-  verdict — is the credibility asset, and it is exactly what's missing from benchmark suites that open with a
-  win.
+  identity, compares fairly) *before* making a performance claim, and then used that instrument to **reject its
+  own hypothesis** (M6b/M6c falsified the preferred causal allocation policy on a neutral ruler). A system that
+  can be caught being wrong by its own bench is the credibility asset — the opposite of a suite that opens with
+  a win.
 
 **For researchers / reproducibility (the cross-domain frame):**
 
@@ -871,8 +890,9 @@ PFAL → TCFF chain. [`docs/RENDER_VERIFICATION_RECORD.md`](docs/RENDER_VERIFICA
 experiments. [`docs/GENEALOGY.md`](docs/GENEALOGY.md) — the full genealogy & checklist.
 [`docs/REAL_SILICON_BENCHMARK.md`](docs/REAL_SILICON_BENCHMARK.md) — the measurement *contract* for the GPU
 benchmark (device as constrained oracle, GPU-timestamp budget as the shared ruler, temporal error as a Pareto
-profile). Its apparatus is now **built and verified on hardware** in `experiments/bench_gpu_real` (M1–M5 on an
-Ally X); the open rung is M6 (PFAL/TCFF under a real perceptual-error measure). Substrate ≠ benchmark.
+profile). It is now **built and verified on hardware through the summit** in `experiments/bench_gpu_real`
+(M1–M6c on an Ally X); the M6b/M6c gate on a neutral ruler falsified the strong causal claim and left a
+conditional one. Substrate ≠ benchmark.
 [`docs/MEASUREMENT_DISCIPLINE.md`](docs/MEASUREMENT_DISCIPLINE.md) — the project's epistemic boundary: the
 measurement loop, closed-world failure, what a result means, and what NOT to claim.
 [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md) — the *next-gen direction* (research, not built):
@@ -884,7 +904,7 @@ a real external anchor remain the frontier. [`experiments/`](experiments/) — t
 (`latent_phase1`–`6`, `provenance_runtime`, `adversarial_runtime`, `reality_authoring`, `live_latent_provenance`,
 and `reality_kernel/` — the four-primitive consolidation, its Rust CORE port `core_rs/` verified on real
 silicon, and the `lineage_scale/` closure test; `bench_gpu/` — the GPU measurement *contract*; and
-`bench_gpu_real/` — the **GPU benchmark verified on hardware**, M1–M5 on an Ally X), each a seeded,
+`bench_gpu_real/` — the **GPU benchmark verified on hardware**, M1–M6c on an Ally X, summit reached), each a seeded,
 self-checking bench outside the core. [`AGENTS.md`](AGENTS.md) — the contract every change obeys.
 
 ## License
