@@ -290,6 +290,30 @@ encodings (which boundaries become signed edges, which flow ops, which partition
 `declared ≠ verified`, and a clean audit means "no attention signal under this declared model," never `safe`
 (`tested ≠ safe`). Run (from this directory): `PYTHONHASHSEED=0 python3 topology_provenance_engine.py` (7/7).
 
+## The self-extraction probe — `module_graph.py` (audit what it didn't author)
+
+The first artifact that turns a *real* artifact into a model instead of hand-declaring one — and so the first
+test of the hardest assumption: **`SystemModel` is an interpretation of evidence, not reality.** It is
+deliberately dumb (AST only; module → node, intra-repo import → edge, package dir → partition; no inference, no
+scores). Pointed at this subfolder's own source, it rediscovers the import structure
+(`topology_provenance_engine → {klein, frontier, concurrency}`) **without having authored it**.
+
+Its first success is **negative — knowing what it cannot see:**
+
+- **spatial** lens *applies* — cross-package imports = the directory boundary going semantic (does the org
+  chart match the dependency graph?).
+- **structural** uses a *fit-for-purpose* check — directed dependency **cycles** — and explicitly does **not**
+  force klein signed-orientability (bare imports carry no signed trust/authority boundary).
+- **provenance** is **declared NOT APPLICABLE** — a static import graph has no temporal candidate→commit flow;
+  it refuses to fabricate a provenance verdict (that would need git history or runtime traces).
+- **blind spots** (dynamic imports, relative imports, unparseable files, basename collisions) are *recorded,
+  not dropped* — the extraction-fidelity metric, *"does it know what it doesn't know?"*
+
+Sealed / observe-only: `ast`-only (never executes scanned code), never writes, no verdict. Run (from this
+directory): `PYTHONHASHSEED=0 python3 module_graph.py` (7/7; optional path arg to scan a broader tree). It is
+the threshold the subfolder was built toward — auditing a system it did not author, honest about the gap
+between the model and the evidence.
+
 ## Target areas — where these patterns are already load-bearing (resonance, not validation)
 
 The mathematics these instruments compute is not invented here; it is established and load-bearing across real
