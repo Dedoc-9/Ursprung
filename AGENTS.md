@@ -346,8 +346,8 @@ Weltlinie + monitored invariants intact. It does **not** mean the renderer is co
 
 ## Status
 
-The conceptual arc is **complete** (495-check core suite), the empirical phase **ran**, and it has **crossed
-into the substrate.** The conceptual genealogy: M1 foundation + invariant harness → M2 the five laws → M3/3.1
+The conceptual arc is **complete** (502-check core suite), the empirical phase **ran**, and it has **crossed
+onto real silicon.** The conceptual genealogy: M1 foundation + invariant harness → M2 the five laws → M3/3.1
 the VIEW raster slice and the *ranking ≠ allocation* result (from a recorded **failed** hypothesis) → M4–M9
 fidelity-as-economy (resistance tensor, shader cache, readiness, providers, dependency integrity, compiler) →
 M10–M21 the information-firewall arc → Channel Discovery + the Measurement Discipline → the **perception loop**
@@ -358,10 +358,15 @@ M10–M21 the information-firewall arc → Channel Discovery + the Measurement D
 meta-invariant **`identity includes provenance`** (the Provenance Principle — a law of the runtime, not a
 numbered world-law). Run: `PYTHONHASHSEED=0 python3 loop.py`; suite `python3 tests/test_ursprung.py`.
 
-The empirical phase (`experiments/`, seeded benches *outside* the 495-check core): six latent phases → three
+The empirical phase (`experiments/`, seeded benches *outside* the 502-check core): six latent phases → three
 provenance runtimes → live/latent compression → the **RealityKernel** consolidation (the constraint surface
 above), whose **Rust CORE port is verified on real silicon** (`cargo test` 10/10) and whose **lineage-scale
-closure** proves *optimization cannot erase history* to 5×10⁵ commits with zero lineage lost.
+closure** proves *optimization cannot erase history* to 5×10⁵ commits with zero lineage lost. Then the **GPU
+benchmark apparatus, verified on hardware** (`experiments/bench_gpu_real`, **M1–M5** on an ASUS ROG Xbox Ally X
+/ Radeon 890M, Vulkan): the timestamp ruler exists, measures real compute *and* render work, binds each
+measurement to a world-identity digest, and compares allocation policies *fairly* at equal measured GPU-tick
+budget (over-spenders refused) — **no policy yet declared superior** (that is M6, under a real perceptual-error
+measure → the gate for Causal Continuity → law).
 
 **Verified means the distinctions survived a substrate transition — not that the runtime is complete.**
 *Proven:* kernel invariants, semantic preservation across implementations, the tested failure distinctions, and

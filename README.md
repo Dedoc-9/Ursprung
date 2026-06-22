@@ -62,11 +62,15 @@ estimator class and coverage boundary instead of declaring "safe."
 
 **Where it goes next** — the kernel is the minimal center; everything else is a **client**. A renderer, a
 physics step, an agent, and a world generator all *consume* the kernel — **transition history is the center,
-not the world**. The scoped, deliberately un-faked frontiers: the Rust CORE at real scale (1e6–1e8 lineage,
-frame-loop integration, and the Windows sub-granularity timing question — full-frame spin vs. raising OS timer
-resolution); the first world-loop client built *on top of* the kernel; a real estimator under intervention
-scarcity (unknown graph); a real external anchor (a verifiable delay function / proof-of-sequential-work); and
-the GPU real-silicon benchmark where every constructed-world number finally expires.
+not the world**. First real silicon has already arrived: the GPU benchmark's *measurement apparatus* is now
+verified on hardware (`experiments/bench_gpu_real`, M1–M5 on an ASUS ROG Xbox Ally X — the ruler exists,
+measures real work, binds to world identity across compute and render passes, and compares policies fairly at
+equal measured budget). The scoped frontiers that remain genuinely un-faked: **M6** — whether the allocation
+policies (PFAL/TCFF) actually win under a *real perceptual-error measure* on real frames (the gate that would
+move Causal Continuity from `supported_constructed` to an empirically-supported law); the Rust CORE at real
+scale (1e6–1e8 lineage, frame-loop integration, the Windows sub-granularity timing question); the first
+world-loop client built *on top of* the kernel; a real estimator under intervention scarcity (unknown graph);
+and a real external anchor (a verifiable delay function / proof-of-sequential-work).
 
 What began as a renderer *philosophy* became, under benchmarking, a set of measurable **rendering economics**:
 finite fidelity is a budget, every approximation is debt, and the bench — not the manifesto — decides which
@@ -355,7 +359,7 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 | `ursprung/polygon_reconciliation.py` | **OBSERVER** | Polygon Reconciliation Law: polygons as deterministic convention; `reconcile()` not replace |
 | `ursprung/fidelity_conservation.py` | **OBSERVER** | Temporal Fidelity Accounting Law (was "Conservation"): under a fixed budget, fidelity transferred between dimensions is a bookkeeping model, not a physical conservation law; minimize consequential discontinuity |
 | `ursprung/reality_debt.py` | **OBSERVER** | Reality Debt Law: `Debt = Approximation × Persistence × Consequence`; place debt where consequence is lowest |
-| `ursprung/causal_continuity.py` | **OBSERVER** | Causal Continuity *Hypothesis* (provisional): allocate ∝ expected future causal loss `U×C×P`; PFAL⇄Debt duality |
+| `ursprung/causal_continuity.py` | **OBSERVER** | Causal Continuity (now `supported_constructed`): the naive `∝ U×C×P` form failed; the re-specified water-filling form `∝ √(U·C·P·resistance)` passed the re-run gate (`promotion_gate.py`) — *not a law* (pending real silicon) |
 | `ursprung/raster.py` | **VIEW** | deterministic reference rasterizer: projection→coverage→sampling→raster, each a declared convention; hashable framebuffer |
 | `ursprung/raster_bench.py` | **OBSERVER** | equal-budget allocation bench + promotion gate (the hypothesis *failed* as stated — recorded with diagnosis) |
 | `ursprung/representation.py` | **OBSERVER** | Representation Resistance (difficulty to represent) + `DebtPressure = RealityDebt × RepresentationResistance` |
@@ -501,11 +505,15 @@ count is authoritative), every milestone carrying a verified demo, a negative co
   confident model can lose the world at a *worsening rate*. `declining ≠ accelerating-decline`. World-side
   direction: [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md).
 
-**The conceptual arc is complete, the empirical phase ran, and it has now crossed into the substrate** (see
+**The conceptual arc is complete, the empirical phase ran, and it has crossed onto real silicon** (see
 *The empirical phase* below): `experiments/` carries six executed latent phases, the three provenance runtimes,
 the live/latent compression bench, and the **RealityKernel** consolidation — whose **Rust CORE port is verified
 on real silicon** (`cargo test` 10/10) and whose lineage-scale closure test proves *optimization cannot erase
-history* to 5×10⁵ commits. Each is a seeded, replayable bench with its own self-check. What stays deliberately
+history* to 5×10⁵ commits. And the **GPU benchmark apparatus is verified on hardware** (`experiments/bench_gpu_real`,
+**M1–M5** on an ASUS ROG Xbox Ally X / Radeon 890M, Vulkan): the timestamp ruler exists, measures real compute
+*and* render work, binds every measurement to a stable world-identity digest, and compares allocation policies
+*fairly* at equal measured GPU-tick budget (over-spenders refused) — with no policy yet declared superior. Each
+is a seeded, replayable bench with its own self-check. What stays deliberately
 un-faked lives behind the intentionally-unbuilt seams — `reality_harness.NetworkChannel` (point it at a real
 socket), `behavioral_harness.ExperimentLayer(channel="real")`, and the perception compiler's lookup compiler —
 plus:
@@ -515,8 +523,12 @@ plus:
   vs. raising OS timer resolution) attached.
 - The **first world-loop client** built *on top of* the kernel — the point where the substrate stops being
   tested in isolation and starts carrying a world.
-- A **real-silicon benchmark** — every constructed-world number expires there (equal GPU time; temporal
-  artifacts, input-to-photon latency, reconstruction error, motion stability).
+- **M6 — PFAL/TCFF on real silicon (the open summit).** The measurement apparatus is now verified on hardware
+  (M1–M5); what remains is whether the allocation policies actually *win* under a **real perceptual-error
+  measure** on real frames — the gate that would move Causal Continuity from `supported_constructed` to an
+  empirically-supported law (within the stated measurement domain). It needs a genuine perceptual-error metric
+  (a sloppy one would pre-decide the winner), so it is a deliberate scoping step, not a reflex. Constructed-world
+  numbers still expire here.
 - **Composing + calibrating the resistance tensor** — the 7-dimensional `resistance_tensor.py` already exists;
   what is open is using it as the resistance *everywhere* and tuning its weights against measured artifacts.
 - A **real estimator under intervention scarcity** — every experiment so far runs ground-truth `do()` on a
@@ -606,7 +618,7 @@ attached*):
 
 The conceptual arc ended at a claim it could not yet test: that the project's discipline would survive contact
 with a real, flexible learning system. `experiments/` is where that claim meets numbers. Each phase is a small,
-**seeded, replayable** bench (numpy or pure stdlib) kept *outside* the 495-check core so the verified renderer
+**seeded, replayable** bench (numpy or pure stdlib) kept *outside* the 502-check core so the verified renderer
 stays dependency-free; each has its own self-check, an explicit "expires on a non-toy world" bound, and reuses
 the prior phase's contract *unedited* — the reuse is the experiment. The organizing instruction was
 **"define the horizon, then trust the dark"** ([`docs/LATENT_SPACETIME.md`](docs/LATENT_SPACETIME.md)): demarcate
@@ -754,6 +766,25 @@ layer), not a turnkey product — read the use cases through that frame.
 - **LLM-on-track methodology.** `observe → hypothesize → implement → verify → record`, with guards against
   silent architectural drift, accidental authority leakage, unreplayable behavior, and unmeasured optimization
   claims — portable to any systems project ([`docs/LLM_ON_TRACK.md`](docs/LLM_ON_TRACK.md)).
+- **A fair GPU/perf comparison harness (metrology, not marketing).** `experiments/bench_gpu_real` is a
+  transplantable pattern for performance A/Bs that can't cheat: compare only at **equal *measured* GPU-tick
+  budget** (a policy that spent more is *refused*, not crowned), report error as a **Pareto vector** never a
+  summed score, bind every measurement to the identity of what it measured, and treat a zero/negative interval
+  as a recorded ghost. Drop it onto any "policy A beats B" GPU question where a scalar score would smuggle the
+  conclusion (M1–M5 verified on an Ally X).
+- **A provenance kernel for any stateful system.** `experiments/reality_kernel` (Artifact / Event /
+  CommitReceipt / Query, with a Rust CORE verified under concurrency) is a domain-agnostic, event-sourced core:
+  every transition emits a *receipt* (a record, never an authorization), and **absence is queryable** —
+  `present / absent / unresolved / unaccounted`. Usable as the spine of an editor, a simulation, or a
+  collaborative tool that must answer *why is the state this way, who introduced it, and what is missing.*
+- **An "optimization cannot erase history" guarantee for caches/compression.** `live_latent_provenance` +
+  `lineage_scale`: a hot path may carry only a digest while the lineage resolves on demand, but a compression
+  that drops the pointer is caught as *severance*, never silently allowed. Transplantable to telemetry
+  pipelines, model-artifact stores, and event logs that compress state yet must stay auditable.
+- **Agent / RL observation governance.** The perception loop (`disclosure` + `ursprung/perception/`) bounds how
+  much of a hidden world an agent-observer may see while preserving task utility, and classifies the observer's
+  reconstruction regime (bounded / tradeoff / cascade-collapse) — a fit for agent sandboxes and AI evaluation
+  where you must reveal enough to act without leaking the whole state.
 
 **For investors / strategic readers (honest framing):**
 
@@ -773,6 +804,27 @@ layer), not a turnkey product — read the use cases through that frame.
   closed-loop, typed, falsification-first system. It does not claim to have solved causal discovery or to ship
   GPU pixels; it claims to make every assumption visible, every result replayable, and every conclusion carry
   its price — and it states its frontiers rather than papering over them.
+- **Verified-on-silicon credibility (M1–M5).** The first hardware results aren't performance boasts — they're
+  *metrology*: the project proved its own measuring instrument is trustworthy (ruler exists, scales, binds to
+  identity, compares fairly) before making a single performance claim. That ordering — instrument before
+  verdict — is the credibility asset, and it is exactly what's missing from benchmark suites that open with a
+  win.
+
+**For researchers / reproducibility (the cross-domain frame):**
+
+- **Cross-domain provenance accounting.** The recurring operation — *object + the conditions that license it*
+  (claim+floor, edge+support, latent+identification-cost, edit+lineage, **absence+diagnosis**) — is a discipline
+  for any computational science that needs results to carry *how they became admissible* across transformations,
+  learning stages, and substrate changes. The rarest single piece is the last: **absence as a first-class
+  object** (`NonRecovery`) — recording *why something is unknown*, with a typed diagnosis, instead of a silent
+  gap.
+- **Category-mistake hygiene.** The separator catalogue (`integrity ≠ truth`, `reconstruction ≠ generator`,
+  `correlation ≠ cause`, `observation ≠ intervention`, `declared ≠ verified`, `stable ≠ causal`) is a usable
+  checklist for spotting where an analysis has collapsed distinctions that matter. Honest scope: it is a
+  *discipline a human applies* with worked examples, not an automated detector you can point at arbitrary code.
+- **Falsification-as-record.** A preserved failed hypothesis (Causal Continuity's naive form) and the
+  re-specification it forced is a template for keeping negative results load-bearing instead of deleting them —
+  the habit that produced most of the architecture.
 
 ## Toward a fidelity operating system (direction, not built)
 
@@ -806,10 +858,10 @@ being kept open for.
 the renderer track. [`docs/PREDICTIVE_FIDELITY.md`](docs/PREDICTIVE_FIDELITY.md) — the prediction → membrane →
 PFAL → TCFF chain. [`docs/RENDER_VERIFICATION_RECORD.md`](docs/RENDER_VERIFICATION_RECORD.md) — features as
 experiments. [`docs/GENEALOGY.md`](docs/GENEALOGY.md) — the full genealogy & checklist.
-[`docs/REAL_SILICON_BENCHMARK.md`](docs/REAL_SILICON_BENCHMARK.md) — the *plan* (not built) for the GPU
-benchmark that would move Causal Continuity from `supported_constructed` toward a law: device as constrained
-oracle, GPU-timestamp budget as the shared ruler, temporal error as a Pareto profile, three harnesses.
-Substrate ≠ benchmark.
+[`docs/REAL_SILICON_BENCHMARK.md`](docs/REAL_SILICON_BENCHMARK.md) — the measurement *contract* for the GPU
+benchmark (device as constrained oracle, GPU-timestamp budget as the shared ruler, temporal error as a Pareto
+profile). Its apparatus is now **built and verified on hardware** in `experiments/bench_gpu_real` (M1–M5 on an
+Ally X); the open rung is M6 (PFAL/TCFF under a real perceptual-error measure). Substrate ≠ benchmark.
 [`docs/MEASUREMENT_DISCIPLINE.md`](docs/MEASUREMENT_DISCIPLINE.md) — the project's epistemic boundary: the
 measurement loop, closed-world failure, what a result means, and what NOT to claim.
 [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md) — the *next-gen direction* (research, not built):
@@ -820,7 +872,9 @@ discipline layers are **built** in `experiments/` (Phases 1–6 + two runtimes),
 a real external anchor remain the frontier. [`experiments/`](experiments/) — the executed empirical phase
 (`latent_phase1`–`6`, `provenance_runtime`, `adversarial_runtime`, `reality_authoring`, `live_latent_provenance`,
 and `reality_kernel/` — the four-primitive consolidation, its Rust CORE port `core_rs/` verified on real
-silicon, and the `lineage_scale/` closure test), each a seeded, self-checking bench outside the core. [`AGENTS.md`](AGENTS.md) — the contract every change obeys.
+silicon, and the `lineage_scale/` closure test; `bench_gpu/` — the GPU measurement *contract*; and
+`bench_gpu_real/` — the **GPU benchmark verified on hardware**, M1–M5 on an Ally X), each a seeded,
+self-checking bench outside the core. [`AGENTS.md`](AGENTS.md) — the contract every change obeys.
 
 ## License
 
