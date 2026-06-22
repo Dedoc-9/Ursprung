@@ -261,6 +261,35 @@ boundary into a sign is a declared model (`declared ≠ verified`). It is the **
 adversarial test** — it catches the moment the architecture worships a boundary it only needed to draw. Run:
 `PYTHONHASHSEED=0 python3 klein_probe.py` (7/7).
 
+## The integrated audit — `topology_provenance_engine.py`
+
+The three probes bundle into one **audit harness** that runs all of them over a *single* declared system
+model and reports **three independent coherence dimensions** — not a performance metric, but the *health,
+safety, and coherence of data flows*:
+
+```
+dimension    probe               question                                       verdicts
+structural   klein_probe         do the boundaries cohere, or is one a false    ORIENTABLE / NON_ORIENTABLE
+                                  global claim?
+provenance   frontier_probe      where does possibility become obligation;      ALIGNED / NEEDS_PROMOTION /
+                                  did a dependency outrun commitment?            OBSERVER_DEPENDENT
+spatial      concurrency_probe   is a chosen partition a clean gauge or a       GOOD_GAUGE / GAUGE_WITH_COST /
+                                  semantic leak?                                 SEMANTIC_LEAK
+```
+
+The feature that makes it *faithful* rather than a dashboard that lies: **it refuses to collapse the three
+into a single "coherence score."** Objectivity is not one scalar — not even for the auditor. The report is a
+**vector** of three categorical verdicts plus per-axis attention flags; the only legitimate rollup is the
+unweighted conjunction "all axes clean?", never a weighted number. It bundles the three *verified* probes
+without re-deriving them, surfaces **attention signals** ("look here") rather than **verdicts** ("broken" /
+"safe" / "merge" / "fix"), and enforces nothing. Its self-test shows the axes are **independent** — a model
+can be clean on two and leak on the third — so all three are needed; one green never implies another.
+
+*"Continuous" is a usage* (run it per-commit / in CI), not a new runtime — this is a single-pass harness. The
+encodings (which boundaries become signed edges, which flow ops, which partition) are **declared models**:
+`declared ≠ verified`, and a clean audit means "no attention signal under this declared model," never `safe`
+(`tested ≠ safe`). Run (from this directory): `PYTHONHASHSEED=0 python3 topology_provenance_engine.py` (7/7).
+
 ## Target areas — where these patterns are already load-bearing (resonance, not validation)
 
 The mathematics these instruments compute is not invented here; it is established and load-bearing across real
