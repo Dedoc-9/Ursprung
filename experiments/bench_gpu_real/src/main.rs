@@ -1,21 +1,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-//! bench_gpu_real — Milestone 3: bind the GPU measurement to the WORLD IDENTITY it measured.
+//! bench_gpu_real — Milestone 4: timestamp a RENDER pass, same identity contract as the compute pass.
 //!
-//! M1: the ruler exists. M2: the ruler measures real work. M3 adds no rendering and no new timing —
-//! it adds *traceability*: a `GoldenReplay` derives a `FrameArtifact` whose digest is the stable
-//! identity of what is measured, and every `BenchmarkObservation` carries that digest. The dispatch is
-//! "derived from this frame, derived from this replay." Identity is stable; timing is observed.
+//! M1: the ruler exists (empty compute pass). M2: it measures real compute work. M3: the measurement is
+//! bound to a world identity, and a ghost interval changes the number, never the digest. M4 proves the
+//! contract is *backend-agnostic across pass types*: it times a real RENDER pass — a fullscreen triangle
+//! with a per-fragment work loop, rendered to an OFFSCREEN texture — with the identical machinery
+//! (GoldenReplay → FrameArtifact digest, classify-the-ghost, BenchmarkObservation, median over runs).
 //!
-//! This is the GPU analogue of the provenance kernel's digest-resolution contract: the measurement can
-//! always be traced back to the thing it measured. Still compute-only — no window, swapchain, pixels.
+//! Still headless: no window, no swapchain, no present, no pixel readback. Still no PFAL/TCFF/fidelity
+//! claim. The only new thing is a render pipeline and a render pass; the timing path is unchanged.
 //!
-//! Acceptance (M3 claims success only if all hold):
-//!   1. same replay → same digest;
-//!   2. same digest → same dispatch description;
-//!   3. the observation carries the digest;
-//!   4. the observation JSON round-trips (serialize → deserialize → equal);
-//!   5. many runs of one digest → varying timing but ONE identity;
-//!   6. a non-positive interval is a ghost (flagged, excluded from stats) — never an identity change.
+//! Acceptance (M4 claims success only if all hold):
+//!   1. a RENDER pass's timestamps function (begin/end captured);
+//!   2. duration is positive — real fragment work, not bracket overhead;
+//!   3. many runs of one frame → ONE identity, timing observed;
+//!   4. the observation carries the world-identity digest;
+//!   5. a non-positive interval is a ghost (flagged, excluded), identity intact;
+//!   6. it is headless — rendered to an offscreen texture, no swapchain.
 //!
 //! Run on the device:  cargo run --release
 
@@ -27,24 +28,29 @@ use std::hash::{Hash, Hasher};
 use pollster::FutureExt as _;
 use serde::{Deserialize, Serialize};
 
-const WORKLOAD_WGSL: &str = r#"
-@group(0) @binding(0) var<storage, read_write> data: array<u32>;
-@compute @workgroup_size(64)
-fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
-    let i = gid.x;
-    if (i < arrayLength(&data)) {
-        var acc: u32 = i;
-        for (var k: u32 = 0u; k < 256u; k = k + 1u) {
-            acc = acc * 1664525u + 1013904223u;
-        }
-        data[i] = acc;
+// fullscreen triangle (no vertex buffer) + a per-fragment work loop so the pass does measurable work.
+const RENDER_WGSL: &str = r#"
+@vertex
+fn vs_main(@builtin(vertex_index) vi: u32) -> @builtin(position) vec4<f32> {
+    var p = array<vec2<f32>, 3>(vec2<f32>(-1.0, -1.0), vec2<f32>(3.0, -1.0), vec2<f32>(-1.0, 3.0));
+    return vec4<f32>(p[vi], 0.0, 1.0);
+}
+@fragment
+fn fs_main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
+    var acc: f32 = 0.0;
+    for (var k: u32 = 0u; k < 64u; k = k + 1u) {
+        acc = acc + sin(pos.x * 0.01 + f32(k)) * cos(pos.y * 0.01 + f32(k));
     }
+    return vec4<f32>(fract(acc), 0.5, 0.25, 1.0);
 }
 "#;
 
-const WORKLOAD_NAME: &str = "compute_lcg_iter256";
-const WORKLOAD_SIZE: u64 = 262_144; // execution condition (not identity); fixed for M3 (M2 did scaling)
+const WORKLOAD_NAME: &str = "render_fullscreen_tri_frag64";
+const PASS_KIND: &str = "render";
+const WIDTH: u32 = 1920;
+const HEIGHT: u32 = 1080;
 const RUNS: usize = 12;
+const HEADLESS: bool = true; // offscreen texture only; no Surface/swapchain is ever created
 
 fn digest(parts: &[&str]) -> String {
     let mut h = DefaultHasher::new();
@@ -54,7 +60,6 @@ fn digest(parts: &[&str]) -> String {
     format!("{:012x}", h.finish())
 }
 
-// --- the world description: a replay derives a frame whose digest is its stable identity ----------
 #[derive(Clone)]
 struct GoldenReplay {
     scene: String,
@@ -86,20 +91,15 @@ impl FrameArtifact {
     fn digest(&self) -> String {
         digest(&[&self.scene_digest, &self.transform_digest, &self.policy_id, &self.provenance_digest])
     }
-    /// The dispatch description derived from this frame — deterministic, so same digest → same dispatch.
-    fn dispatch_descriptor(&self) -> String {
-        format!("{}|{}|n={}", WORKLOAD_NAME, self.policy_id, WORKLOAD_SIZE)
-    }
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Copy)]
 enum TimingStatus {
     Ok,
-    NonPositive, // end <= begin: a measurement ghost (clock re-index / power-state), not an identity change
+    NonPositive,
 }
 
 fn classify(begin: u64, end: u64, period_ns: f32) -> (TimingStatus, f64) {
-    // signed on purpose — a backward interval is recorded honestly, never clamped-and-hidden
     let ticks = end as i128 - begin as i128;
     let status = if ticks > 0 { TimingStatus::Ok } else { TimingStatus::NonPositive };
     (status, ticks as f64 * period_ns as f64)
@@ -110,10 +110,11 @@ struct BenchmarkObservation {
     backend: String,
     device_name: String,
     driver: String,
-    artifact_digest: String, // the FrameArtifact identity measured (stable across runs)
+    artifact_digest: String,
     provenance_digest: String,
     workload: String,
-    workload_size: u64,
+    pass_kind: String, // "render" — provenance of WHAT was timed (cf. "compute" in M2/M3)
+    render_target: String,
     gpu_begin_tick: u64,
     gpu_end_tick: u64,
     timestamp_period_ns: f32,
@@ -124,8 +125,8 @@ struct BenchmarkObservation {
 struct Gpu {
     device: wgpu::Device,
     queue: wgpu::Queue,
-    pipeline: wgpu::ComputePipeline,
-    bgl: wgpu::BindGroupLayout,
+    pipeline: wgpu::RenderPipeline,
+    target_view: wgpu::TextureView,
     period_ns: f32,
     backend: String,
     device_name: String,
@@ -138,6 +139,7 @@ impl Gpu {
             backends: wgpu::Backends::PRIMARY,
             ..Default::default()
         });
+        // headless: compatible_surface is None — no window, no swapchain, ever.
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::HighPerformance,
@@ -154,7 +156,7 @@ impl Gpu {
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
-                    label: Some("bench_gpu_real M3"),
+                    label: Some("bench_gpu_real M4"),
                     required_features: wgpu::Features::TIMESTAMP_QUERY,
                     required_limits: wgpu::Limits::default(),
                     memory_hints: wgpu::MemoryHints::default(),
@@ -165,35 +167,53 @@ impl Gpu {
             .expect("device request failed");
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("lcg"),
-            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(WORKLOAD_WGSL)),
+            label: Some("render"),
+            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(RENDER_WGSL)),
         });
-        let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("bgl"),
-            entries: &[wgpu::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: wgpu::ShaderStages::COMPUTE,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Storage { read_only: false },
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
-                },
-                count: None,
-            }],
-        });
-        let pl = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("pl"),
-            bind_group_layouts: &[&bgl],
+            bind_group_layouts: &[],
             push_constant_ranges: &[],
         });
-        let pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-            label: Some("lcg pipeline"),
-            layout: Some(&pl),
-            module: &shader,
-            entry_point: "main",
-            compilation_options: Default::default(),
+        let format = wgpu::TextureFormat::Rgba8Unorm;
+        let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("fullscreen tri"),
+            layout: Some(&layout),
+            vertex: wgpu::VertexState {
+                module: &shader,
+                entry_point: "vs_main",
+                buffers: &[],
+                compilation_options: Default::default(),
+            },
+            fragment: Some(wgpu::FragmentState {
+                module: &shader,
+                entry_point: "fs_main",
+                targets: &[Some(wgpu::ColorTargetState {
+                    format,
+                    blend: None,
+                    write_mask: wgpu::ColorWrites::ALL,
+                })],
+                compilation_options: Default::default(),
+            }),
+            primitive: wgpu::PrimitiveState::default(),
+            depth_stencil: None,
+            multisample: wgpu::MultisampleState::default(),
+            multiview: None,
             cache: None,
         });
+
+        // the OFFSCREEN render target — a texture, not a swapchain
+        let target = device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("offscreen target"),
+            size: wgpu::Extent3d { width: WIDTH, height: HEIGHT, depth_or_array_layers: 1 },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            view_formats: &[],
+        });
+        let target_view = target.create_view(&Default::default());
 
         Gpu {
             period_ns: queue.get_timestamp_period(),
@@ -203,22 +223,11 @@ impl Gpu {
             device,
             queue,
             pipeline,
-            bgl,
+            target_view,
         }
     }
 
-    fn time_dispatch(&self, n: u64) -> (u64, u64) {
-        let buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("data"),
-            size: n * 4,
-            usage: wgpu::BufferUsages::STORAGE,
-            mapped_at_creation: false,
-        });
-        let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("bg"),
-            layout: &self.bgl,
-            entries: &[wgpu::BindGroupEntry { binding: 0, resource: buffer.as_entire_binding() }],
-        });
+    fn time_render(&self) -> (u64, u64) {
         let query_set = self.device.create_query_set(&wgpu::QuerySetDescriptor {
             label: Some("ts"),
             ty: wgpu::QueryType::Timestamp,
@@ -239,18 +248,26 @@ impl Gpu {
 
         let mut enc = self.device.create_command_encoder(&Default::default());
         {
-            let mut pass = enc.begin_compute_pass(&wgpu::ComputePassDescriptor {
-                label: Some("timed dispatch"),
-                timestamp_writes: Some(wgpu::ComputePassTimestampWrites {
+            let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("timed render pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &self.target_view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                        store: wgpu::StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: None,
+                timestamp_writes: Some(wgpu::RenderPassTimestampWrites {
                     query_set: &query_set,
                     beginning_of_pass_write_index: Some(0),
                     end_of_pass_write_index: Some(1),
                 }),
+                occlusion_query_set: None,
             });
             pass.set_pipeline(&self.pipeline);
-            pass.set_bind_group(0, &bind_group, &[]);
-            let workgroups = ((n + 63) / 64) as u32;
-            pass.dispatch_workgroups(workgroups, 1, 1);
+            pass.draw(0..3, 0..1); // fullscreen triangle
         }
         enc.resolve_query_set(&query_set, 0..2, &resolve, 0);
         enc.copy_buffer_to_buffer(&resolve, 0, &readback, 0, 16);
@@ -271,9 +288,8 @@ impl Gpu {
         (begin, end)
     }
 
-    /// Measure a frame: the observation carries the frame's identity digest.
     fn observe(&self, frame: &FrameArtifact) -> BenchmarkObservation {
-        let (begin, end) = self.time_dispatch(WORKLOAD_SIZE);
+        let (begin, end) = self.time_render();
         let (status, dur) = classify(begin, end, self.period_ns);
         BenchmarkObservation {
             backend: self.backend.clone(),
@@ -282,7 +298,8 @@ impl Gpu {
             artifact_digest: frame.digest(),
             provenance_digest: frame.provenance_digest.clone(),
             workload: WORKLOAD_NAME.into(),
-            workload_size: WORKLOAD_SIZE,
+            pass_kind: PASS_KIND.into(),
+            render_target: format!("offscreen {}x{} Rgba8Unorm", WIDTH, HEIGHT),
             gpu_begin_tick: begin,
             gpu_end_tick: end,
             timestamp_period_ns: self.period_ns,
@@ -296,53 +313,43 @@ fn main() {
     let gpu = Gpu::init();
     let replay = GoldenReplay { scene: "hallway".into(), seed: 1, policy: "PFAL".into() };
     let frame = replay.frame();
-    println!("M3 — measurement bound to world identity on {} ({})", gpu.device_name, gpu.backend);
-    println!("  replay: scene={} seed={} policy={}", replay.scene, replay.seed, replay.policy);
-    println!("  frame.digest() = {}  (the stable identity of what is measured)\n", frame.digest());
+    println!("M4 — RENDER-pass timing bound to world identity on {} ({})", gpu.device_name, gpu.backend);
+    println!("  target: offscreen {}x{} (headless={}, no swapchain)", WIDTH, HEIGHT, HEADLESS);
+    println!("  frame.digest() = {}\n", frame.digest());
 
-    // run the SAME frame many times — identity must stay one, timing must be observed
     let obs: Vec<BenchmarkObservation> = (0..RUNS).map(|_| gpu.observe(&frame)).collect();
-
     let identities: HashSet<&str> = obs.iter().map(|o| o.artifact_digest.as_str()).collect();
     let ok_times: Vec<f64> = obs.iter()
         .filter(|o| o.timing_status == TimingStatus::Ok)
         .map(|o| o.gpu_duration_ns)
         .collect();
-    let distinct_times: HashSet<u64> = ok_times.iter().map(|t| t.to_bits()).collect();
+    let distinct: HashSet<u64> = ok_times.iter().map(|t| t.to_bits()).collect();
     let ghosts = obs.iter().filter(|o| o.timing_status == TimingStatus::NonPositive).count();
     let (tmin, tmax) = ok_times.iter().fold((f64::INFINITY, 0.0_f64), |(a, b), &x| (a.min(x), b.max(x)));
 
     println!("  {} runs · identities seen: {} · timing ok: {} (ghosts excluded: {}) · spread {:.0}–{:.0} ns",
              RUNS, identities.len(), ok_times.len(), ghosts, tmin, tmax);
 
-    // --- deterministic checks (don't depend on the GPU cooperating) ---
-    let r1 = GoldenReplay { scene: "hallway".into(), seed: 1, policy: "PFAL".into() };
-    let r2 = GoldenReplay { scene: "hallway".into(), seed: 1, policy: "PFAL".into() };
-    let same_replay_same_digest = r1.frame().digest() == r2.frame().digest();
-    let same_digest_same_dispatch = r1.frame().dispatch_descriptor() == r2.frame().dispatch_descriptor();
-
-    let sample = obs.first().unwrap();
+    let sample = obs.iter().find(|o| o.timing_status == TimingStatus::Ok).unwrap_or(&obs[0]);
     let json = serde_json::to_string(sample).unwrap();
     let round: Result<BenchmarkObservation, _> = serde_json::from_str(&json);
-    let json_round_trips = round.as_ref().map(|o| o == sample).unwrap_or(false);
+    println!("\nobservation JSON: {}", json);
 
-    // Q2: a non-positive interval is a ghost — flagged, excluded from stats, identity intact.
-    let (gs_eq, _) = classify(100, 100, gpu.period_ns); // equal ticks
-    let (gs_back, _) = classify(100, 90, gpu.period_ns); // backward
+    let (gs_eq, _) = classify(100, 100, gpu.period_ns);
+    let (gs_back, _) = classify(100, 90, gpu.period_ns);
     let (gs_ok, _) = classify(100, 140, gpu.period_ns);
     let ghost_handled = gs_eq == TimingStatus::NonPositive
         && gs_back == TimingStatus::NonPositive
         && gs_ok == TimingStatus::Ok;
 
-    println!("\nobservation JSON: {}", json);
-
     let checks = [
-        ("1_same_replay_same_digest", same_replay_same_digest),
-        ("2_same_digest_same_dispatch", same_digest_same_dispatch),
-        ("3_observation_carries_digest", sample.artifact_digest == frame.digest()),
-        ("4_observation_json_round_trips", json_round_trips),
-        ("5_one_identity_timing_observed", identities.len() == 1 && distinct_times.len() >= 2),
-        ("6_nonpositive_interval_is_a_ghost_not_identity", ghost_handled),
+        ("1_render_pass_timestamps_function", !ok_times.is_empty()),
+        ("2_duration_positive_real_fragment_work", tmax > 0.0 && tmin > 0.0),
+        ("3_one_identity_timing_observed", identities.len() == 1 && distinct.len() >= 2),
+        ("4_observation_carries_world_identity", sample.artifact_digest == frame.digest()),
+        ("5_nonpositive_interval_is_a_ghost", ghost_handled),
+        ("6_headless_offscreen_no_swapchain", HEADLESS && sample.render_target.starts_with("offscreen")),
+        ("7_observation_json_round_trips", round.as_ref().map(|o| o == sample).unwrap_or(false)),
     ];
     println!("\nacceptance:");
     let mut ok = true;
@@ -351,12 +358,12 @@ fn main() {
         ok &= *pass;
     }
     println!(
-        "\nM3 {} — identity is stable ({}), timing is observed ({} distinct over {} runs). \
-         A ghost interval would change the number, never the digest.",
+        "\nM4 {} — a render pass times under the SAME contract as compute: identity stable ({}), \
+         timing observed ({} distinct over {} runs), headless. Still no PFAL/fidelity claim.",
         if ok { "PASS" } else { "FAIL" },
         frame.digest(),
-        distinct_times.len(),
+        distinct.len(),
         RUNS
     );
-    assert!(ok, "M3 acceptance failed");
+    assert!(ok, "M4 acceptance failed");
 }

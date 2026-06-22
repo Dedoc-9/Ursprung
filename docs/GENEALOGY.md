@@ -451,8 +451,13 @@ benchmark measures the benchmark's world; it does not prove universal superiorit
   bound to world identity (Ally X):** a `GoldenReplay` derives a `FrameArtifact` (digest 4f1cb7c2495167e7);
   12 runs of one frame → identities seen 1, timing varies 9600–11720 ns. A REAL ghost fired — run 1 returned
   a zero interval (cold-start timestamp), flagged `NonPositive`, excluded from stats, identity intact: a ghost
-  changes the number, never the digest (the Q2 handling firing on a genuine anomaly). 6/6. Remaining: M4
-  render-pass timing → M5 equal-budget → M6 PFAL vs TCFF on silicon → Causal Continuity evidence.
+  changes the number, never the digest (the Q2 handling firing on a genuine anomaly). 6/6. **M4 DONE —
+  render-pass timing under the SAME contract (Ally X):** a headless fullscreen-triangle render pass
+  (offscreen 1080p, frag loop ×64) timed via `RenderPassTimestampWrites` (in-pass path, no fallback) →
+  ~0.7–0.9 ms, 12 runs one identity, a real ghost again excluded. Digest IDENTICAL to M3's compute run
+  (4f1cb7c2495167e7) — same GoldenReplay → same world identity whether compute or render: identity is the
+  world's, not the pass's. 7/7. Remaining: M5 equal-budget comparison harness → M6 PFAL vs TCFF on silicon
+  → Causal Continuity evidence.
 - [ ] Native (C++/Rust) **renderer/fidelity** port validated against the Python reference via conformance
   vectors. (The conformance-vector method has been demonstrated at the kernel layer: `reality_kernel/core_rs`
   validated against the Python reference via `golden_kernel.tsv`; this item remains open for PFAL/TCFF/raster.)

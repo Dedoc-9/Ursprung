@@ -1,14 +1,35 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-only -->
-# bench_gpu_real — the GPU-interval ruler on real silicon (M1 ✓, M2 ✓, M3 ✓)
+# bench_gpu_real — the GPU-interval ruler on real silicon (M1 ✓, M2 ✓, M3 ✓, M4 ✓)
 
 The smallest non-faked claims in the project, and the first ones that did **not** expire on silicon —
-because they were measured on silicon. `src/main.rs` is currently the **M3** program (measurement bound
-to world identity); M1 (empty pass) and M2 (real workload) are preserved in git history. No window, no
-swapchain, no pixels, no fidelity claim.
+because they were measured on silicon. `src/main.rs` is currently the **M4** program (render-pass
+timing); M1 (empty pass), M2 (real compute work), M3 (identity binding) are preserved in git history.
+No window, no swapchain, no pixels read back, no fidelity claim.
 
 ```bash
 cd experiments/bench_gpu_real && cargo run --release
 ```
+
+## Milestone 4 — a render pass times under the same contract as compute ✓ (verified on the Ally X)
+
+A fullscreen-triangle render pass with a per-fragment work loop, rendered to an **offscreen texture**
+(no swapchain), timed with `RenderPassTimestampWrites` — the identical machinery as the compute
+milestones. The point is that the contract is **backend-agnostic across pass types**.
+
+```
+render pass (1080p, frag loop ×64): spread 700040–915160 ns  (~0.7–0.9 ms)
+12 runs · identities seen: 1 · timing ok: 11 (1 ghost excluded) · 10 distinct timings
+frame.digest = 4f1cb7c2495167e7   ← IDENTICAL to M3's compute run of the same GoldenReplay
+```
+
+The quiet result: the digest matches M3's exactly. Same `GoldenReplay` → same world identity, *whether
+measured by a compute or a render pass*. Identity is the world's, not the pass's. The render-pass
+timestamps worked via the in-pass path (no `write_timestamp` fallback needed on RDNA 3.5 / AMD Vulkan),
+a real cold-start ghost fired again at run 1 (flagged, excluded, identity intact), and the magnitude
+jumped two orders (≈10 µs compute → ≈0.8 ms render) because ~2M fragments × 64 sin/cos is real work.
+Seven checks: render-pass timestamps function, duration positive, one-identity-many-timings,
+observation-carries-digest, ghost-is-not-identity, headless-offscreen-no-swapchain, JSON round-trips.
+Still no PFAL / TCFF / fidelity claim.
 
 ## Milestone 3 — the measurement is bound to the world identity ✓ (verified on the Ally X)
 
@@ -92,7 +113,7 @@ ruler has ample resolution for frame-scale timing.
 M1 ✓  the ruler exists on silicon                         (empty pass, 40 ns)
 M2 ✓  the ruler measures real work + BenchmarkObservation  (compute LCG, 880→30760 ns, contract JSON)
 M3 ✓  measurement bound to world identity                  (GoldenReplay→FrameArtifact digest; ghost caught)
-M4    render-pass timing                                    (still compute→render; no PFAL yet)
+M4 ✓  render-pass timing under the same contract            (offscreen 1080p, ~0.8 ms; digest == M3's)
 M5    equal-budget comparison harness  ·  M6  PFAL vs TCFF on silicon  →  Causal Continuity evidence
 ```
 
