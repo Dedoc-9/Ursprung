@@ -440,7 +440,12 @@ benchmark measures the benchmark's world; it does not prove universal superiorit
   `TemporalErrorProfile without a BenchmarkObservation = UNACCOUNTED`; GPU budget is an execution condition,
   not frame identity; provenance can't be a bare label; the image hash is a receipt, not the lineage. The only
   thing left is the `RealGpuBackend` body (Vulkan/DX12/wgpu submit + GPU timestamp queries + present-to-photon)
-  on device — deliberately boring; no new theory.
+  on device — deliberately boring; no new theory. **Milestone 1 DONE — verified on real silicon:**
+  `experiments/bench_gpu_real/` (wgpu 22.1, Vulkan) ran on the ASUS ROG Xbox Ally X (Radeon 890M, RDNA 3.5):
+  the GPU-interval ruler EXISTS and is monotonic (`end > begin`), timestamp period 10 ns/tick, empty-pass
+  interval 40 ns (bracket overhead, not work, not fidelity). The project's first datum that did not expire on
+  silicon. Remaining: M2 Rust BenchmarkObservation → M3 FrameArtifact→submission→GpuInterval → M4 shaders /
+  pixels / present-to-photon / thermal.
 - [ ] Native (C++/Rust) **renderer/fidelity** port validated against the Python reference via conformance
   vectors. (The conformance-vector method has been demonstrated at the kernel layer: `reality_kernel/core_rs`
   validated against the Python reference via `golden_kernel.tsv`; this item remains open for PFAL/TCFF/raster.)

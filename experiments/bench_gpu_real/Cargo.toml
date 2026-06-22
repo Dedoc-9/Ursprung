@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# bench_gpu_real — Milestone 1: prove the contract's ruler exists on real silicon.
+# Times an EMPTY GPU compute pass with timestamp queries and prints the GPU interval in nanoseconds,
+# with provenance (backend / adapter / driver / period). No window, no swapchain, no pixels, no fidelity.
+#
+# CANDIDATE: written without a GPU/toolchain in the loop. The machine that runs it is the verifier.
+# wgpu is PINNED to 22.x so the source matches one API; if `cargo` resolves a different major, the
+# Instance/request_* signatures will differ — paste the first error and we fix it together.
+[package]
+name = "bench_gpu_real"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-only"
+
+[dependencies]
+wgpu = "22.1"
+pollster = "0.3"      # lets us block on wgpu's async setup without an async runtime
