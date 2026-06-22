@@ -314,6 +314,50 @@ directory): `PYTHONHASHSEED=0 python3 module_graph.py` (7/7; optional path arg t
 the threshold the subfolder was built toward — auditing a system it did not author, honest about the gap
 between the model and the evidence.
 
+## The breakthrough probe — `fidelity_gap.py` (why the model came back blind, and what crosses)
+
+Pointed at two real open-source repos (`psf/requests`, `pallets/click`), `module_graph` came back almost
+entirely **blind** — 91 and 197 blind spots, ~0 resolvable edges. That is not a finding about requests/click;
+it is a finding about *our model*. `fidelity_gap.py` reads the blindness, names its cause, and **proves what is
+recoverable** without overclaiming what is not.
+
+**The diagnosis — one root cause.** The dumb extractor's identity is the file *basename* and its resolution is
+*absolute-imports-only*; real packaged code is overwhelmingly *relative imports* (`from . import x`) over a
+*package-dotted identity*. So ~95% of the blindness is a single defect — wrong module identity — not a property
+of the code. The corrected model (package-path dotted identity + relative-level math) turns those blind spots
+into real edges and makes basename collisions vanish. It then **fences the irreducible residual**: dynamic
+imports (`__import__` / `import_module`) are a *runtime frontier* a static parser can never cross — declared and
+handed to provenance, never faked into an edge.
+
+Verified on `pallets/click` (2026-06-22; the machine that runs it is the verifier):
+
+```
+dumb model (basename, absolute-only):   modules 60   edges 6     blind 197   collisions 3
+corrected (package-path, relative):     modules 63   edges 131   collisions 0
+  recovered relative edges 196   |   spatial leak 0.52 (68 cross-package)
+  structural cycle: click._compat → click._winconsole → click._compat
+  failure mode        count  verdict           why
+  RELATIVE_IMPORT       196  RECOVERABLE       wrong identity; package-path + level math resolves these
+  BASENAME_COLLISION      3  RECOVERABLE       dotted names make them unique (now 0)
+  DYNAMIC_IMPORT          1  RUNTIME_FRONTIER  target computed at runtime — needs a trace, not a parser
+  BREAKTHROUGH: 199 blind spots were a MODEL DEFECT — edges 6 → 131, collisions 3 → 0
+  RESIDUAL: 1 dynamic import is a runtime frontier (complex.cli __import__) — handed to provenance, not faked
+7/7 checks
+```
+
+(`psf/requests` scans the same way: 91 blind → relative recovered, basename-collisions 4 → 0, residual = 2
+dynamic imports — `compat.import_module`, `packages.__import__`.)
+
+**What it proves:** the blindness was *read, not lamented* — almost all of it was one model defect, and the fix
+is **demonstrated** (relative imports become real edges; collisions disappear under dotted names), not asserted.
+**What it refuses:** `declared ≠ verified` (the import model is the common case, not CPython — namespace
+packages, `sys.path` edits, conditional imports stay in the declared residual); `resolved ≠ executed` (a
+recovered edge means one module *names* another, never that a call path runs); and the **runtime frontier is
+never counted as recovered** (the self-test's 7th check enforces exactly this). The gap is mapped: push the
+static model up to the frontier, stop pushing it past — *that boundary is where the committed Weltlinie begins.*
+Run (from this directory): `PYTHONHASHSEED=0 python3 fidelity_gap.py [path]` (7/7; the self-test runs on
+synthetic cases + this folder, so it passes without requests/click present — the *report* is for the path you pass).
+
 ## Defensive use — structural reconnaissance (authorized red-team / architecture review)
 
 These probes are observe-only diagnostics, but *structural reconnaissance* is exactly what an authorized red
