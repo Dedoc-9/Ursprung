@@ -806,6 +806,10 @@ being kept open for.
 the renderer track. [`docs/PREDICTIVE_FIDELITY.md`](docs/PREDICTIVE_FIDELITY.md) — the prediction → membrane →
 PFAL → TCFF chain. [`docs/RENDER_VERIFICATION_RECORD.md`](docs/RENDER_VERIFICATION_RECORD.md) — features as
 experiments. [`docs/GENEALOGY.md`](docs/GENEALOGY.md) — the full genealogy & checklist.
+[`docs/REAL_SILICON_BENCHMARK.md`](docs/REAL_SILICON_BENCHMARK.md) — the *plan* (not built) for the GPU
+benchmark that would move Causal Continuity from `supported_constructed` toward a law: device as constrained
+oracle, GPU-timestamp budget as the shared ruler, temporal error as a Pareto profile, three harnesses.
+Substrate ≠ benchmark.
 [`docs/MEASUREMENT_DISCIPLINE.md`](docs/MEASUREMENT_DISCIPLINE.md) — the project's epistemic boundary: the
 measurement loop, closed-world failure, what a result means, and what NOT to claim.
 [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md) — the *next-gen direction* (research, not built):

@@ -426,7 +426,10 @@ benchmark measures the benchmark's world; it does not prove universal superiorit
   allocation reduce *real perceived* error, not just the declared residual? Only then does `supported_constructed`
   become a law.
 - [ ] Real-silicon benchmark: PFAL/TCFF at equal GPU time, measuring temporal artifacts, input-to-photon
-  latency, reconstruction error, and motion stability (the numbers above expire here).
+  latency, reconstruction error, and motion stability (the numbers above expire here). **Plan fixed** in
+  [`REAL_SILICON_BENCHMARK.md`](REAL_SILICON_BENCHMARK.md) — device = constrained oracle (run-provenance
+  recorded), GPU-timestamp budget = the shared ruler, provenance kept off the frame path, temporal error is a
+  Pareto *profile* not a summed score, three harnesses (fidelity / latency / thermal). Substrate ≠ benchmark.
 - [ ] Native (C++/Rust) **renderer/fidelity** port validated against the Python reference via conformance
   vectors. (The conformance-vector method has been demonstrated at the kernel layer: `reality_kernel/core_rs`
   validated against the Python reference via `golden_kernel.tsv`; this item remains open for PFAL/TCFF/raster.)
