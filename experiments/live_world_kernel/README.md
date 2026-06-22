@@ -314,6 +314,43 @@ directory): `PYTHONHASHSEED=0 python3 module_graph.py` (7/7; optional path arg t
 the threshold the subfolder was built toward — auditing a system it did not author, honest about the gap
 between the model and the evidence.
 
+## Defensive use — structural reconnaissance (authorized red-team / architecture review)
+
+These probes are observe-only diagnostics, but *structural reconnaissance* is exactly what an authorized red
+team or architecture review does first — and `module_graph` (+ the engine) surfaces a class of finding that
+CVE scanners, port scanners, and SAST pattern-matchers miss: **architectural / boundary** weakness, not
+code-level bugs. Run on a codebase you own or are authorized to assess, the structural signals map to
+defensive questions — *findings to close*, not attacks to launch:
+
+- **Semantic leak (a cross-package import that violates intended isolation)** → a *privilege-boundary smell*:
+  a low-trust component (logging, a utility) importing a high-trust one (credential store, config loader) is a
+  structural bridge that should not exist. For a defender it is a **lateral-movement surface to remove** — fix
+  the dependency or the partition before it becomes one. (engine spatial axis / `concurrency_probe`.)
+- **Dependency cycle (a non-coherent directed loop)** → a *resilience / availability risk*: circular chains
+  are where unhandled re-entrancy, deadlocks, and unbounded loops hide — a **denial-of-service and
+  stack-exhaustion surface to harden**. (`module_graph`'s structural cycle check.)
+- **High fan-in modules** (in-degree over the import edges) → *blast-radius concentration*: the
+  most-depended-upon internal modules are the highest-value review targets, where one compromise propagates
+  farthest. (The edge data supports this; centrality is a natural extension of the current output.)
+
+The discipline binds here too — and it is what keeps this honest rather than alarmist:
+
+- **`flagged ≠ exploitable`.** Every output is an *attention signal*, never a confirmed vulnerability: a
+  cross-package import may be intentional; a cycle may be benign. The tool surfaces structure; a human confirms
+  whether it is a real weakness. No verdict — same stance as everywhere else.
+- **It does NOT reveal the irreversibility frontier.** A *static* import graph has no temporal flow, so it
+  **cannot** identify "the module just before the point of no return" (payment gateway, DB writer) — the
+  provenance lens is declared `NOT_APPLICABLE`. Finding those needs runtime traces or git history; claiming the
+  static graph finds them is the extraction lie the probe exists to refuse.
+- **Dual-use, defensively framed.** Like any dependency/architecture analyzer (SAST, SBOM / dependency-graph
+  tooling), this is dual-use; it is documented for **authorized** defensive use — mapping and closing your own
+  architectural attack surface before an adversary maps it from a leak. It ships no exploit, no payload, and no
+  targeting; it reads source you are entitled to read and reports structure.
+
+The defensive wedge: most security tooling asks *"is there a known-bad pattern or CVE here?"*; this asks
+*"does the architecture's **real** boundary structure match its **intended** one — and where doesn't it?"*
+That gap is where isolation failures and resilience risks live, and it is invisible to pattern-matchers.
+
 ## Target areas — where these patterns are already load-bearing (resonance, not validation)
 
 The mathematics these instruments compute is not invented here; it is established and load-bearing across real
