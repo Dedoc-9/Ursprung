@@ -998,6 +998,14 @@ mechanism? Three actors (state · mechanism · validator), three cases (external
 provenance self-edit), three categorical axes (orientability via `klein_probe` · frontier locality via
 `frontier_probe` · recovery integrity via the kernel's severance). Names the boundary without assuming it
 resolves; concurrency kept deliberately separate; `declared ≠ verified`.
+[`docs/AUTHORITY_ARBITRAGE_BOUNDARY.md`](docs/AUTHORITY_ARBITRAGE_BOUNDARY.md) — its **adversarial dual**: same
+self-edit structure, different measured quantity — can an actor modify the authority that validates it without
+creating *hidden advantage*? The load-bearing definition is `hidden ≠ unrecorded; hidden = unadjudicable` (a
+fully-logged change is still arbitrage if no party independent of the changed rule can judge its legitimacy). New
+axis: advantage reconstructability (`RECONSTRUCTABLE / VIA_INDEPENDENT_WITNESS / SEVERED`); the layered
+witness substrate is *derived as an anti-arbitrage necessity*, not chosen — stated with its falsifier, and the
+honest residual that layering relocates unadjudicability to the bootstrap (genesis). The strongest reduction is
+**non-representability**, bounded by genesis; `declared ≠ verified`.
 [`docs/REAL_SILICON_BENCHMARK.md`](docs/REAL_SILICON_BENCHMARK.md) — the measurement *contract* for
 the GPU benchmark (device as constrained oracle, GPU-timestamp budget as the shared ruler, temporal error as a
 Pareto profile). It is now **built and verified on hardware through the temporal arc** in
