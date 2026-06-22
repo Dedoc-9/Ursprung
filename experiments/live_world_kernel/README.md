@@ -261,6 +261,44 @@ boundary into a sign is a declared model (`declared ≠ verified`). It is the **
 adversarial test** — it catches the moment the architecture worships a boundary it only needed to draw. Run:
 `PYTHONHASHSEED=0 python3 klein_probe.py` (7/7).
 
+## Target areas — where these patterns are already load-bearing (resonance, not validation)
+
+The mathematics these instruments compute is not invented here; it is established and load-bearing across real
+distributed systems. That is a reason to get the instruments *right* — **not** a claim that any production
+system implements these probes, and **not** validation of the architecture. `resemblance ≠ implementation`;
+`declared ≠ verified`. Graded honestly, with the common over-claims corrected:
+
+- **Signed-cycle frustration (the `klein_probe` math) is real and broadly applied.** The frustration index —
+  the minimum edge sign-flips so that every cycle's sign-product is positive, *exactly* `klein_probe`'s
+  orientability test — is established graph theory (Cartwright–Harary structural balance), with genuine uses in
+  social/political networks, **biological** networks (monotone-subsystem decomposition), **physics** (spin-glass
+  / atomic-magnet ground states), international relations, **finance** (portfolio bipolarization), and chemistry
+  (fullerene stability). *Correction:* a *deployed BGP / traffic-engineering "frustration-index" tool* is **not**
+  among the verified applications — treat that specific claim as unverified. The durable fact is the underlying
+  mathematics is real and used for consistency/conflict detection.
+- **Speculate-then-commit-at-a-point-of-no-return (the kernel + `frontier_probe`) is a standard pattern.** CPU
+  speculative execution with rollback, database optimistic concurrency / MVCC, and the irreversible *commit
+  point* of a distributed transaction or an exchange gateway all match the irreversibility frontier: branches
+  are pruned freely until an external boundary makes them load-bearing. *Honest scope:* the five-stage
+  vocabulary (creation → observation → dependency → commitment → consequence) is ours; the *pattern* is the
+  established one — a resonance, not a claim those systems use our terms.
+- **Optimistic replication for collaborative editing (the `concurrency_probe` area) is real — but not quantum.**
+  Collaborative editors converge via optimistic replication + conflict resolution: CRDTs, operational
+  transforms, or server-authoritative last-writer-wins. *Correction:* Figma's published design is a
+  **server-authoritative, CRDT-*inspired* last-writer-wins** model — explicitly *not* true CRDTs, *not* OT, and
+  *centrally ordered* (the server is the authority). That is the **opposite** of "no master clock / emergent
+  environmental consensus," so the "quantum-Darwinism / environmental-witness" framing is **wrong as a
+  mechanism**; the Zurek "redundant recording → objectivity" resemblance is a *shape* this project already
+  graded down, not how these systems work. The real mechanisms are CRDTs / OT / LWW, with consensus (Raft /
+  Paxos) where genuinely decentralized.
+
+The honest takeaway: these probes instrument mathematics the field already relies on — *evidence the
+abstractions are real*, never *proof that elite systems run them*, and never *validation*. Resemblance is a
+reason to look, not a reason to believe.
+
+*Sources: [Figma — How Figma's multiplayer technology works](https://www.figma.com/blog/how-figmas-multiplayer-technology-works/);
+[Aref & Wilson, Balance and Frustration in Signed Networks](https://arxiv.org/abs/1712.04628).*
+
 ## Honest scope (what this is NOT)
 
 A **logic reference**, not a performance system. No concurrency-at-scale, no networking, no UI, no renderer.
