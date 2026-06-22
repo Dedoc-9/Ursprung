@@ -482,7 +482,22 @@ benchmark measures the benchmark's world; it does not prove universal superiorit
   near-converged, so there is little to reallocate; the variance-optimal SSAA exponent is ∝ difficulty^(2/3)
   while causal weights ∝ difficulty (likely OVER-concentrates). Open ghost → M6c: an alignment×budget sweep,
   to find whether a LOWER budget (unconverged tiles) ever lets causal reach the frontier. `benchmark gain ≠
-  universal` — and neither does a benchmark loss.
+  universal` — and neither does a benchmark loss. **M6c DONE — the sweep REFINED M6b's flat loss into a
+  measured boundary (Ally X):** swept prior_alignment α∈{+1,+0.5,0,−0.5,−1} × budget∈{2,4,8,16,64} avg
+  samples/tile, running TWO causal exponents side by side — causal_d1 (∝difficulty^1, the M6b policy) and
+  causal_d23 (∝difficulty^(2/3), the VARIANCE-OPTIMAL SSAA exponent) — vs uniform + drifted, sealed policies,
+  per-cell ε-dominance. (1) WRONG EXPONENT: causal_d1 over-concentrates — on the ε-frontier only at b2, else
+  dominated, usually by causal_d23; M6b's loss was largely a wrong-exponent artifact. (2) GENUINE NARROW WINS:
+  at α=+1, causal_d23 is the SOLE ε-frontier member (ε-DOMINATES uniform) at b8 & b64 — b8/α+1 clears ε on all
+  three axes (pixel .00009>ε.00005, struct .00046>ε.00014, temporal .00008>ε.00005), real though sub-1%. (3) NO
+  ROBUSTNESS MARGIN: at α≤0 uniform ε-dominates everywhere — the allocator can't tell its priors are wrong.
+  GHOSTS kept: a non-monotonic b4 dip (d23 loses b4, wins b8 — likely Hamilton rounding × convergence curve),
+  and a b2 scatter regime (even drifted reaches the frontier via tradeoffs — weak evidence at extreme
+  scarcity). NET: the STRONG claim ("causal generally beats uniform at equal budget") stays FALSIFIED; a
+  CONDITIONAL claim is SUPPORTED on silicon — causal helps only with informative priors AND the matched
+  concentration exponent. `causal_continuity.STATUS = conditional_on_neutral_ruler`. A measured boundary, not
+  a law. The apparatus did its job: the policy was allowed to lose, then to win narrowly, and the ruler told
+  the difference. `benchmark gain ≠ universal`, and neither does a benchmark loss.
 - [ ] Native (C++/Rust) **renderer/fidelity** port validated against the Python reference via conformance
   vectors. (The conformance-vector method has been demonstrated at the kernel layer: `reality_kernel/core_rs`
   validated against the Python reference via `golden_kernel.tsv`; this item remains open for PFAL/TCFF/raster.)

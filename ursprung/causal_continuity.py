@@ -42,9 +42,10 @@ was U·C·P-weighted (the thing being optimized); strip that circularity and the
 """
 from __future__ import annotations
 
-# Tier reached: "hypothesis" → "supported_constructed" (circular metric) → REAL SILICON, NEUTRAL ruler (M6b):
-# unsupported. The constructed support is kept as history, not promoted. Never hard-code "law".
-STATUS = "unsupported_on_neutral_ruler"   # constructed gate passed; M6b neutral perceptual ruler did NOT support
+# Tier reached: "hypothesis" → "supported_constructed" (circular metric) → REAL SILICON, NEUTRAL ruler:
+# M6b unsupported (flat loss) → M6c sweep REFINED it to CONDITIONAL. The strong/general claim stays
+# falsified; a narrow conditional claim is supported on silicon. Never hard-code "law".
+STATUS = "conditional_on_neutral_ruler"   # general claim FALSIFIED; conditional claim supported (see SWEEP_M6C)
 
 # M6b (real silicon, ASUS ROG Xbox Ally X / Radeon 890M, Vulkan) — the falsification-grade result.
 NEUTRAL_RULER_RESULT = (
@@ -76,9 +77,32 @@ PROMOTION_CRITERIA = (
     "across seeds (`promotion_gate.decide` / `.robust`), with the cardinal invariant intact. (2) LAW: "
     "additionally requires the real-silicon benchmark (equal GPU time — temporal artifacts, input-to-photon "
     "latency, reconstruction error, motion stability); constructed numbers expire there. The constructed gate "
-    "PASSED; the real-silicon gate has now RUN (M6b) on a neutral perceptual ruler and did NOT support — see "
-    "NEUTRAL_RULER_RESULT. STATUS = unsupported_on_neutral_ruler (not a law; the constructed support was "
-    "circular in its metric)."
+    "PASSED; the real-silicon gate RAN (M6b) on a neutral perceptual ruler and did NOT support the policy as "
+    "specified; the M6c sweep then REFINED that flat loss to a CONDITIONAL result (right exponent + informative "
+    "priors). STATUS = conditional_on_neutral_ruler (not a law; general claim falsified, narrow conditional "
+    "claim supported — see NEUTRAL_RULER_RESULT and SWEEP_M6C)."
+)
+
+# M6c (real silicon, Ally X) — the alignment × budget × exponent sweep that refined M6b's flat loss.
+SWEEP_M6C = (
+    "M6c swept prior_alignment α∈{+1,+0.5,0,-0.5,-1} × budget∈{2,4,8,16,64} avg samples/tile, running TWO "
+    "causal exponents side by side: causal_d1 (∝√(U·C·P·resistance) ≈ difficulty^1, the M6b policy) and "
+    "causal_d23 (∝(U·C·P·resistance)^(1/3) ≈ difficulty^(2/3), the VARIANCE-OPTIMAL exponent for SSAA error). "
+    "Sealed policies, per-cell ε-dominance. THREE findings: (1) WRONG EXPONENT — causal_d1 over-concentrates: "
+    "it reaches the ε-frontier only at the lowest budget (b2/α≥+0.5) and is dominated elsewhere, usually BY "
+    "causal_d23. The corrected exponent is consistently better; M6b's flat loss was in large part a "
+    "wrong-exponent artifact. (2) GENUINE BUT NARROW WINS — at α=+1 (informative priors), causal_d23 is the "
+    "SOLE ε-frontier member (ε-DOMINATES uniform, not merely ties) at b8 and b64; the b8/α+1 win clears ε on "
+    "all three axes (pixel 0.00009>ε0.00005, struct 0.00046>ε0.00014, temporal 0.00008>ε0.00005) — real, "
+    "though sub-1%. (3) NO ROBUSTNESS MARGIN — at α≤0 (uninformative/inverted priors) uniform ε-dominates "
+    "everywhere; the allocator does not detect that its own priors are wrong. GHOSTS kept as attention signals: "
+    "a non-monotonic b4 dip (d23 loses at b4 but wins at b8 — likely Hamilton integer-rounding × the "
+    "convergence curve) and a b2 scatter regime where even the drifted control reaches the frontier via "
+    "tradeoffs (frontier membership is weak evidence at extreme scarcity). NET: the STRONG claim ('causal "
+    "importance weighting generally beats neutral allocation at equal budget') remains FALSIFIED; a CONDITIONAL "
+    "claim is supported on silicon — causal allocation helps only when the priors are informative AND the "
+    "concentration exponent matches the convergence regime. A measured boundary, not a law. `benchmark gain ≠ "
+    "universal`, and neither does a benchmark loss."
 )
 
 PROMOTION_RESULT = (

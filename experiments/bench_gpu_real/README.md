@@ -1,14 +1,47 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-only -->
-# bench_gpu_real — the GPU benchmark on real silicon (M1 ✓ … M5 ✓, M6a ✓, M6b ✓ — result: causal NOT supported)
+# bench_gpu_real — the GPU benchmark on real silicon (M1 ✓ … M6a ✓, M6b ✓, M6c ✓ — result: causal is CONDITIONAL)
 
 The smallest non-faked claims in the project, and the first ones that did **not** expire on silicon —
-because they were measured on silicon. `src/main.rs` is currently the **M6b** program (the Causal
-Continuity gate); M1 (empty pass), M2 (real compute work), M3 (identity binding), M4 (render-pass timing),
-M5 (equal-budget comparison), M6a (the perceptual ruler) are preserved in git history.
+because they were measured on silicon. `src/main.rs` is currently the **M6c** program (the alignment ×
+budget × exponent sweep); M1 (empty pass), M2 (real compute work), M3 (identity binding), M4 (render-pass
+timing), M5 (equal-budget comparison), M6a (the perceptual ruler), M6b (the Causal Continuity gate) are
+preserved in git history.
 
 ```bash
 cd experiments/bench_gpu_real && cargo run --release
 ```
+
+## Milestone 6c — the alignment × budget × exponent sweep (M6b's flat loss → a measured boundary) ✓ (Ally X)
+
+M6b found causal-waterfill beaten by uniform at one budget — but left three questions open: was the
+*exponent* wrong, the *budget* too high, or the *priors* simply uninformative? M6c sweeps all three and
+turns the flat loss into a boundary. It runs two causal exponents side by side — `causal_d1`
+(∝√(U·C·P·resistance) ≈ difficulty¹, the M6b policy) and `causal_d23` (∝(U·C·P·resistance)^(1/3) ≈
+difficulty^(2/3), the **variance-optimal** exponent for SSAA error) — against `uniform` and a `drifted`
+control, across budget {2,4,8,16,64} avg samples/tile × alignment α {+1,+0.5,0,−0.5,−1}. Policies stay
+sealed (`fn(&TilePriors,u32)->Vec<u32>`); ε is re-measured **per cell** (noise grows as budget shrinks).
+
+Three findings (Ally X):
+
+```
+(1) WRONG EXPONENT      causal_d1 over-concentrates: on the ε-frontier ONLY at b2 (lowest budget);
+                        dominated elsewhere, usually BY causal_d23. M6b's loss was largely a wrong exponent.
+(2) GENUINE NARROW WINS at α=+1, causal_d23 is the SOLE ε-frontier member (ε-DOMINATES uniform) at b8 & b64.
+                        b8/α+1: d23 beats uniform on all 3 axes, each beyond ε
+                        (pixel .00009>ε.00005, struct .00046>ε.00014, temporal .00008>ε.00005) — real, sub-1%.
+(3) NO ROBUSTNESS       at α≤0 (uninformative / inverted priors) uniform ε-dominates everywhere; the
+                        allocator does not detect that its own priors are wrong.
+```
+
+**Result.** The **strong** claim — "causal importance weighting generally beats neutral allocation at equal
+budget" — stays **falsified**. A **conditional** claim is **supported on silicon**: causal allocation helps
+only when the priors are informative (α≈+1) *and* the concentration exponent matches the convergence regime
+(difficulty^(2/3), not difficulty¹). `ursprung/causal_continuity.py` STATUS is now
+`conditional_on_neutral_ruler`. **Ghosts kept** (not smoothed): a non-monotonic **b4 dip** (d23 loses at b4
+but wins at b8 — likely Hamilton integer-rounding × the convergence curve), and a **b2 scatter regime**
+where even `drifted` reaches the frontier via tradeoffs (frontier membership is weak evidence at extreme
+scarcity). HONEST CEILING: one device, one synthetic scene family, SSAA proxy, wins are sub-1% and need
+near-perfect priors — `benchmark gain ≠ universal`, and neither does a benchmark loss.
 
 ## Milestone 6b — the Causal Continuity gate (a falsification-grade result) ✓ (verified on the Ally X)
 
@@ -48,7 +81,8 @@ nothing. Under misalignment it is worse on every axis. So causal allocation has 
 only profile** here — no upside at any alignment tested, real downside under misalignment. This **partially
 falsifies** the constructed gate's blessing (`promotion_gate.py` → `supported_constructed`): that gate's
 metric was U·C·P-weighted — the thing being optimized — and the circularity does not survive a neutral
-ruler. `ursprung/causal_continuity.py` STATUS is now `unsupported_on_neutral_ruler`.
+ruler. (M6c later REFINED this flat loss into a conditional result — see above — by correcting the
+allocation exponent and sweeping alignment/budget; STATUS is now `conditional_on_neutral_ruler`.)
 
 **Explicit limits / the open ghost.** One device, one synthetic scene, one budget (16 samples/tile), SSAA
 as the quality proxy. The variance-optimal allocation for SSAA error scales as ∝ difficulty^(2/3); causal
@@ -219,10 +253,11 @@ M3 ✓  measurement bound to world identity                  (GoldenReplay→Fra
 M4 ✓  render-pass timing under the same contract            (offscreen 1080p, ~0.8 ms; digest == M3's)
 M5 ✓  equal-budget comparison is fair                       (perms admitted, cheat refused, Pareto vector)
 M6a ✓ a fair perceptual ruler vs a frozen reference         (pixel/structural/temporal vector; blind; limits stated)
-M6b ✓ the Causal Continuity gate, sealed + equal budget     →  RESULT: uniform ε-dominates causal in BOTH scenes;
-                                                               causal partially FALSIFIED on the neutral ruler (no
-                                                               upside, temporal downside) → unsupported_on_neutral_ruler
-M6c   alignment × budget sweep (the open ghost)             →  does causal ever reach the frontier at a LOWER budget?
+M6b ✓ the Causal Continuity gate, sealed + equal budget     →  uniform ε-dominates causal in both scenes at 16 spp
+                                                               (flat loss — but the policy used the wrong exponent)
+M6c ✓ alignment × budget × exponent sweep                   →  REFINED: strong claim FALSIFIED, conditional claim
+                                                               SUPPORTED — causal_d23 (∝difficulty^2/3) ε-dominates
+                                                               uniform at α=+1, b8 & b64 → conditional_on_neutral_ruler
 ```
 
 The pinned `wgpu = "22.1"` resolved cleanly (`wgpu v22.1.0`) and compiled first try on the device; the
