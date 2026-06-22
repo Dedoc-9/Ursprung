@@ -34,16 +34,37 @@ CLASSIFICATION: OBSERVER (mutates_core=False). It proposes an allocation weighti
 itself, asserts no truth, and is explicitly provisional.
 
 HONEST BOUND: promotion is earned by the bench in TWO tiers, never asserted. The naive proportional form
-was falsified; the re-specified water-filling form has now PASSED the constructed gate
-(`promotion_gate.py`, seeds 1..8) → `STATUS = "supported_constructed"`. A LAW additionally requires the
-real-silicon benchmark (constructed numbers expire there), which is not yet run. `integrity ≠ truth`;
-`declared ≠ verified`.
+was falsified; the re-specified water-filling form PASSED the constructed gate (`promotion_gate.py`,
+seeds 1..8) → `supported_constructed`. The real-silicon gate has now RUN (M6b, `experiments/
+bench_gpu_real`) on a *neutral* perceptual ruler — and did NOT support it. The constructed gate's metric
+was U·C·P-weighted (the thing being optimized); strip that circularity and the support does not survive.
+`integrity ≠ truth`; `declared ≠ verified`; `benchmark gain ≠ universal`.
 """
 from __future__ import annotations
 
-# Tier reached by the bench: "hypothesis" → "supported_constructed" → (real silicon) → "law".
-# Never hard-code "law"; the constructed gate grants only "supported_constructed".
-STATUS = "supported_constructed"   # was "hypothesis"; re-specified form passed promotion_gate; LAW pending real silicon
+# Tier reached: "hypothesis" → "supported_constructed" (circular metric) → REAL SILICON, NEUTRAL ruler (M6b):
+# unsupported. The constructed support is kept as history, not promoted. Never hard-code "law".
+STATUS = "unsupported_on_neutral_ruler"   # constructed gate passed; M6b neutral perceptual ruler did NOT support
+
+# M6b (real silicon, ASUS ROG Xbox Ally X / Radeon 890M, Vulkan) — the falsification-grade result.
+NEUTRAL_RULER_RESULT = (
+    "M6b ran the actual gate on a SEALED, policy-neutral perceptual ruler (pixel/structural/temporal error vs "
+    "a frozen 256-sample reference), policies allocating a per-tile sample budget from DECLARED priors only "
+    "(the ruler is not in the policy's function scope — Goodhart is structurally unrepresentable). At equal "
+    "measured GPU budget (1024 samples/frame, ~16/tile), under ε-dominance (ε measured from the data: "
+    "pixel/struct/temporal ≈ 0.000083/0.000133/0.000090), UNIFORM allocation ε-dominates causal-waterfill in "
+    "BOTH the aligned scene (priors track real difficulty) and the adversarial scene (priors anti-track it). "
+    "ALIGNED: causal ties uniform on pixel/structural (within ε) but is measurably WORSE on temporal stability "
+    "(gap 0.00014 > ε 0.00009) — concentration starves de-prioritized tiles into flicker while buying no "
+    "measurable spatial accuracy at this near-converged budget. ADVERSARIAL: causal is worse on every axis "
+    "(~28%, far above ε). So causal allocation showed NO measured upside at any alignment tested and a "
+    "downside that grows under misalignment — an asymmetric, downside-only profile. This PARTIALLY FALSIFIES "
+    "the constructed gate's blessing on a neutral metric. HONEST CEILING & open question: this is one device, "
+    "one synthetic scene, one budget (16 samples/tile). Whether a LOWER budget — where tiles are genuinely "
+    "unconverged and there is real error to reallocate — ever lets causal allocation reach the frontier is the "
+    "open ghost (the variance-optimal exponent for SSAA error is ∝ difficulty^(2/3); causal weights ∝ "
+    "difficulty, i.e. it likely OVER-concentrates). Pending an alignment×budget sweep (M6c)."
+)
 
 STATEMENT = ("Fidelity may be allocated according to expected future causal loss resulting from "
              "representational error.")
@@ -55,7 +76,9 @@ PROMOTION_CRITERIA = (
     "across seeds (`promotion_gate.decide` / `.robust`), with the cardinal invariant intact. (2) LAW: "
     "additionally requires the real-silicon benchmark (equal GPU time — temporal artifacts, input-to-photon "
     "latency, reconstruction error, motion stability); constructed numbers expire there. The constructed gate "
-    "is now PASSED → STATUS = supported_constructed; the real-silicon gate is NOT yet run, so it is not a law."
+    "PASSED; the real-silicon gate has now RUN (M6b) on a neutral perceptual ruler and did NOT support — see "
+    "NEUTRAL_RULER_RESULT. STATUS = unsupported_on_neutral_ruler (not a law; the constructed support was "
+    "circular in its metric)."
 )
 
 PROMOTION_RESULT = (

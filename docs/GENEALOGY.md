@@ -466,11 +466,23 @@ benchmark measures the benchmark's world; it does not prove universal superiorit
   policy-neutral, blind VECTOR — pixel (0.0098/0.0050/0.0027 at S=4/16/64, monotone) / structural / temporal;
   negative control (ref vs ref) = 0.000000; reproducibility 0.000039; identity preserved (sample budget is a
   condition, not identity); ghost handling intact (warm-up + cold-start zero interval flagged/excluded, pixels
-  unaffected); explicit limits stated. 7/7. **No policy declared superior** — that is M6b. Remaining: M6b —
-  PFAL/TCFF (and uniform/structural controls) on this perceptual ruler at equal measured GPU budget → the
-  genuine Causal Continuity gate (which can FALSIFY it: the constructed gate's metric was U·C·P-weighted/
-  self-consistent; a neutral perceptual metric removes that circularity). Honest ceiling either way:
-  supported-on-silicon within the stated domain, NOT a universal law.
+  unaffected); explicit limits stated. 7/7. **No policy declared superior** — that is M6b. **M6b DONE — the
+  Causal Continuity gate, and it (partially) FALSIFIED the hypothesis on a neutral ruler (Ally X):** six
+  policies (uniform/distance/visibility/PFAL/causal-waterfill/drifted) allocate a per-tile sample budget from
+  DECLARED priors only — the policy signature `fn(&TilePriors,u32)->Vec<u32>` cannot see pixels/reference/
+  ground-truth, so Goodhart is structurally unrepresentable (the sealed-observer invariant is enforced by the
+  type boundary, not a comment). Equal budget (1024 samples ≈ 16/tile); ε-dominance with ε measured from the
+  data (pixel/struct/temporal 0.000083/0.000133/0.000090). RESULT: **uniform ε-dominates causal-waterfill in
+  BOTH scenes** — aligned (priors track difficulty): causal ties on pixel/struct (<ε) but is measurably WORSE
+  on temporal stability (0.00014 > ε); adversarial (priors anti-track): causal worse on every axis (~28%).
+  Causal allocation showed NO measured upside at any alignment and a temporal downside that grows under
+  misalignment — asymmetric, downside-only. This partially falsifies the constructed gate's blessing (its
+  metric was U·C·P-weighted/circular; a neutral metric removes that). `causal_continuity.STATUS =
+  unsupported_on_neutral_ruler`. Honest ceiling: one device/scene/budget — at ~16 samples/tile every tile is
+  near-converged, so there is little to reallocate; the variance-optimal SSAA exponent is ∝ difficulty^(2/3)
+  while causal weights ∝ difficulty (likely OVER-concentrates). Open ghost → M6c: an alignment×budget sweep,
+  to find whether a LOWER budget (unconverged tiles) ever lets causal reach the frontier. `benchmark gain ≠
+  universal` — and neither does a benchmark loss.
 - [ ] Native (C++/Rust) **renderer/fidelity** port validated against the Python reference via conformance
   vectors. (The conformance-vector method has been demonstrated at the kernel layer: `reality_kernel/core_rs`
   validated against the Python reference via `golden_kernel.tsv`; this item remains open for PFAL/TCFF/raster.)

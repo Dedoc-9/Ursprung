@@ -1,14 +1,60 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-only -->
-# bench_gpu_real — the GPU benchmark on real silicon (M1 ✓ … M5 ✓, M6a ✓)
+# bench_gpu_real — the GPU benchmark on real silicon (M1 ✓ … M5 ✓, M6a ✓, M6b ✓ — result: causal NOT supported)
 
 The smallest non-faked claims in the project, and the first ones that did **not** expire on silicon —
-because they were measured on silicon. `src/main.rs` is currently the **M6a** program (the perceptual
-ruler); M1 (empty pass), M2 (real compute work), M3 (identity binding), M4 (render-pass timing), M5
-(equal-budget comparison) are preserved in git history.
+because they were measured on silicon. `src/main.rs` is currently the **M6b** program (the Causal
+Continuity gate); M1 (empty pass), M2 (real compute work), M3 (identity binding), M4 (render-pass timing),
+M5 (equal-budget comparison), M6a (the perceptual ruler) are preserved in git history.
 
 ```bash
 cd experiments/bench_gpu_real && cargo run --release
 ```
+
+## Milestone 6b — the Causal Continuity gate (a falsification-grade result) ✓ (verified on the Ally X)
+
+M6b is the rung with teeth: it finally compares allocation **policies** on M6a's neutral ruler, under
+equal measured budget — the gate that can move Causal Continuity past `supported_constructed` *or falsify
+it*. It falsified it (partially), and that is a real result, kept.
+
+**The load-bearing design is the SEALED OBSERVER.** Each policy's signature is `fn(&TilePriors, u32) ->
+Vec<u32>`: it allocates the per-tile sample budget from *declared priors only*. The rendered pixels, the
+reference, and the scene's ground-truth difficulty are **not arguments** — a policy cannot read the ruler
+it is judged by. "Optimize the metric" is structurally unrepresentable, not merely discouraged (that loop
+is the Goodhart failure the project exists to detect). Six policies — uniform, distance, visibility, PFAL
+(√(U·C·P·S·resistance)), causal-waterfill (√(U·C·P·resistance)), and a drifted negative control — each
+distribute the SAME 1024-sample budget (~16/tile over 8×8 tiles), differing only in *where* the samples go.
+
+Two scenes probe the boundary: `aligned` (declared causal priors track real per-tile difficulty) and
+`adversarial` (they anti-track it). The Pareto frontier uses **ε-dominance**, where ε is the per-axis
+reproducibility floor *measured from the data itself* — you cannot claim dominance below your own noise.
+
+Measured on the Ally X (256×256, per-tile SSAA budget):
+
+```
+                  pixel     struct    temporal     (lower = better; equal budget = 1024 samples)
+aligned   uniform 0.00538   0.00779   0.00721      ← ε-frontier (sole member)
+          causal  0.00542   0.00788   0.00735      ← OFF frontier: ties on pixel/struct (<ε), WORSE on temporal
+          drifted 0.00734   0.01033   0.00966      ← clearly worst (control behaves)
+adversarial uniform 0.00538 0.00779   0.00721      ← ε-frontier (sole member)
+          causal  0.00687   0.00990   0.00949      ← OFF frontier: worse on every axis (~28%, far above ε)
+measured noise floor ε (pixel/struct/temporal) = 0.000083 / 0.000133 / 0.000090
+```
+
+**The result.** Under ε-dominance, **uniform allocation ε-dominates causal-waterfill in BOTH scenes.** Even
+with *perfectly aligned* priors, causal buys no measurable spatial accuracy (pixel/structural within ε) and
+is measurably *worse* on temporal stability (gap 0.00014 > ε 0.00009): at ~16 samples/tile every tile is
+already near-converged, so concentrating samples starves de-prioritized tiles into flicker while gaining
+nothing. Under misalignment it is worse on every axis. So causal allocation has an **asymmetric, downside-
+only profile** here — no upside at any alignment tested, real downside under misalignment. This **partially
+falsifies** the constructed gate's blessing (`promotion_gate.py` → `supported_constructed`): that gate's
+metric was U·C·P-weighted — the thing being optimized — and the circularity does not survive a neutral
+ruler. `ursprung/causal_continuity.py` STATUS is now `unsupported_on_neutral_ruler`.
+
+**Explicit limits / the open ghost.** One device, one synthetic scene, one budget (16 samples/tile), SSAA
+as the quality proxy. The variance-optimal allocation for SSAA error scales as ∝ difficulty^(2/3); causal
+weights ∝ difficulty, so it likely **over-concentrates**. Whether a *lower* budget — tiles genuinely
+unconverged, real error to reallocate — ever lets causal reach the frontier is unanswered, and is the
+M6c alignment×budget sweep. `benchmark gain ≠ universal`, and neither does a benchmark *loss* generalize.
 
 ## Milestone 6a — a fair PERCEPTUAL ruler (apparatus, no verdict) ✓ (verified on the Ally X)
 
@@ -173,7 +219,10 @@ M3 ✓  measurement bound to world identity                  (GoldenReplay→Fra
 M4 ✓  render-pass timing under the same contract            (offscreen 1080p, ~0.8 ms; digest == M3's)
 M5 ✓  equal-budget comparison is fair                       (perms admitted, cheat refused, Pareto vector)
 M6a ✓ a fair perceptual ruler vs a frozen reference         (pixel/structural/temporal vector; blind; limits stated)
-M6b   PFAL/TCFF on the perceptual ruler, equal budget       →  Causal Continuity: supported_constructed → (or NOT) law
+M6b ✓ the Causal Continuity gate, sealed + equal budget     →  RESULT: uniform ε-dominates causal in BOTH scenes;
+                                                               causal partially FALSIFIED on the neutral ruler (no
+                                                               upside, temporal downside) → unsupported_on_neutral_ruler
+M6c   alignment × budget sweep (the open ghost)             →  does causal ever reach the frontier at a LOWER budget?
 ```
 
 The pinned `wgpu = "22.1"` resolved cleanly (`wgpu v22.1.0`) and compiled first try on the device; the
