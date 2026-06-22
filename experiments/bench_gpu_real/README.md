@@ -1,14 +1,41 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-only -->
-# bench_gpu_real — the GPU-interval ruler on real silicon (M1 ✓, M2 ✓, M3 ✓, M4 ✓)
+# bench_gpu_real — the GPU-interval ruler on real silicon (M1 ✓ … M5 ✓)
 
 The smallest non-faked claims in the project, and the first ones that did **not** expire on silicon —
-because they were measured on silicon. `src/main.rs` is currently the **M4** program (render-pass
-timing); M1 (empty pass), M2 (real compute work), M3 (identity binding) are preserved in git history.
-No window, no swapchain, no pixels read back, no fidelity claim.
+because they were measured on silicon. `src/main.rs` is currently the **M5** program (equal-budget
+comparison harness); M1 (empty pass), M2 (real compute work), M3 (identity binding), M4 (render-pass
+timing) are preserved in git history. No window, no swapchain, no pixels read back, no fidelity claim.
 
 ```bash
 cd experiments/bench_gpu_real && cargo run --release
 ```
+
+## Milestone 5 — equal-budget comparison is FAIR (metrology, not a verdict) ✓ (verified on the Ally X)
+
+M5 proves exactly one thing and refuses to prove any more: **when two allocation policies consume the
+same *measured* GPU-tick budget, the harness compares them fairly — vector-valued, replay-identity-
+preserving — and it refuses to compare two policies whose measured budgets differ.** No policy is
+declared superior; that is M6's question. The only thing varying between policies is the allocation
+decision (a per-region effort vector); workload, replay, scene, ruler, and budget rule are held fixed.
+
+Published budget rule (fixed before coding, policy-independent): *a comparison is admissible iff
+`|median_ticks(policy) − target| ≤ 20% · target`; otherwise `budget_violation` and the comparison is
+refused* — the M5 analogue of ghost exclusion.
+
+```
+A             391668 ticks  admissible ✓   peak/mean/imbal 0.029/0.009/0.009
+B (perm of A) 391688 ticks  admissible ✓   peak/mean/imbal 0.030/0.009/0.009   ← within 0.005% of A
+cheat (×1.4)  548156 ticks  admissible ✗   budget_violation → comparison REFUSED
+A vs B: ADominates   (a Pareto RELATION, never a scalar winner)
+```
+
+A and B are **permutations of one effort multiset** — identical total work and scheduling, so they
+measure the same budget — yet their error *profiles* differ because the same efforts land on different
+base-weighted regions. The cheat uses a larger effort *sum* → ~1.4× the ticks → rejected for spending
+more. Seven checks: equal-budget-pair-admitted, cheat-rejected, comparison-is-Pareto-not-scalar,
+replay-identity-preserved, deterministic-policy-independent-rule, ghosts-excluded, no-winner-only-a-
+relation. The error model is a *declared synthetic* one — **not** a fidelity claim; M5 tests the
+apparatus, not the policy. Now when M6 names a winner, nobody can argue it simply spent more GPU time.
 
 ## Milestone 4 — a render pass times under the same contract as compute ✓ (verified on the Ally X)
 
@@ -114,7 +141,8 @@ M1 ✓  the ruler exists on silicon                         (empty pass, 40 ns)
 M2 ✓  the ruler measures real work + BenchmarkObservation  (compute LCG, 880→30760 ns, contract JSON)
 M3 ✓  measurement bound to world identity                  (GoldenReplay→FrameArtifact digest; ghost caught)
 M4 ✓  render-pass timing under the same contract            (offscreen 1080p, ~0.8 ms; digest == M3's)
-M5    equal-budget comparison harness  ·  M6  PFAL vs TCFF on silicon  →  Causal Continuity evidence
+M5 ✓  equal-budget comparison is fair                       (perms admitted, cheat refused, Pareto vector)
+M6    PFAL vs TCFF on silicon                               →  Causal Continuity: supported_constructed → law
 ```
 
 The pinned `wgpu = "22.1"` resolved cleanly (`wgpu v22.1.0`) and compiled first try on the device; the

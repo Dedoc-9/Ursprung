@@ -456,8 +456,13 @@ benchmark measures the benchmark's world; it does not prove universal superiorit
   (offscreen 1080p, frag loop ×64) timed via `RenderPassTimestampWrites` (in-pass path, no fallback) →
   ~0.7–0.9 ms, 12 runs one identity, a real ghost again excluded. Digest IDENTICAL to M3's compute run
   (4f1cb7c2495167e7) — same GoldenReplay → same world identity whether compute or render: identity is the
-  world's, not the pass's. 7/7. Remaining: M5 equal-budget comparison harness → M6 PFAL vs TCFF on silicon
-  → Causal Continuity evidence.
+  world's, not the pass's. 7/7. **M5 DONE — equal-budget comparison is FAIR (metrology, Ally X):** two
+  allocation policies that are PERMUTATIONS of one effort multiset measure the same GPU-tick budget
+  (391668 vs 391688 ticks, 0.005% apart) → admitted and compared as a Pareto vector (A dominates B on a
+  declared synthetic error model — NOT a fidelity claim); a cheat with a larger effort sum measures ~1.4×
+  (548156 ticks) → budget_violation → comparison REFUSED. Published rule: ±20% of target measured ticks,
+  policy-independent. 7/7. No policy declared superior — that is M6. Remaining: M6 PFAL vs TCFF on silicon
+  → the real-silicon gate for Causal Continuity → law.
 - [ ] Native (C++/Rust) **renderer/fidelity** port validated against the Python reference via conformance
   vectors. (The conformance-vector method has been demonstrated at the kernel layer: `reality_kernel/core_rs`
   validated against the Python reference via `golden_kernel.tsv`; this item remains open for PFAL/TCFF/raster.)
