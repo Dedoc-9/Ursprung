@@ -166,9 +166,15 @@ beat** uniform, distance, visibility, proportional-causal, and a negative contro
 residual metric. The proportional allocator *knew what mattered*; the water-filling allocator *knew what
 mattered and where representation actually breaks.* (Constructed-world; expires on real silicon.)
 
-The **Causal Continuity Hypothesis** therefore remains explicitly *provisional* — the naive (proportional)
-form failed; the re-specified two-stage form is *supported on the constructed bench, pending real silicon*.
-Nothing is promoted to a law by a benchmark on a model world.
+The **Causal Continuity Hypothesis** therefore advanced one tier, by the bench, not by assertion: the naive
+(proportional) form failed; the re-specified water-filling form (`samples ∝ √(U·C·P · resistance)`) **passed
+the re-run promotion gate** (`promotion_gate.py`, seeds 1..8), strictly beating uniform, distance, visibility,
+**PFAL**, and the structural-only optimum on the future-causal residual, with the negative control losing. Its
+status is now **`supported_constructed`** — and explicitly *not a law*: the candidate is the analytic optimum
+of the *declared* objective, so promotion to a law still requires the real-silicon benchmark. The two decisive
+isolations: beating PFAL means *dropping present-perception S helps the future-causal objective*, and beating
+structural-only means *the causal weight adds value beyond geometry*. Nothing is promoted to a law by a
+benchmark on a model world.
 
 See [`docs/GENEALOGY.md`](docs/GENEALOGY.md) for the full genealogy & checklist of what is built, verified,
 and not yet built, and [`docs/PREDICTIVE_FIDELITY.md`](docs/PREDICTIVE_FIDELITY.md) for the prediction →
@@ -391,8 +397,9 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 
 ## Status
 
-The full suite is **495 checks** (stdlib asserts), every milestone carrying a verified demo, a negative
-control, and an explicit "expires on real silicon" bound.
+The full suite is **502 checks** (stdlib asserts; 495 + 7 for the re-run promotion gate — the printed run
+count is authoritative), every milestone carrying a verified demo, a negative control, and an explicit
+"expires on real silicon" bound.
 
 - **M1 — foundation.** Invariant harness; the renderer is proven observer-only (`integrity ≠ truth`).
 - **M2 — the five laws.** Reality Debt · Arbitrary-Boundary · Predictive Fidelity (PFAL/TCFF) · Polygon
@@ -400,7 +407,9 @@ control, and an explicit "expires on real silicon" bound.
   forms are bookkeeping models, not derived invariants.
 - **M3 / 3.1 — rendering economics.** VIEW raster slice + the Causal Continuity Hypothesis, which **failed**
   the equal-budget bench (recorded, not hidden) and became the *ranking ≠ allocation* refinement;
-  `ranked_waterfill` strictly beat every control.
+  `ranked_waterfill` strictly beat every control. The re-specified water-filling form has since **passed the
+  re-run promotion gate** (`promotion_gate.py`, seeds 1..8: beats uniform/distance/visibility/PFAL/structural +
+  negative control) → status `supported_constructed`, *not a law* (law pending the real-silicon benchmark).
 - **M4–M9 — fidelity as an economy.** Stressors, transition debt, the resistance tensor + fidelity
   derivative, the shader cache (hitches → allocation), Causal Surface Area, the Readiness Layer, provider
   contracts, dependency surface/integrity, and the representation compiler.

@@ -33,22 +33,39 @@ them apart (`raster_bench.py`).
 CLASSIFICATION: OBSERVER (mutates_core=False). It proposes an allocation weighting; it allocates nothing
 itself, asserts no truth, and is explicitly provisional.
 
-HONEST BOUND: a hypothesis with a measurement plan, not a result. `STATUS` stays "hypothesis" until
-`earns_promotion()` is satisfied by a real bench. `integrity ≠ truth`.
+HONEST BOUND: promotion is earned by the bench in TWO tiers, never asserted. The naive proportional form
+was falsified; the re-specified water-filling form has now PASSED the constructed gate
+(`promotion_gate.py`, seeds 1..8) → `STATUS = "supported_constructed"`. A LAW additionally requires the
+real-silicon benchmark (constructed numbers expire there), which is not yet run. `integrity ≠ truth`;
+`declared ≠ verified`.
 """
 from __future__ import annotations
 
-STATUS = "hypothesis"   # never hard-code "law"; promotion is earned by the bench, not asserted
+# Tier reached by the bench: "hypothesis" → "supported_constructed" → (real silicon) → "law".
+# Never hard-code "law"; the constructed gate grants only "supported_constructed".
+STATUS = "supported_constructed"   # was "hypothesis"; re-specified form passed promotion_gate; LAW pending real silicon
 
 STATEMENT = ("Fidelity may be allocated according to expected future causal loss resulting from "
              "representational error.")
 
 PROMOTION_CRITERIA = (
-    "Promoted to a law ONLY if, at equal budget, causal-continuity allocation yields strictly lower "
-    "consequential discontinuity / future failure cost than EVERY control (uniform, distance, visibility, "
-    "PFAL), AND a drifted negative control loses, AND the cardinal invariant (CORE trajectory unchanged) "
-    "holds throughout. Otherwise it remains a hypothesis and the result is recorded as architectural "
-    "information."
+    "Two tiers, earned by the bench, never asserted. (1) SUPPORTED (constructed): at equal budget, the "
+    "re-specified causal-waterfill yields strictly lower future-causal residual than EVERY control (uniform, "
+    "distance, visibility, PFAL), is ≤ the structural-only optimum, the drifted control loses, and it holds "
+    "across seeds (`promotion_gate.decide` / `.robust`), with the cardinal invariant intact. (2) LAW: "
+    "additionally requires the real-silicon benchmark (equal GPU time — temporal artifacts, input-to-photon "
+    "latency, reconstruction error, motion stability); constructed numbers expire there. The constructed gate "
+    "is now PASSED → STATUS = supported_constructed; the real-silicon gate is NOT yet run, so it is not a law."
+)
+
+PROMOTION_RESULT = (
+    "promotion_gate (seeds 1..8): SUPPORTED on the constructed bench. The re-specified causal-waterfill "
+    "(rank U·C·P, water-fill samples ∝ √(U·C·P · representation_resistance)) strictly beats PFAL, the "
+    "structural-only optimum, uniform, distance, visibility, and the drifted control on the future-causal "
+    "residual, every seed. Two decisive isolations: it beats PFAL — dropping present-perception S helps the "
+    "FUTURE-causal objective — and it beats structural-only — the causal weight adds value beyond geometry. "
+    "Honest: the candidate is the analytic optimum of the DECLARED objective on the declared aliasing model; "
+    "promotion to a LAW is pending real silicon. `declared ≠ verified`."
 )
 
 # Re-specification (Milestone 3.1): the failure split one object into two. See allocation.py / representation.py.

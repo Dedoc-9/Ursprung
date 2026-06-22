@@ -28,6 +28,7 @@ from ursprung import raster
 from ursprung import raster_bench as rb
 from ursprung import representation as rep
 from ursprung import allocation as al
+from ursprung import promotion_gate as pg
 from ursprung import perceptual as pc
 from ursprung import policy_arena as arena
 from ursprung import stress
@@ -393,13 +394,27 @@ def test_rasterizer_is_observer_only():
 
 
 def test_causal_continuity_is_provisional_and_gate_is_honest():
-    check(cc.STATUS == "hypothesis", "Causal Continuity must stay provisional in source (never a hard-coded law)")
+    check(cc.STATUS != "law", "Causal Continuity is never a hard-coded law (promotion to law needs real silicon)")
+    check(cc.STATUS == "supported_constructed",
+          "the re-specified form passed the constructed gate; status is supported, not hypothesis, not law")
     # the gate promotes only on a strict win over all controls + control loses
     win = {"causal (U×C×P)": 1, "uniform": 2, "distance": 2, "visibility": 2, "pfal (U×C×P×S)": 2,
            "drifted (control)": 3}
     lose = dict(win); lose["uniform"] = 0
     check(cc.earns_promotion(win)[0] is True, "a strict win over all controls earns promotion")
     check(cc.earns_promotion(lose)[0] is False, "losing to any control blocks promotion")
+
+
+def test_promotion_gate_supports_respecified_causal_but_not_as_law():
+    res = pg.run(seed=1, budget=400)
+    status, _ = pg.decide(res)
+    check(status == "supported_constructed", "re-specified causal-waterfill passes the constructed gate")
+    check(res[pg.CANDIDATE] < res["pfal (U·C·P·S·τ)"],
+          "dropping present-perception S beats PFAL on the future-causal objective")
+    check(res[pg.CANDIDATE] <= res[pg.STRUCTURAL], "the causal weight adds value over the structural-only optimum")
+    check(res[pg.DRIFTED] >= res[pg.CANDIDATE], "the negative control loses")
+    check(all(pg.robust().values()), "the gate holds across seeds 1..8, not just one")
+    check(status != "law", "a constructed pass is 'supported', never 'law' — that needs real silicon")
 
 
 def test_view_slice_records_honest_failure():

@@ -415,8 +415,16 @@ benchmark measures the benchmark's world; it does not prove universal superiorit
 
 ## Not yet built (honest)
 
-- [ ] **Re-specified Causal Continuity** — water-filling form (∝ √weight) + a weight that includes the error's
-  structural term (size/perimeter); re-run the gate. Only then is promotion on the table.
+- [x] **Re-specified Causal Continuity (constructed gate PASSED → `supported_constructed`)** — the
+  water-filling form (samples ∝ √(U·C·P · resistance), the structural term included) re-ran the gate
+  (`promotion_gate.py`, seeds 1..8) and strictly beats uniform, distance, visibility, **PFAL**, and the
+  structural-only optimum on the future-causal residual, with the negative control losing. Decisive: it beats
+  PFAL (dropping present-perception S helps the future-causal objective) and beats structural-only (the causal
+  weight adds value beyond geometry). *Promotion to a LAW is NOT granted — that needs the real-silicon
+  benchmark below; the candidate is the analytic optimum of the declared objective. `declared ≠ verified`.*
+- [ ] **Causal Continuity → LAW** — requires the real-silicon benchmark (next item): does future-causal
+  allocation reduce *real perceived* error, not just the declared residual? Only then does `supported_constructed`
+  become a law.
 - [ ] Real-silicon benchmark: PFAL/TCFF at equal GPU time, measuring temporal artifacts, input-to-photon
   latency, reconstruction error, and motion stability (the numbers above expire here).
 - [ ] Native (C++/Rust) **renderer/fidelity** port validated against the Python reference via conformance
