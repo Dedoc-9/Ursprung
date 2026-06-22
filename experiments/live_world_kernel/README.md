@@ -8,9 +8,46 @@ idea from [`docs/EMBEDDED_AUTHORING.md`](../../docs/EMBEDDED_AUTHORING.md). It a
 
 If yes, the editor is a UI problem. If no, the larger engine vision collapses before it needs a renderer.
 
+**Status — VERIFIED.** Ran 2026-06-22 (`PYTHONHASHSEED=0`, Python 3, Windows): **9/9 checks PASS**, answer
+**YES — within the reference scope stated below**. `declared ≠ verified`: the YES is a property of the
+single-process *logic*, not yet of a system under concurrency, latency, or scale.
+
 ```bash
 PYTHONHASHSEED=0 python3 live_world_kernel.py
 ```
+
+## Result — verified (9/9)
+
+The reference passed its own adversarial self-test on the author's machine (the machine that runs it is the
+verifier):
+
+```
+[PASS] speculative_isolation             A sees its speculative wall; B and shared truth do not
+[PASS] commit_promotes_to_truth          accepted → B now sees the wall; it left A's speculation
+[PASS] causal_subtree_rollback           reject e1b → removed exactly {e1b,e2b,e3b}; unrelated torch survives
+[PASS] no_leak_on_reject                 rejected speculation never entered committed truth or B's view
+[PASS] replay_from_zero                  world rebuilt from 2 committed events == live state (log 98a401876bd92998)
+[PASS] authority_from_history            e1 authorized by grant g1; after revoke, the same edit is rejected
+[PASS] duplicate_idempotent              re-committing e1 is a no-op
+[PASS] disconnect_discards_speculation   disconnect drops private speculation; committed truth untouched
+[PASS] latency_irreversibility_frontier  rolled-back work = causal depth; expected thrash = depth × reject_prob
+9/9 checks — answer: YES (within scope)
+```
+
+**What it proves** (under the stated conditions): the causal-truth machinery is sound *in the small* —
+speculation is private and disposable, shared truth grows only by committed events, **rejection rewinds exactly
+the causal subtree and nothing else**, authority is replayable history (not an annotation), and the world
+reconstructs from its log (digest `98a401876bd92998`). The load-bearing claim — *causal-subtree rollback
+without corrupting unrelated state* — held against the adversarial case (`e1b → e2b → e3b` rejected while the
+unrelated `e4b` survived). That is the provenance claim, made measurable and passed.
+
+**What it does NOT prove** (`declared ≠ verified`): nothing about *scale*. This is single-process logic — no
+concurrency-at-scale (the common lethal failure: many actors, one region), no networking or real latency
+(check 9's frontier is a **surrogate**, not a measured human-trust threshold), external-root authority only
+(the embedded-root / genesis case is open), and no performance claim. So "the editor is a UI problem" is true
+*conditional on unscaled, single-process logic*; the boundary that actually decides the engine vision —
+concurrency — is the next probe, not this one. The pass means the idea **earned the right to be scaled**, not
+that it has been.
 
 ## Three stores, kept distinct
 
