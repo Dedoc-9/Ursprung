@@ -235,6 +235,32 @@ Dini-style convergence holds *only* in quiescence. Pure functions (sealed — no
 verdict** on which partition to adopt. Run: `PYTHONHASHSEED=0 python3 concurrency_probe.py` (7/7). It is the
 reconciliation-layer cousin of `prediction.py`'s Dini-style observer.
 
+## The Klein probe — orientability test for false global boundaries (`klein_probe.py`)
+
+Graded all the way down, the Klein-bottle intuition stops being poetry and becomes an *exact, computable
+test* — because "non-orientable" has a precise discrete form: a **signed graph with a frustrated cycle**
+(sign-product −1 around a loop). Following such a cycle returns you to the start with the side reversed, which
+is exactly *"if I follow this boundary through its consequences, does it return me with the meanings
+reversed?"* This is the one place a topology analogy survives as real mathematics rather than metaphor.
+
+`klein_probe.py` models architectural boundaries as signed edges (+1 = same side, −1 = opposite side under
+that boundary) and tests for a consistent **global** side-assignment:
+
+```
+system               classification    meaning
+coherent boundaries  ORIENTABLE        the locals cohere into one global cut — safe to unify
+embedded observer    NON_ORIENTABLE    world→observer→event→world reverses orientation — no global 'outside'
+```
+
+It shows: every boundary is orientable *locally* (single edges are always 2-colorable); the failure is
+**global, not local** (removing any one edge of the frustrated cycle restores orientability — the locality
+escape); and it fires **only on the global-promotion claim** (each boundary kept separate is fine; only "these
+imply one global boundary" fails). Pure functions (sealed); **no verdict** — it never says merge or split,
+only whether the single-global-boundary claim is a lie. The orientability test is exact topology; encoding a
+boundary into a sign is a declared model (`declared ≠ verified`). It is the **Arbitrary-Boundary Law's
+adversarial test** — it catches the moment the architecture worships a boundary it only needed to draw. Run:
+`PYTHONHASHSEED=0 python3 klein_probe.py` (7/7).
+
 ## Honest scope (what this is NOT)
 
 A **logic reference**, not a performance system. No concurrency-at-scale, no networking, no UI, no renderer.
