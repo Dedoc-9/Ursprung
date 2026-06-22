@@ -907,7 +907,10 @@ experiments. [`docs/GENEALOGY.md`](docs/GENEALOGY.md) — the full genealogy & c
 [`docs/BOUNDARY_MAP.md`](docs/BOUNDARY_MAP.md) — **the measured boundary map for causal allocation**, stated
 once and whole: spatial conditional-negative (M6a–c) · temporal conditional-positive (T1–T3) · hidden-future
 recoverable only above a precursor threshold, where a weak signal is *harmful* (T4). The artifact worth
-preserving. [`docs/REAL_SILICON_BENCHMARK.md`](docs/REAL_SILICON_BENCHMARK.md) — the measurement *contract* for
+preserving. [`docs/EMBEDDED_AUTHORING.md`](docs/EMBEDDED_AUTHORING.md) — a **design note** (direction, not a
+verified result) on the editor as a capability of the world: an edit is an event; guarantees captured at the
+irreversibility frontier; *minimum under uncertainty*; the sealed reserve as the answer to Hyrum's Law —
+closing on the Arbitrary-Boundary Law. [`docs/REAL_SILICON_BENCHMARK.md`](docs/REAL_SILICON_BENCHMARK.md) — the measurement *contract* for
 the GPU benchmark (device as constrained oracle, GPU-timestamp budget as the shared ruler, temporal error as a
 Pareto profile). It is now **built and verified on hardware through the temporal arc** in
 `experiments/bench_gpu_real` (M1–M6c spatial + M6d/T1–T4 temporal on an Ally X); the neutral rulers falsified
