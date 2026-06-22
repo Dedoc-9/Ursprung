@@ -1,33 +1,29 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-//! bench_gpu_real — Milestone 6d / T1: the TEMPORAL apparatus, on the RealityKernel (apparatus, no verdict).
+//! bench_gpu_real — Milestone 6d / T2: the TEMPORAL RULER (apparatus, no verdict).
 //!
-//! M6a–M6c lived in a single frame: render once, score against one reference. They answered "allocate by
-//! *present* render difficulty?" — and could not answer the ORIGINAL Causal Continuity claim, which is about
-//! *future* consequence (drop present-perception S; spend now to reduce error LATER). Testing that needs a
-//! world that EVOLVES across frames, where the cost of an allocation now is paid (or not) in a future frame.
+//! T1 proved the temporal apparatus (a world evolving through the kernel, replaying identically, posing the
+//! present≠future question). T2 builds the *ruler* that T3 will score policies on — and proves it is fair
+//! FIRST, exactly as M6a proved the perceptual ruler before M6b compared anything.
 //!
-//! T1 builds only the apparatus and proves it is trustworthy — exactly as M6a did before any policy compare:
+//! THE COUPLING MODEL (a DECLARED boundary condition, NOT "the temporal law"). For "spend now to reduce error
+//! later" to be measurable, work at frame t must persist to frame t+k. The model: TAA-style **history
+//! accumulation with explicit disocclusion invalidation** — samples spent on a tile accumulate across frames
+//! while its content is stable, and RESET the frame its content changes (the occlusion edge passes). This is
+//! the *weakest* coupling that still exists in real renderers: present work can genuinely survive, history can
+//! genuinely become wrong, future benefit is earned not assumed, and it arises from scene dynamics, not oracle
+//! foresight. It is the rendering analogue of the project's recurring lesson — carried information has a cost
+//! and is valid only until its assumptions change (disocclusion reset ≈ provenance invalidation; `compress ≠
+//! sever` in time). A different reuse model would change the numbers: `declared ≠ verified`. The claim T2
+//! earns is therefore scoped: *under a history-accumulation renderer with explicit disocclusion invalidation,
+//! future consequence is measurable* — enough to make T3 a legitimate experiment, not a universal temporal law.
 //!
-//!   1. the world EVOLVES                  (state changes frame to frame)
-//!   2. TEMPORAL replay identity           (re-run the evolution → byte-identical commit-digest chain)
-//!   3. commit-path SEVERANCE              (a transition on an uncommitted prerequisite is REFUSED)
-//!   4. future reference is REPRODUCIBLE   (render frame t+k twice → identical pixels)
-//!   5. temporal error is MEASURABLE       (low-sample t+k vs its hi-fi reference > 0, and responds to samples)
-//!   6. present ≠ future DECOUPLING EXISTS (≥1 tile easy NOW, hard LATER — the question T3 will pose)
-//!   7. identity ⟂ render budget + provenance RESOLVES (rendering is observation, not state; compress ≠ sever)
+//! THE KEY ISOLATION. future_penalty := error(t+k | accumulation WITH disocclusion resets)
+//!                                     − error(t+k | accumulation WITHOUT resets), same future content & budget.
+//! It isolates exactly the cost of history becoming invalid: a world with no emergence has identical sample
+//! maps either way → penalty exactly 0; the sweeping world loses history at each disocclusion → penalty > ε.
+//! So the ruler distinguishes *present error* from *future consequence* WITHOUT looking inside any policy.
 //!
-//! THE WORLD RUNS THROUGH THE KERNEL. Each frame's state transition is an `Event` committed by
-//! `reality_core::Core::apply`, chained by `requires` (frame t+1 requires frame t's digest). So this is also
-//! the first **world-loop client**: the kernel stops being a verified substrate and starts carrying a world,
-//! its replay identity and lineage now operating across *time*, not within a frame.
-//!
-//! THE DECOUPLING IS EMERGENT, NOT DECLARED (the load-bearing rule, lifted from M6's sealed observer). The
-//! scene is an occlusion edge sweeping across the tile grid: a tile ahead of the edge is flat (cheap to render
-//! NOW) and becomes high-frequency the frame the edge reaches it (expensive LATER). "Future consequence" is a
-//! *consequence of the world's dynamics*, never a per-tile importance map authored by the benchmark. T3 may
-//! later ask whether a policy can exploit it; T1 only proves the rig can pose the question honestly.
-//!
-//! NO POLICY IS COMPARED HERE. `benchmark gain ≠ universal`; this is the instrument, not a verdict.
+//! Five checks, NO policy compared. `benchmark gain ≠ universal`.
 //!
 //! Run on the device:  cargo run --release
 
@@ -41,11 +37,9 @@ const BYTES_PER_ROW: u32 = RES * 4;
 const TILES_X: u32 = 8;
 const TILES: usize = (TILES_X * TILES_X) as usize;
 const REF_SAMPLES: u32 = 256;
-const N_FRAMES: usize = 8;     // the occlusion edge sweeps columns 0..8
-const T0: usize = 2;           // the "present" frame
-const HORIZON: usize = 3;      // look-ahead k; future frame = T0 + HORIZON
-const HARD: f32 = 0.95;        // revealed tile: high-frequency content (expensive)
-const EASY: f32 = 0.12;        // still-occluded tile: nearly flat (cheap)
+const TF: usize = 5;          // the future frame (the occlusion edge sweeps columns 0..=TF over frames 0..=TF)
+const HARD: f32 = 0.95;
+const EASY: f32 = 0.12;
 
 const SCENE_WGSL: &str = r#"
 struct U { seed: u32, res: u32, tiles_x: u32, _pad: u32 };
@@ -85,42 +79,48 @@ fn fs(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
 }
 "#;
 
-/// The world at a given frame: an occlusion edge at column `frame`. Columns 0..=frame are REVEALED (hard);
-/// columns ahead are still occluded (easy). A column x therefore becomes hard exactly at frame x — so at any
-/// present frame t, every column x in (t, ..] is cheap NOW and will be expensive LATER. Emergent, not declared.
+/// The world at a frame: occlusion edge at column `frame`; columns 0..=frame revealed (hard), ahead occluded.
 fn world_amp(frame: usize) -> Vec<f32> {
     (0..TILES)
-        .map(|ti| {
-            let x = (ti as u32 % TILES_X) as usize;
-            if x <= frame { HARD } else { EASY }
-        })
+        .map(|ti| { let x = (ti as u32 % TILES_X) as usize; if x <= frame { HARD } else { EASY } })
         .collect()
 }
+fn world_state_str(frame: usize) -> String { format!("edge_col={}", frame) }
 
-/// A compact, replayable description of the world state (what the kernel commits as the transition's value).
-fn world_state_str(frame: usize) -> String {
-    format!("edge_col={}", frame)
-}
-
-/// Evolve the world through the KERNEL: each frame is an Event committed via Core::apply, chained by `requires`
-/// (frame t requires frame t-1's digest). Returns the commit-digest chain (the temporal Weltlinie) + refusals.
+/// Evolve the world through the KERNEL (for the identity check): chained Events committed by Core::apply.
 fn evolve_through_kernel(frames: usize) -> (Vec<String>, usize) {
     let mut core = Core::new();
-    let mut chain: Vec<String> = Vec::new();
+    let mut chain = Vec::new();
     let mut prev_digest: Option<String> = None;
     let mut prev_state = "edge_col=-1".to_string();
     for t in 0..frames {
         let new_state = world_state_str(t);
-        let ev = Event::new("scene", &prev_state, &new_state, &format!("occlusion_sweep@f{}", t))
-            .expect("event must name a source");
-        let receipt = core
-            .apply(&ev, prev_digest.as_deref())
-            .expect("a well-formed, prerequisite-satisfied transition must commit");
-        chain.push(receipt.provenance_digest.clone());
-        prev_digest = Some(receipt.provenance_digest);
+        let ev = Event::new("scene", &prev_state, &new_state, &format!("occlusion_sweep@f{}", t)).unwrap();
+        let rec = core.apply(&ev, prev_digest.as_deref()).expect("commit");
+        chain.push(rec.provenance_digest.clone());
+        prev_digest = Some(rec.provenance_digest);
         prev_state = new_state;
     }
     (chain, core.refused)
+}
+
+/// THE DECLARED COUPLING MODEL. Per-tile effective samples at frame TF, accumulating a fixed per-frame budget
+/// `b` while a tile's content is stable, RESETTING on disocclusion iff `reset` (the honest TAA model). `sweep`
+/// selects the dynamic world (edge advances) vs a static one (edge frozen → no content change → no reset).
+fn effective(b: u32, reset: bool, sweep: bool) -> Vec<u32> {
+    let edge = |f: usize| -> usize { if sweep { f } else { TF } };
+    let mut acc = vec![0u32; TILES];
+    for f in 0..=TF {
+        let e = edge(f);
+        let e_prev = if f == 0 { e } else { edge(f - 1) };
+        for ti in 0..TILES {
+            let x = (ti as u32 % TILES_X) as usize;
+            let revealed = x <= e;
+            let changed = f != 0 && (revealed != (x <= e_prev));
+            if reset && changed { acc[ti] = b; } else { acc[ti] = (acc[ti] + b).min(REF_SAMPLES); }
+        }
+    }
+    acc
 }
 
 struct Gpu { device: wgpu::Device, queue: wgpu::Queue, pipeline: wgpu::RenderPipeline, bgl: wgpu::BindGroupLayout,
@@ -131,7 +131,7 @@ impl Gpu {
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor { backends: wgpu::Backends::PRIMARY, ..Default::default() });
         let adapter = instance.request_adapter(&wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, force_fallback_adapter: false, compatible_surface: None }).block_on().expect("no adapter");
         let info = adapter.get_info();
-        let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor { label: Some("T1"), required_features: wgpu::Features::empty(), required_limits: wgpu::Limits::default(), memory_hints: wgpu::MemoryHints::default() }, None).block_on().expect("device");
+        let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor { label: Some("T2"), required_features: wgpu::Features::empty(), required_limits: wgpu::Limits::default(), memory_hints: wgpu::MemoryHints::default() }, None).block_on().expect("device");
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("scene"), source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(SCENE_WGSL)) });
         let stor = |b: u32| wgpu::BindGroupLayoutEntry { binding: b, visibility: wgpu::ShaderStages::FRAGMENT, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: true }, has_dynamic_offset: false, min_binding_size: None }, count: None };
         let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("bgl"), entries: &[
@@ -162,7 +162,6 @@ impl Gpu {
         buf.unmap(); buf
     }
 
-    /// Render a world frame (amp from `world_amp`) with a per-tile sample budget. Pixels only — T1 does not time.
     fn render(&self, frame_amp: &[f32], tile_samples: &[u32], seed: u32) -> Vec<u8> {
         let amp = self.storage_f32(frame_amp);
         let samp = self.storage_u32(tile_samples);
@@ -203,92 +202,60 @@ fn pixel_err(a: &[u8], b: &[u8]) -> f64 {
 
 fn main() {
     let gpu = Gpu::init();
-    println!("M6d / T1 — TEMPORAL apparatus on the RealityKernel (apparatus, no verdict) on {} ({})",
-             gpu.device_name, gpu.backend);
-    println!("world: occlusion edge sweeping {} tile-columns over {} frames; present frame T0={}, horizon k={} (future frame {})\n",
-             TILES_X, N_FRAMES, T0, HORIZON, T0 + HORIZON);
+    println!("M6d / T2 — the TEMPORAL RULER (apparatus, no verdict) on {} ({})", gpu.device_name, gpu.backend);
+    println!("coupling: TAA history accumulation + explicit disocclusion invalidation (a DECLARED boundary condition, not 'the temporal law')");
+    println!("future frame TF={}; per-frame budget accumulates while content is stable, RESETS on disocclusion\n", TF);
 
-    let tf = T0 + HORIZON;
-    let mut pass = 0u32;
-    let mut total = 0u32;
+    let amp_tf = world_amp(TF);
+    let reference = gpu.render(&amp_tf, &vec![REF_SAMPLES; TILES], 0);
+    // future-frame error of an effective-sample map, vs the frozen hi-fi future reference
+    let err = |eff: &[u32], seed: u32| pixel_err(&gpu.render(&amp_tf, eff, seed), &reference);
+
+    let mut pass = 0u32; let mut total = 0u32;
     let mut check = |name: &str, ok: bool, detail: String| {
         total += 1; if ok { pass += 1; }
-        println!("  [{}] {:<34} {}", if ok { "PASS" } else { "FAIL" }, name, detail);
+        println!("  [{}] {:<30} {}", if ok { "PASS" } else { "FAIL" }, name, detail);
     };
 
-    // 1. the world evolves
-    let states: Vec<String> = (0..N_FRAMES).map(world_state_str).collect();
-    let distinct = { let mut s = states.clone(); s.sort(); s.dedup(); s.len() };
-    check("world_evolves", distinct == N_FRAMES,
-          format!("{} distinct states over {} frames", distinct, N_FRAMES));
+    // 1. future error monotonicity — degrade allocation (lower per-frame budget) → future error rises
+    let e_lo = err(&effective(2, true, true), 7);
+    let e_hi = err(&effective(8, true, true), 7);
+    check("future_error_monotonic", e_lo > e_hi && e_hi > 0.0,
+          format!("future err @b2 {:.5} > @b8 {:.5} > 0", e_lo, e_hi));
 
-    // 2. temporal replay identity — the world runs through the kernel, twice, byte-identical commit chain
-    let (chain_a, refused_a) = evolve_through_kernel(N_FRAMES);
-    let (chain_b, _) = evolve_through_kernel(N_FRAMES);
-    let replay_ok = chain_a == chain_b && chain_a.len() == N_FRAMES;
-    check("temporal_replay_identity", replay_ok,
-          format!("commit-digest chain identical across 2 runs ({} commits; head {})",
-                  chain_a.len(), chain_a.first().cloned().unwrap_or_default()));
+    // 2. negative control — the future reference scored against itself is exactly zero
+    let nc = pixel_err(&reference, &reference);
+    check("negative_control_zero", nc == 0.0, format!("ref vs ref future error = {:.6}", nc));
 
-    // 3. commit-path severance — a transition requiring an uncommitted prerequisite is REFUSED
-    let severance_ok = {
-        let mut core = Core::new();
-        let ev = Event::new("scene", "edge_col=-1", "edge_col=0", "orphan_frame").unwrap();
-        let refused_before = core.refused;
-        let res = core.apply(&ev, Some("deadbeefdeadbeef")); // a prerequisite digest that was never committed
-        res.is_err() && core.refused == refused_before + 1
-    };
-    check("commit_path_severance", severance_ok && refused_a == 0,
-          format!("orphan transition refused; legitimate chain refused {} (dropped transition forbidden)", refused_a));
+    // 3. reproducibility floor ε — cross-seed spread of the future-error measure
+    let eff_real = effective(8, true, true);
+    let errs: Vec<f64> = [11u32, 22, 33, 44].iter().map(|&s| err(&eff_real, s)).collect();
+    let eps = errs.iter().cloned().fold(f64::MIN, f64::max) - errs.iter().cloned().fold(f64::MAX, f64::min);
+    check("reproducibility_floor", eps >= 0.0 && eps < 0.002,
+          format!("ε(future) = {:.6} across 4 seeds", eps));
 
-    // 4. future reference is reproducible — render frame tf at full fidelity twice → identical pixels
-    let amp_tf = world_amp(tf);
-    let full = vec![REF_SAMPLES; TILES];
-    let ref_a = gpu.render(&amp_tf, &full, 0);
-    let ref_b = gpu.render(&amp_tf, &full, 0);
-    check("future_reference_reproducible", ref_a == ref_b,
-          format!("frame {} hi-fi render identical across 2 calls ({} bytes)", tf, ref_a.len()));
+    // 4. temporal sensitivity — future_penalty = err(WITH disocclusion resets) − err(WITHOUT), same content/budget.
+    //    Emergence world: disoccluded tiles lose history → penalty > ε. Static world: identical maps → penalty 0.
+    let pen_dyn = err(&effective(8, true, true), 7) - err(&effective(8, false, true), 7);
+    let pen_stat = err(&effective(8, true, false), 7) - err(&effective(8, false, false), 7);
+    check("temporal_sensitivity", pen_dyn > eps && pen_stat.abs() <= eps.max(1e-9),
+          format!("future penalty: emergence {:.5} (> ε) vs static {:.6} (≈ 0) — ruler sees future consequence", pen_dyn, pen_stat));
 
-    // 5. temporal error is measurable and responds to samples (low-sample future render vs its hi-fi reference)
-    let err_lo = pixel_err(&gpu.render(&amp_tf, &vec![4u32; TILES], 11), &ref_a);
-    let err_hi = pixel_err(&gpu.render(&amp_tf, &vec![64u32; TILES], 11), &ref_a);
-    check("temporal_error_measurable", err_lo > 0.0 && err_hi > 0.0 && err_lo > err_hi,
-          format!("future-frame err @4spp {:.5} > @64spp {:.5} > 0", err_lo, err_hi));
+    // 5. identity preservation — same world history (kernel commit chain) → same future reference
+    let (chain1, _) = evolve_through_kernel(TF + 1);
+    let ref1 = gpu.render(&amp_tf, &vec![REF_SAMPLES; TILES], 0);
+    let (chain2, _) = evolve_through_kernel(TF + 1);
+    let ref2 = gpu.render(&amp_tf, &vec![REF_SAMPLES; TILES], 0);
+    check("identity_preservation", chain1 == chain2 && ref1 == ref2,
+          format!("same kernel world-history ({} commits) → identical future reference", chain1.len()));
 
-    // 6. present ≠ future decoupling EXISTS — tiles cheap NOW (T0) that become expensive LATER (tf)
-    let amp_now = world_amp(T0);
-    let decoupled: usize = (0..TILES).filter(|&ti| amp_now[ti] < amp_tf[ti]).count();
-    check("present_future_decoupling_exists", decoupled > 0,
-          format!("{} tiles easy@T0 but hard@{} (emergent, not authored)", decoupled, tf));
-
-    // 7. identity ⟂ render budget, and provenance resolves (compress ≠ sever)
-    let chain_before = evolve_through_kernel(N_FRAMES).0;
-    let _ = gpu.render(&amp_tf, &vec![4u32; TILES], 1);   // render at one budget
-    let _ = gpu.render(&amp_tf, &vec![128u32; TILES], 1); // render at another
-    let chain_after = evolve_through_kernel(N_FRAMES).0;
-    let provenance_ok = {
-        // re-walk the kernel and confirm a committed frame's digest still resolves to lineage
-        let mut core = Core::new();
-        let mut prev_d: Option<String> = None;
-        let mut prev_s = "edge_col=-1".to_string();
-        let mut t0_digest = String::new();
-        for t in 0..=T0 {
-            let ns = world_state_str(t);
-            let ev = Event::new("scene", &prev_s, &ns, &format!("occlusion_sweep@f{}", t)).unwrap();
-            let rec = core.apply(&ev, prev_d.as_deref()).unwrap();
-            if t == T0 { t0_digest = rec.provenance_digest.clone(); }
-            prev_d = Some(rec.provenance_digest); prev_s = ns;
-        }
-        matches!(core.resolve_digest(&t0_digest), reality_core::Resolution::Resolved(_))
-    };
-    check("identity_independent_of_render", chain_before == chain_after && provenance_ok,
-          format!("commit chain unchanged by rendering at 2 budgets; T0 lineage resolves = {}", provenance_ok));
-
-    println!("\nT1 {} — {}/{} checks. The TEMPORAL apparatus is {}: the world evolves through the kernel,",
+    println!("\nT2 {} — {}/{} checks. The TEMPORAL RULER is {}: future error responds to allocation, reads",
              if pass == total { "COMPLETE" } else { "INCOMPLETE" }, pass, total,
-             if pass == total { "trustworthy" } else { "NOT yet trustworthy" });
-    println!("replays identically, refuses severed transitions, renders reproducible futures, measures future");
-    println!("error, and CAN pose the present≠future question — with the decoupling emerging from world dynamics,");
-    println!("not authored. No policy compared (that is T2's ruler, then T3's gate). benchmark gain ≠ universal.");
-    assert!(pass == total, "T1 apparatus did not fully hold");
+             if pass == total { "fair" } else { "NOT yet fair" });
+    println!("zero on its negative control, has a measured floor ε, and DISTINGUISHES present error from future");
+    println!("consequence (emergence penalised, static not) WITHOUT looking inside any policy. The coupling is a");
+    println!("declared boundary condition (TAA + disocclusion invalidation) — `declared ≠ verified`; the claim is");
+    println!("'future consequence is measurable UNDER THIS model', not a temporal law. No policy compared — that");
+    println!("is T3, the temporal causal gate: does spending NOW measurably reduce FUTURE error? benchmark gain ≠ universal.");
+    assert!(pass == total, "T2 ruler did not fully hold");
 }

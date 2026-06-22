@@ -509,14 +509,35 @@ benchmark measures the benchmark's world; it does not prove universal superiorit
   rule lifted into time. 7 checks, no policy: world_evolves (8 distinct states); temporal_replay_identity
   (commit-digest chain byte-identical across 2 runs, head 34d29a70…); commit_path_severance (orphan transition
   on an uncommitted prerequisite REFUSED, legit chain refused 0); future_reference_reproducible (frame-5 hi-fi
-  render BIT-identical across 2 calls — RDNA3.5/Vulkan is bit-exact here, no ε needed); temporal_error_measurable
+  render reproduced bit-identically across 2 calls UNDER THE TESTED STACK, RDNA3.5/AMD-Vulkan/release — an
+  implementation result, no ε needed *here*; NOT elevated to a portability claim, the scientific claim is only
+  reproducibility-under-stated-conditions); temporal_error_measurable
   (future-frame err @4spp 0.01368 > @64spp 0.00376 > 0); present≠future_decoupling_exists (24 tiles easy@T0=2
   hard@frame5, emergent); identity⟂render_budget (commit chain unchanged by rendering at 2 budgets; T0 lineage
   resolves — compress≠sever). reality_core wired as a path dep into bench_gpu_real (first cross-crate use; built
-  clean). NEXT: T2 (temporal ruler — prove future-error responds + negative controls + reproducibility floor,
-  still no winner), then T3 (the temporal causal gate — uniform/PFAL/causal/controls allocate under equal budget,
-  measured against FUTURE references: does spending now reduce future error?). Expected: another conditional
-  region, not a universal law.
+  clean). **M6d/T2 DONE — the TEMPORAL RULER (Ally X, 5/5, apparatus no verdict):** builds the future-error
+  ruler T3 will score policies on, and proves it fair first (M6a discipline in time). THE COUPLING MODEL is a
+  DECLARED boundary condition, NOT "the temporal law": TAA-style history accumulation + explicit DISOCCLUSION
+  INVALIDATION — a tile's samples accumulate across frames while content is stable and RESET the frame content
+  changes (edge passes). Chosen (user) as the *weakest* coupling still real in renderers: present work can
+  survive, history can become wrong, future benefit is earned not assumed, emerges from scene dynamics not
+  oracle foresight. Rendering analogue of the project's recurring lesson (carried info has a cost, valid only
+  until assumptions change; disocclusion reset ≈ provenance invalidation; compress≠sever in time). `declared ≠
+  verified` — the claim is scoped: "future consequence is measurable UNDER THIS model," not a temporal law. KEY
+  ISOLATION (check 4): future_penalty = err(tf | accumulation WITH disocclusion resets) − err(tf | WITHOUT),
+  same future content+budget → measures exactly the cost of history becoming invalid. 5 checks: future_error_
+  monotonic (err @b2 0.01165 > @b8 0.00599 > 0); negative_control_zero (ref vs ref 0.000000); reproducibility_
+  floor (ε=0.000053 across 4 seeds); temporal_sensitivity (emergence penalty 0.00169 ≈32× ε vs static EXACTLY
+  0.000000 — the ruler distinguishes present error from future consequence WITHOUT looking inside any policy);
+  identity_preservation (same kernel world-history, 6 commits → identical future reference). Also (this turn)
+  SOFTENED the T1 bit-exact language across README/GENEALOGY/memory per user caution: bit-exact replay is an
+  implementation result under the tested stack (RDNA3.5/AMD-Vulkan/release), NOT a portability/scientific claim;
+  the claim is reproducibility-under-stated-conditions. NEXT: T3 — the temporal causal gate: uniform/PFAL/
+  causal_d1/causal_d23/controls allocate the per-frame budget (sealed observer, present priors only) under EQUAL
+  measured budget, scored on THIS temporal ruler against FUTURE references — does spending NOW measurably reduce
+  FUTURE error, and for which policies? Expected: another conditional region (future consequence matters only
+  when prediction_quality × horizon × budget_scarcity clear a threshold, AND only post-disocclusion since
+  pre-warming occluded content is reset), not a universal law.
 - [ ] Native (C++/Rust) **renderer/fidelity** port validated against the Python reference via conformance
   vectors. (The conformance-vector method has been demonstrated at the kernel layer: `reality_kernel/core_rs`
   validated against the Python reference via `golden_kernel.tsv`; this item remains open for PFAL/TCFF/raster.)

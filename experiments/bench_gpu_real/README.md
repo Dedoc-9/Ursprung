@@ -1,15 +1,50 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-only -->
-# bench_gpu_real — the GPU benchmark on real silicon (M1 ✓ … M6c ✓; M6d/T1 ✓ — the temporal apparatus)
+# bench_gpu_real — the GPU benchmark on real silicon (M1 ✓ … M6c ✓; M6d/T1 ✓, T2 ✓ — the temporal ruler)
 
 The smallest non-faked claims in the project, and the first ones that did **not** expire on silicon —
-because they were measured on silicon. `src/main.rs` is currently the **M6d/T1** program (the temporal
-apparatus, the world evolving *through* the RealityKernel); M1–M5 (the timing ladder), M6a (the perceptual
-ruler), M6b (the Causal Continuity gate), M6c (the alignment × budget × exponent sweep) are preserved in git
-history.
+because they were measured on silicon. `src/main.rs` is currently the **M6d/T2** program (the temporal ruler);
+M1–M5 (the timing ladder), M6a (the perceptual ruler), M6b (the Causal Continuity gate), M6c (the alignment ×
+budget × exponent sweep), and M6d/T1 (the temporal apparatus) are preserved in git history.
 
 ```bash
 cd experiments/bench_gpu_real && cargo run --release
 ```
+
+## Milestone 6d / T2 — the temporal RULER (apparatus, no verdict) ✓ (Ally X)
+
+T1 proved the temporal apparatus; T2 builds the *ruler* T3 will score policies on, and proves it fair first —
+the M6a discipline, lifted into time.
+
+**The coupling model is a DECLARED boundary condition, not "the temporal law."** For "spend now to reduce
+error later" to be measurable, work at frame *t* must persist to frame *t+k*. The model: **TAA-style history
+accumulation with explicit disocclusion invalidation** — a tile's samples accumulate across frames while its
+content is stable, and **reset** the frame its content changes (the occlusion edge passes). This is the
+*weakest* coupling that still exists in real renderers: present work can genuinely survive, history can
+genuinely become wrong, future benefit is *earned* not assumed, and it arises from scene dynamics, not oracle
+foresight. It is the rendering analogue of the project's recurring lesson — carried information has a cost and
+is valid only until its assumptions change (disocclusion reset ≈ provenance invalidation; `compress ≠ sever`
+in time). A different reuse model would change the numbers: `declared ≠ verified`. So the claim T2 earns is
+scoped — *under a history-accumulation renderer with explicit disocclusion invalidation, future consequence
+is measurable* — enough to make T3 legitimate, never a universal temporal law.
+
+**The isolation that makes check 4 honest:** `future_penalty = error(tf | accumulation WITH disocclusion
+resets) − error(tf | accumulation WITHOUT resets)`, same future content and budget — so it measures *exactly*
+the cost of history becoming invalid, nothing else.
+
+Five checks, **no policy compared** (Ally X, Vulkan, Radeon 890M):
+
+```
+future_error_monotonic    future err @b2 0.01165 > @b8 0.00599 > 0   (less accumulated work → more future error)
+negative_control_zero     future reference vs itself = 0.000000
+reproducibility_floor      ε(future) = 0.000053 across 4 seeds
+temporal_sensitivity       future penalty: emergence 0.00169 (≈32× ε) vs static 0.000000 (exactly 0)
+identity_preservation     same kernel world-history (6 commits) → identical future reference
+```
+
+**The result that matters:** the ruler **distinguishes present error from future consequence** — the sweeping
+world's disocclusions cost 0.00169 (32× the noise floor), while a world with no content change costs *exactly
+zero* — and it does so **without looking inside any policy**. That is the precondition T3 needed. No verdict
+here. `benchmark gain ≠ universal`.
 
 ## Milestone 6d / T1 — the temporal apparatus, on the RealityKernel (apparatus, no verdict) ✓ (Ally X)
 
@@ -35,15 +70,18 @@ Seven checks, **no policy compared** (Ally X, Vulkan, Radeon 890M):
 world_evolves                  8 distinct states over 8 frames
 temporal_replay_identity       commit-digest chain byte-identical across 2 runs (8 commits; head 34d29a70…)
 commit_path_severance          an orphan transition (uncommitted prerequisite) is REFUSED; legit chain refused 0
-future_reference_reproducible  frame 5 hi-fi render bit-identical across 2 calls (strict — RDNA is bit-exact here)
+future_reference_reproducible  frame 5 hi-fi render reproduced bit-identically across 2 calls UNDER THE TESTED
+                               STACK (RDNA 3.5 / AMD Vulkan / release) — an implementation result, not a portability claim
 temporal_error_measurable      future-frame error @4spp 0.01368 > @64spp 0.00376 > 0 (responds to samples)
 present≠future decoupling      24 tiles easy@T0=2 but hard@frame5 — EMERGENT from the sweep, not authored
 identity ⟂ render budget       commit chain unchanged by rendering at 2 budgets; T0 lineage resolves (compress≠sever)
 ```
 
-The temporal apparatus is trustworthy: the world evolves through the kernel, replays identically, refuses
-severed transitions, renders reproducible futures, measures future error, and **can pose the present≠future
-question** with the decoupling emerging from dynamics. **No verdict** — that is T2 (the temporal ruler) then
+The temporal apparatus reproduced identically **under the tested conditions**: the world evolves through the
+kernel, replays identically, refuses severed transitions, renders reproducible futures, measures future
+error, and **can pose the present≠future question** with the decoupling emerging from dynamics. (Bit-exact
+replay is an implementation result under this hardware/driver/compiler stack, not part of the scientific
+claim — the claim is reproducibility under the stated conditions, which is all the ruler needs.) **No verdict** — that is T2 (the temporal ruler) then
 T3 (the temporal causal gate). `benchmark gain ≠ universal`.
 
 ## Milestone 6c — the alignment × budget × exponent sweep (M6b's flat loss → a measured boundary) ✓ (Ally X)
@@ -295,7 +333,8 @@ M6c ✓ alignment × budget × exponent sweep                   →  REFINED: st
                                                                uniform at α=+1, b8 & b64 → conditional_on_neutral_ruler
 M6d/T1 ✓ temporal apparatus on the RealityKernel            →  world evolves THROUGH the kernel, replays identically,
                                                                present≠future decoupling emerges; 7/7, no verdict
-M6d/T2   temporal ruler (future-error responds, controls)   →  prove the future-error ruler is fair before any policy
+M6d/T2 ✓ temporal ruler (TAA accum + disocclusion reset)    →  future error responds, neg-control 0, ε measured,
+                                                               emergence penalty 32× ε vs static 0; 5/5, no verdict
 M6d/T3   temporal causal gate (uniform/PFAL/causal/control) →  does spending NOW reduce FUTURE error? (the real test)
 ```
 
