@@ -1,47 +1,51 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-//! bench_gpu_real — Milestone 6c: the alignment × budget × exponent sweep (chasing M6b's ghost).
+//! bench_gpu_real — Milestone 6d / T1: the TEMPORAL apparatus, on the RealityKernel (apparatus, no verdict).
 //!
-//! M6b found a *narrow* falsification: at 16 samples/tile, on this scene/metric/device, causal-waterfill
-//! allocation showed no measured upside over uniform and a temporal downside. M6b left three separable
-//! questions open, and M6c turns each into a swept axis instead of a slogan:
+//! M6a–M6c lived in a single frame: render once, score against one reference. They answered "allocate by
+//! *present* render difficulty?" — and could not answer the ORIGINAL Causal Continuity claim, which is about
+//! *future* consequence (drop present-perception S; spend now to reduce error LATER). Testing that needs a
+//! world that EVOLVES across frames, where the cost of an allocation now is paid (or not) in a future frame.
 //!
-//!   (a) BUDGET.    At ~16 samples/tile every tile is already near-converged — redistribution had no room
-//!                  to win. Does a LOWER budget (tiles genuinely unconverged) ever let causal reach the
-//!                  ε-frontier? Budget is swept over {2,4,8,16,64} avg samples/tile.
-//!   (b) ALIGNMENT. The declared causal priors may be informative or wrong. `prior_alignment α ∈ [-1,1]`
-//!                  (1 = perfect prior, 0 = random, -1 = inverted) is swept to produce a CURVE, not 2 points.
-//!   (c) EXPONENT.  The variance-optimal allocation for SSAA error scales as ∝ difficulty^(2/3); causal-
-//!                  waterfill allocates ∝ difficulty^1 (it likely OVER-concentrates). So two causal policies
-//!                  run side by side: `causal_d1` (√(U·C·P·resistance) ≈ difficulty^1) and `causal_d23`
-//!                  ((U·C·P·resistance)^(1/3) ≈ difficulty^(2/3), the variance-optimal exponent).
+//! T1 builds only the apparatus and proves it is trustworthy — exactly as M6a did before any policy compare:
 //!
-//! SEALED OBSERVER preserved exactly (M6b's load-bearing rule): every policy is `fn(&TilePriors,u32) ->
-//! Vec<u32>` — it never sees pixels, the reference, or the ground-truth difficulty. The ε-frontier is
-//! computed with ε MEASURED PER CELL from the data (noise grows as budget shrinks; you cannot claim
-//! dominance below your own noise). Policy set is reduced to {uniform, causal_d1, causal_d23, drifted} to
-//! ISOLATE the causal-vs-neutral question — distance/visibility were dominated in M6b and are not the
-//! question here. Output reports ε-frontier membership + dominated_by per cell, never a "winner".
+//!   1. the world EVOLVES                  (state changes frame to frame)
+//!   2. TEMPORAL replay identity           (re-run the evolution → byte-identical commit-digest chain)
+//!   3. commit-path SEVERANCE              (a transition on an uncommitted prerequisite is REFUSED)
+//!   4. future reference is REPRODUCIBLE   (render frame t+k twice → identical pixels)
+//!   5. temporal error is MEASURABLE       (low-sample t+k vs its hi-fi reference > 0, and responds to samples)
+//!   6. present ≠ future DECOUPLING EXISTS (≥1 tile easy NOW, hard LATER — the question T3 will pose)
+//!   7. identity ⟂ render budget + provenance RESOLVES (rendering is observation, not state; compress ≠ sever)
 //!
-//! HONEST CEILING unchanged: one device, one synthetic scene family, SSAA proxy. A cell where causal reaches
-//! the frontier is "supported at THAT budget/alignment here", not a law. `benchmark gain ≠ universal`.
+//! THE WORLD RUNS THROUGH THE KERNEL. Each frame's state transition is an `Event` committed by
+//! `reality_core::Core::apply`, chained by `requires` (frame t+1 requires frame t's digest). So this is also
+//! the first **world-loop client**: the kernel stops being a verified substrate and starts carrying a world,
+//! its replay identity and lineage now operating across *time*, not within a frame.
+//!
+//! THE DECOUPLING IS EMERGENT, NOT DECLARED (the load-bearing rule, lifted from M6's sealed observer). The
+//! scene is an occlusion edge sweeping across the tile grid: a tile ahead of the edge is flat (cheap to render
+//! NOW) and becomes high-frequency the frame the edge reaches it (expensive LATER). "Future consequence" is a
+//! *consequence of the world's dynamics*, never a per-tile importance map authored by the benchmark. T3 may
+//! later ask whether a policy can exploit it; T1 only proves the rig can pose the question honestly.
+//!
+//! NO POLICY IS COMPARED HERE. `benchmark gain ≠ universal`; this is the instrument, not a verdict.
 //!
 //! Run on the device:  cargo run --release
 
 use std::borrow::Cow;
 
 use pollster::FutureExt as _;
-use serde::{Deserialize, Serialize};
+use reality_core::{Core, Event};
 
 const RES: u32 = 256;
 const BYTES_PER_ROW: u32 = RES * 4;
 const TILES_X: u32 = 8;
 const TILES: usize = (TILES_X * TILES_X) as usize;
 const REF_SAMPLES: u32 = 256;
-const TOLERANCE: f64 = 0.20;
-
-// swept axes
-const BUDGETS_AVG: [u32; 5] = [2, 4, 8, 16, 64];          // avg samples/tile → total = avg * TILES
-const ALPHAS: [f64; 5] = [1.0, 0.5, 0.0, -0.5, -1.0];     // prior alignment with real difficulty
+const N_FRAMES: usize = 8;     // the occlusion edge sweeps columns 0..8
+const T0: usize = 2;           // the "present" frame
+const HORIZON: usize = 3;      // look-ahead k; future frame = T0 + HORIZON
+const HARD: f32 = 0.95;        // revealed tile: high-frequency content (expensive)
+const EASY: f32 = 0.12;        // still-occluded tile: nearly flat (cheap)
 
 const SCENE_WGSL: &str = r#"
 struct U { seed: u32, res: u32, tiles_x: u32, _pad: u32 };
@@ -81,104 +85,42 @@ fn fs(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
 }
 "#;
 
-// --- declared per-tile priors (the ONLY thing a policy sees) --------------------------------------
-#[derive(Clone)]
-struct TilePriors {
-    uncertainty: Vec<f64>,
-    consequence: Vec<f64>,
-    persistence: Vec<f64>,
-    resistance: Vec<f64>,
+/// The world at a given frame: an occlusion edge at column `frame`. Columns 0..=frame are REVEALED (hard);
+/// columns ahead are still occluded (easy). A column x therefore becomes hard exactly at frame x — so at any
+/// present frame t, every column x in (t, ..] is cheap NOW and will be expensive LATER. Emergent, not declared.
+fn world_amp(frame: usize) -> Vec<f32> {
+    (0..TILES)
+        .map(|ti| {
+            let x = (ti as u32 % TILES_X) as usize;
+            if x <= frame { HARD } else { EASY }
+        })
+        .collect()
 }
 
-struct Scene { tile_amp: Vec<f32>, priors: TilePriors }
+/// A compact, replayable description of the world state (what the kernel commits as the transition's value).
+fn world_state_str(frame: usize) -> String {
+    format!("edge_col={}", frame)
+}
 
-/// alignment-parameterized scene. amp is the fixed WORLD difficulty; the declared prior tracks it (α>0),
-/// is random (α=0), or is inverted (α<0). corr(prior, amp) ≈ α. The policy sees only the prior.
-fn build_scene(alpha: f64) -> Scene {
-    let amp: Vec<f64> = (0..TILES).map(|t| {
-        let x = (t as u32 % TILES_X) as f64; let y = (t as u32 / TILES_X) as f64;
-        0.15 + 0.85 * (0.5 + 0.5 * ((x * 0.9).sin() * (y * 1.3).cos()))
-    }).collect();
-    // deterministic per-tile noise, independent of amp
-    let rnd: Vec<f64> = (0..TILES).map(|t| ((t * 2654435761usize) % 1009) as f64 / 1008.0).collect();
-    // blend toward the (correct or inverted) signal by |α|, else random
-    let prior: Vec<f64> = (0..TILES).map(|t| {
-        let signal = if alpha >= 0.0 { amp[t] } else { 1.0 - amp[t] };
-        let a = alpha.abs();
-        ((1.0 - a) * rnd[t] + a * signal).clamp(0.0, 1.0)
-    }).collect();
-    Scene {
-        tile_amp: amp.iter().map(|&a| a as f32).collect(),
-        priors: TilePriors {
-            uncertainty: prior.iter().map(|&c| 0.5 + 0.5 * c).collect(),
-            consequence: prior.clone(),
-            persistence: (0..TILES).map(|t| 1.0 + (t % 4) as f64).collect(),
-            resistance: prior.iter().map(|&c| 1.0 + 3.0 * c).collect(),
-        },
+/// Evolve the world through the KERNEL: each frame is an Event committed via Core::apply, chained by `requires`
+/// (frame t requires frame t-1's digest). Returns the commit-digest chain (the temporal Weltlinie) + refusals.
+fn evolve_through_kernel(frames: usize) -> (Vec<String>, usize) {
+    let mut core = Core::new();
+    let mut chain: Vec<String> = Vec::new();
+    let mut prev_digest: Option<String> = None;
+    let mut prev_state = "edge_col=-1".to_string();
+    for t in 0..frames {
+        let new_state = world_state_str(t);
+        let ev = Event::new("scene", &prev_state, &new_state, &format!("occlusion_sweep@f{}", t))
+            .expect("event must name a source");
+        let receipt = core
+            .apply(&ev, prev_digest.as_deref())
+            .expect("a well-formed, prerequisite-satisfied transition must commit");
+        chain.push(receipt.provenance_digest.clone());
+        prev_digest = Some(receipt.provenance_digest);
+        prev_state = new_state;
     }
-}
-
-// --- SEALED policies: priors + budget only --------------------------------------------------------
-fn hamilton(weights: &[f64], total: u32) -> Vec<u32> {
-    let n = weights.len();
-    let w: Vec<f64> = weights.iter().map(|x| x.max(1e-9)).collect();
-    let sum: f64 = w.iter().sum();
-    let rest = total.saturating_sub(n as u32);
-    let mut alloc: Vec<u32> = w.iter().map(|&x| 1 + (x / sum * rest as f64) as u32).collect();
-    let mut spent: u32 = alloc.iter().sum();
-    let mut order: Vec<usize> = (0..n).collect();
-    order.sort_by(|&a, &b| w[b].partial_cmp(&w[a]).unwrap());
-    let mut i = 0;
-    while spent < total { let k = order[i % n]; alloc[k] += 1; spent += 1; i += 1; }
-    while spent > total { let k = order[n - 1 - (i % n)]; if alloc[k] > 1 { alloc[k] -= 1; spent -= 1; } i += 1; }
-    alloc
-}
-
-type Policy = fn(&TilePriors, u32) -> Vec<u32>;
-
-fn p_uniform(pr: &TilePriors, total: u32) -> Vec<u32> { hamilton(&vec![1.0; pr.consequence.len()], total) }
-fn p_causal_d1(pr: &TilePriors, total: u32) -> Vec<u32> {
-    // ∝ √(U·C·P·resistance) ≈ difficulty^1 (the M6b causal-waterfill — likely over-concentrates)
-    let w: Vec<f64> = (0..pr.consequence.len()).map(|t| {
-        (pr.uncertainty[t] * pr.consequence[t] * pr.persistence[t] * pr.resistance[t]).sqrt()
-    }).collect();
-    hamilton(&w, total)
-}
-fn p_causal_d23(pr: &TilePriors, total: u32) -> Vec<u32> {
-    // ∝ (U·C·P·resistance)^(1/3) ≈ difficulty^(2/3) — the VARIANCE-OPTIMAL exponent for SSAA error
-    let w: Vec<f64> = (0..pr.consequence.len()).map(|t| {
-        (pr.uncertainty[t] * pr.consequence[t] * pr.persistence[t] * pr.resistance[t]).powf(1.0 / 3.0)
-    }).collect();
-    hamilton(&w, total)
-}
-fn p_drifted(pr: &TilePriors, total: u32) -> Vec<u32> {
-    let w: Vec<f64> = (0..pr.consequence.len()).map(|t| ((t * 40503usize) % 997) as f64 + 1.0).collect();
-    hamilton(&w, total)
-}
-
-// --- the M6a perceptual ruler (sealed evaluator) --------------------------------------------------
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
-struct ErrorProfile { pixel: f64, structural: f64, temporal: f64 }
-impl ErrorProfile { fn axes(&self) -> [f64; 3] { [self.pixel, self.structural, self.temporal] } }
-
-fn r_channel(px: &[u8]) -> Vec<f64> { px.iter().step_by(4).map(|&b| b as f64 / 255.0).collect() }
-fn pixel_err(a: &[u8], b: &[u8]) -> f64 {
-    let (x, y) = (r_channel(a), r_channel(b));
-    x.iter().zip(&y).map(|(p, q)| (p - q).abs()).sum::<f64>() / x.len() as f64
-}
-fn grad(px: &[u8]) -> Vec<f64> {
-    let r = r_channel(px); let n = RES as usize; let mut g = vec![0.0; r.len()];
-    for yy in 0..n { for xx in 0..n {
-        let i = yy * n + xx;
-        let dx = if xx + 1 < n { r[i + 1] - r[i] } else { 0.0 };
-        let dy = if yy + 1 < n { r[i + n] - r[i] } else { 0.0 };
-        g[i] = (dx * dx + dy * dy).sqrt();
-    }}
-    g
-}
-fn struct_err(a: &[u8], b: &[u8]) -> f64 {
-    let (ga, gb) = (grad(a), grad(b));
-    ga.iter().zip(&gb).map(|(x, y)| (x - y).abs()).sum::<f64>() / ga.len() as f64
+    (chain, core.refused)
 }
 
 struct Gpu { device: wgpu::Device, queue: wgpu::Queue, pipeline: wgpu::RenderPipeline, bgl: wgpu::BindGroupLayout,
@@ -189,8 +131,7 @@ impl Gpu {
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor { backends: wgpu::Backends::PRIMARY, ..Default::default() });
         let adapter = instance.request_adapter(&wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, force_fallback_adapter: false, compatible_surface: None }).block_on().expect("no adapter");
         let info = adapter.get_info();
-        if !adapter.features().contains(wgpu::Features::TIMESTAMP_QUERY) { eprintln!("RULER ABSENT: TIMESTAMP_QUERY"); std::process::exit(1); }
-        let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor { label: Some("M6c"), required_features: wgpu::Features::TIMESTAMP_QUERY, required_limits: wgpu::Limits::default(), memory_hints: wgpu::MemoryHints::default() }, None).block_on().expect("device");
+        let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor { label: Some("T1"), required_features: wgpu::Features::empty(), required_limits: wgpu::Limits::default(), memory_hints: wgpu::MemoryHints::default() }, None).block_on().expect("device");
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("scene"), source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(SCENE_WGSL)) });
         let stor = |b: u32| wgpu::BindGroupLayoutEntry { binding: b, visibility: wgpu::ShaderStages::FRAGMENT, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: true }, has_dynamic_offset: false, min_binding_size: None }, count: None };
         let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("bgl"), entries: &[
@@ -221,7 +162,9 @@ impl Gpu {
         buf.unmap(); buf
     }
 
-    fn render(&self, tile_amp: &wgpu::Buffer, tile_samples: &[u32], seed: u32) -> (Vec<u8>, i128) {
+    /// Render a world frame (amp from `world_amp`) with a per-tile sample budget. Pixels only — T1 does not time.
+    fn render(&self, frame_amp: &[f32], tile_samples: &[u32], seed: u32) -> Vec<u8> {
+        let amp = self.storage_f32(frame_amp);
         let samp = self.storage_u32(tile_samples);
         let ubuf = self.device.create_buffer(&wgpu::BufferDescriptor { label: Some("u"), size: 16, usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let mut u = [0u8; 16];
@@ -229,136 +172,123 @@ impl Gpu {
         self.queue.write_buffer(&ubuf, 0, &u);
         let bind = self.device.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("bg"), layout: &self.bgl, entries: &[
             wgpu::BindGroupEntry { binding: 0, resource: ubuf.as_entire_binding() },
-            wgpu::BindGroupEntry { binding: 1, resource: tile_amp.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 1, resource: amp.as_entire_binding() },
             wgpu::BindGroupEntry { binding: 2, resource: samp.as_entire_binding() },
         ]});
-        let qs = self.device.create_query_set(&wgpu::QuerySetDescriptor { label: Some("ts"), ty: wgpu::QueryType::Timestamp, count: 2 });
-        let qres = self.device.create_buffer(&wgpu::BufferDescriptor { label: Some("qr"), size: 16, usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
-        let qread = self.device.create_buffer(&wgpu::BufferDescriptor { label: Some("qrd"), size: 16, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let pxbuf = self.device.create_buffer(&wgpu::BufferDescriptor { label: Some("px"), size: (BYTES_PER_ROW * RES) as u64, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let mut enc = self.device.create_command_encoder(&Default::default());
         {
             let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor { label: Some("p"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment { view: &self.view, resolve_target: None, ops: wgpu::Operations { load: wgpu::LoadOp::Clear(wgpu::Color::BLACK), store: wgpu::StoreOp::Store } })],
-                depth_stencil_attachment: None,
-                timestamp_writes: Some(wgpu::RenderPassTimestampWrites { query_set: &qs, beginning_of_pass_write_index: Some(0), end_of_pass_write_index: Some(1) }),
-                occlusion_query_set: None });
+                depth_stencil_attachment: None, timestamp_writes: None, occlusion_query_set: None });
             pass.set_pipeline(&self.pipeline); pass.set_bind_group(0, &bind, &[]); pass.draw(0..3, 0..1);
         }
-        enc.resolve_query_set(&qs, 0..2, &qres, 0);
-        enc.copy_buffer_to_buffer(&qres, 0, &qread, 0, 16);
         enc.copy_texture_to_buffer(
             wgpu::ImageCopyTexture { texture: &self.tex, mip_level: 0, origin: wgpu::Origin3d::ZERO, aspect: wgpu::TextureAspect::All },
             wgpu::ImageCopyBuffer { buffer: &pxbuf, layout: wgpu::ImageDataLayout { offset: 0, bytes_per_row: Some(BYTES_PER_ROW), rows_per_image: Some(RES) } },
             wgpu::Extent3d { width: RES, height: RES, depth_or_array_layers: 1 });
         self.queue.submit(Some(enc.finish()));
-        let s1 = qread.slice(..); let (t1, r1) = std::sync::mpsc::channel(); s1.map_async(wgpu::MapMode::Read, move |r| { let _ = t1.send(r); });
-        let s2 = pxbuf.slice(..); let (t2, r2) = std::sync::mpsc::channel(); s2.map_async(wgpu::MapMode::Read, move |r| { let _ = t2.send(r); });
-        self.device.poll(wgpu::Maintain::Wait); r1.recv().unwrap().unwrap(); r2.recv().unwrap().unwrap();
-        let qd = s1.get_mapped_range(); let begin = u64::from_le_bytes(qd[0..8].try_into().unwrap()); let end = u64::from_le_bytes(qd[8..16].try_into().unwrap()); drop(qd); qread.unmap();
-        let pd = s2.get_mapped_range(); let pixels = pd.to_vec(); drop(pd); pxbuf.unmap();
-        (pixels, end as i128 - begin as i128)
+        let s = pxbuf.slice(..); let (tx, rx) = std::sync::mpsc::channel(); s.map_async(wgpu::MapMode::Read, move |r| { let _ = tx.send(r); });
+        self.device.poll(wgpu::Maintain::Wait); rx.recv().unwrap().unwrap();
+        let pd = s.get_mapped_range(); let pixels = pd.to_vec(); drop(pd); pxbuf.unmap();
+        pixels
     }
 }
 
-fn median_i(mut v: Vec<i128>) -> i128 { v.sort(); v[v.len() / 2] }
-
-struct Cell { profile: ErrorProfile, ticks: i128, admitted: bool }
+fn r_channel(px: &[u8]) -> Vec<f64> { px.iter().step_by(4).map(|&b| b as f64 / 255.0).collect() }
+fn pixel_err(a: &[u8], b: &[u8]) -> f64 {
+    let (x, y) = (r_channel(a), r_channel(b));
+    x.iter().zip(&y).map(|(p, q)| (p - q).abs()).sum::<f64>() / x.len() as f64
+}
 
 fn main() {
     let gpu = Gpu::init();
-    println!("M6c — alignment × budget × exponent sweep (SEALED evaluator) on {} ({})", gpu.device_name, gpu.backend);
-    println!("policies: uniform · causal_d1 (∝difficulty^1) · causal_d23 (∝difficulty^2/3, variance-optimal) · drifted(control)");
-    println!("question: does causal allocation EVER reach the ε-frontier — at some budget / alignment / exponent?\n");
+    println!("M6d / T1 — TEMPORAL apparatus on the RealityKernel (apparatus, no verdict) on {} ({})",
+             gpu.device_name, gpu.backend);
+    println!("world: occlusion edge sweeping {} tile-columns over {} frames; present frame T0={}, horizon k={} (future frame {})\n",
+             TILES_X, N_FRAMES, T0, HORIZON, T0 + HORIZON);
 
-    let policies: [(&str, Policy); 4] = [
-        ("uniform", p_uniform), ("causal_d1", p_causal_d1), ("causal_d23", p_causal_d23), ("drifted", p_drifted),
-    ];
-    // record where each causal policy reaches the ε-frontier
-    let mut d1_hits: Vec<String> = Vec::new();
-    let mut d23_hits: Vec<String> = Vec::new();
-    let mut apparatus_ok = true;
+    let tf = T0 + HORIZON;
+    let mut pass = 0u32;
+    let mut total = 0u32;
+    let mut check = |name: &str, ok: bool, detail: String| {
+        total += 1; if ok { pass += 1; }
+        println!("  [{}] {:<34} {}", if ok { "PASS" } else { "FAIL" }, name, detail);
+    };
 
-    for &avg in BUDGETS_AVG.iter() {
-        let total = avg * TILES as u32;
-        println!("======== budget: {} avg samples/tile ({} total) ========", avg, total);
-        for &alpha in ALPHAS.iter() {
-            let scene = build_scene(alpha);
-            let amp_buf = gpu.storage_f32(&scene.tile_amp);
-            let _ = gpu.render(&amp_buf, &vec![avg; TILES], 99); // warm-up (discarded)
-            let (reference, _) = gpu.render(&amp_buf, &vec![REF_SAMPLES; TILES], 0);
+    // 1. the world evolves
+    let states: Vec<String> = (0..N_FRAMES).map(world_state_str).collect();
+    let distinct = { let mut s = states.clone(); s.sort(); s.dedup(); s.len() };
+    check("world_evolves", distinct == N_FRAMES,
+          format!("{} distinct states over {} frames", distinct, N_FRAMES));
 
-            // ε measured per cell from the uniform allocation across seed pairs (noise grows at low budget)
-            let ucal = p_uniform(&scene.priors, total);
-            let cal: Vec<[f64; 3]> = [(11u32, 22u32), (33, 44), (55, 66), (77, 88)].iter().map(|&(sa, sb)| {
-                let (a, _) = gpu.render(&amp_buf, &ucal, sa);
-                let (b, _) = gpu.render(&amp_buf, &ucal, sb);
-                [pixel_err(&a, &reference), struct_err(&a, &reference), pixel_err(&a, &b)]
-            }).collect();
-            let eps: [f64; 3] = [0, 1, 2].map(|i| {
-                let v: Vec<f64> = cal.iter().map(|p| p[i]).collect();
-                v.iter().cloned().fold(f64::NEG_INFINITY, f64::max) - v.iter().cloned().fold(f64::INFINITY, f64::min)
-            });
+    // 2. temporal replay identity — the world runs through the kernel, twice, byte-identical commit chain
+    let (chain_a, refused_a) = evolve_through_kernel(N_FRAMES);
+    let (chain_b, _) = evolve_through_kernel(N_FRAMES);
+    let replay_ok = chain_a == chain_b && chain_a.len() == N_FRAMES;
+    check("temporal_replay_identity", replay_ok,
+          format!("commit-digest chain identical across 2 runs ({} commits; head {})",
+                  chain_a.len(), chain_a.first().cloned().unwrap_or_default()));
 
-            // render every policy
-            let mut cells: Vec<(String, Cell)> = Vec::new();
-            let mut target_ticks = 1.0f64;
-            for (name, pol) in policies.iter() {
-                let alloc = pol(&scene.priors, total);
-                let ticks = median_i((0..3).map(|_| gpu.render(&amp_buf, &alloc, 1).1).collect());
-                if *name == "uniform" { target_ticks = ticks as f64; }
-                let (px_a, _) = gpu.render(&amp_buf, &alloc, 11);
-                let (px_b, _) = gpu.render(&amp_buf, &alloc, 22);
-                let profile = ErrorProfile { pixel: pixel_err(&px_a, &reference), structural: struct_err(&px_a, &reference), temporal: pixel_err(&px_a, &px_b) };
-                cells.push((name.to_string(), Cell { profile, ticks, admitted: true }));
-            }
-            // equal-budget gate (M5): all share the same total samples, so ticks should match uniform's
-            for (_, c) in cells.iter_mut() {
-                c.admitted = (c.ticks as f64 - target_ticks).abs() <= TOLERANCE * target_ticks.max(1.0);
-            }
+    // 3. commit-path severance — a transition requiring an uncommitted prerequisite is REFUSED
+    let severance_ok = {
+        let mut core = Core::new();
+        let ev = Event::new("scene", "edge_col=-1", "edge_col=0", "orphan_frame").unwrap();
+        let refused_before = core.refused;
+        let res = core.apply(&ev, Some("deadbeefdeadbeef")); // a prerequisite digest that was never committed
+        res.is_err() && core.refused == refused_before + 1
+    };
+    check("commit_path_severance", severance_ok && refused_a == 0,
+          format!("orphan transition refused; legitimate chain refused {} (dropped transition forbidden)", refused_a));
 
-            // ε-dominance frontier among admitted policies (index-based: 0=uniform 1=d1 2=d23 3=drifted)
-            let dominates = |a: &ErrorProfile, b: &ErrorProfile| {
-                let (x, y) = (a.axes(), b.axes());
-                (0..3).all(|i| x[i] <= y[i] + eps[i]) && (0..3).any(|i| x[i] < y[i] - eps[i])
-            };
-            let adm: Vec<usize> = (0..cells.len()).filter(|&i| cells[i].1.admitted).collect();
-            let frontier_of = |i: usize| !adm.iter().any(|&j| dominates(&cells[j].1.profile, &cells[i].1.profile));
-            let dominated_by_of = |i: usize| -> Vec<String> {
-                adm.iter().filter(|&&j| dominates(&cells[j].1.profile, &cells[i].1.profile))
-                    .map(|&j| cells[j].0.clone()).collect()
-            };
-            let frontier: Vec<String> = adm.iter().filter(|&&i| frontier_of(i)).map(|&i| cells[i].0.clone()).collect();
+    // 4. future reference is reproducible — render frame tf at full fidelity twice → identical pixels
+    let amp_tf = world_amp(tf);
+    let full = vec![REF_SAMPLES; TILES];
+    let ref_a = gpu.render(&amp_tf, &full, 0);
+    let ref_b = gpu.render(&amp_tf, &full, 0);
+    check("future_reference_reproducible", ref_a == ref_b,
+          format!("frame {} hi-fi render identical across 2 calls ({} bytes)", tf, ref_a.len()));
 
-            let (d1f, d23f) = (frontier_of(1), frontier_of(2));
-            let label = format!("b{}/α{:+.1}", avg, alpha);
-            if d1f { d1_hits.push(label.clone()); }
-            if d23f { d23_hits.push(label.clone()); }
+    // 5. temporal error is measurable and responds to samples (low-sample future render vs its hi-fi reference)
+    let err_lo = pixel_err(&gpu.render(&amp_tf, &vec![4u32; TILES], 11), &ref_a);
+    let err_hi = pixel_err(&gpu.render(&amp_tf, &vec![64u32; TILES], 11), &ref_a);
+    check("temporal_error_measurable", err_lo > 0.0 && err_hi > 0.0 && err_lo > err_hi,
+          format!("future-frame err @4spp {:.5} > @64spp {:.5} > 0", err_lo, err_hi));
 
-            let (u, d1, d23) = (&cells[0].1.profile, &cells[1].1.profile, &cells[2].1.profile);
-            println!("  α{:+.1}  ε {:.5}/{:.5}/{:.5}  uniform {:.5}/{:.5}/{:.5}  d1 {:.5}/{:.5}/{:.5}  d23 {:.5}/{:.5}/{:.5}",
-                     alpha, eps[0], eps[1], eps[2], u.pixel, u.structural, u.temporal,
-                     d1.pixel, d1.structural, d1.temporal, d23.pixel, d23.structural, d23.temporal);
-            println!("        frontier {:?}   causal_d1 frontier={} {}   causal_d23 frontier={} {}",
-                     frontier, d1f, if d1f { String::new() } else { format!("(dominated_by {:?})", dominated_by_of(1)) },
-                     d23f, if d23f { String::new() } else { format!("(dominated_by {:?})", dominated_by_of(2)) });
-            apparatus_ok &= !frontier.is_empty() && eps[0] > 0.0;
+    // 6. present ≠ future decoupling EXISTS — tiles cheap NOW (T0) that become expensive LATER (tf)
+    let amp_now = world_amp(T0);
+    let decoupled: usize = (0..TILES).filter(|&ti| amp_now[ti] < amp_tf[ti]).count();
+    check("present_future_decoupling_exists", decoupled > 0,
+          format!("{} tiles easy@T0 but hard@{} (emergent, not authored)", decoupled, tf));
+
+    // 7. identity ⟂ render budget, and provenance resolves (compress ≠ sever)
+    let chain_before = evolve_through_kernel(N_FRAMES).0;
+    let _ = gpu.render(&amp_tf, &vec![4u32; TILES], 1);   // render at one budget
+    let _ = gpu.render(&amp_tf, &vec![128u32; TILES], 1); // render at another
+    let chain_after = evolve_through_kernel(N_FRAMES).0;
+    let provenance_ok = {
+        // re-walk the kernel and confirm a committed frame's digest still resolves to lineage
+        let mut core = Core::new();
+        let mut prev_d: Option<String> = None;
+        let mut prev_s = "edge_col=-1".to_string();
+        let mut t0_digest = String::new();
+        for t in 0..=T0 {
+            let ns = world_state_str(t);
+            let ev = Event::new("scene", &prev_s, &ns, &format!("occlusion_sweep@f{}", t)).unwrap();
+            let rec = core.apply(&ev, prev_d.as_deref()).unwrap();
+            if t == T0 { t0_digest = rec.provenance_digest.clone(); }
+            prev_d = Some(rec.provenance_digest); prev_s = ns;
         }
-        println!();
-    }
+        matches!(core.resolve_digest(&t0_digest), reality_core::Resolution::Resolved(_))
+    };
+    check("identity_independent_of_render", chain_before == chain_after && provenance_ok,
+          format!("commit chain unchanged by rendering at 2 budgets; T0 lineage resolves = {}", provenance_ok));
 
-    println!("======== SWEEP SUMMARY (the answer to M6b's open question) ========");
-    println!("causal_d1  (∝difficulty^1)   reached the ε-frontier in: {}", if d1_hits.is_empty() { "NEVER (no cell)".into() } else { format!("{:?}", d1_hits) });
-    println!("causal_d23 (∝difficulty^2/3) reached the ε-frontier in: {}", if d23_hits.is_empty() { "NEVER (no cell)".into() } else { format!("{:?}", d23_hits) });
-    println!();
-    println!("READING: 'on the ε-frontier' = not measurably worse than the best — parity, not proof of gain.");
-    println!("If d1 NEVER reaches the frontier but d23 reaches it at LOW budget, the M6b loss is (in part) a");
-    println!("WRONG-EXPONENT result: causal allocation over-concentrates (∝difficulty^1 vs variance-optimal");
-    println!("∝difficulty^2/3), and a corrected exponent earns parity where there is room to reallocate. If");
-    println!("NEITHER ever reaches it, causal importance weighting is simply not competitive with uniform on");
-    println!("this scene/metric/device — the stronger, narrower falsification stands. HONEST CEILING: this is");
-    println!("one synthetic scene family on one device; benchmark gain ≠ universal, and neither does a loss.");
-    println!("\nM6c {} — the sweep ran sealed (priors only), per-cell ε-calibrated, equal-budget, no winner crowned.",
-             if apparatus_ok { "COMPLETE" } else { "INCONCLUSIVE (a cell had empty frontier or zero ε)" });
-    assert!(apparatus_ok, "M6c apparatus did not hold in some cell");
+    println!("\nT1 {} — {}/{} checks. The TEMPORAL apparatus is {}: the world evolves through the kernel,",
+             if pass == total { "COMPLETE" } else { "INCOMPLETE" }, pass, total,
+             if pass == total { "trustworthy" } else { "NOT yet trustworthy" });
+    println!("replays identically, refuses severed transitions, renders reproducible futures, measures future");
+    println!("error, and CAN pose the present≠future question — with the decoupling emerging from world dynamics,");
+    println!("not authored. No policy compared (that is T2's ruler, then T3's gate). benchmark gain ≠ universal.");
+    assert!(pass == total, "T1 apparatus did not fully hold");
 }

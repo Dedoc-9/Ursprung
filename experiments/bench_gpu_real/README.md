@@ -1,15 +1,50 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-only -->
-# bench_gpu_real — the GPU benchmark on real silicon (M1 ✓ … M6a ✓, M6b ✓, M6c ✓ — result: causal is CONDITIONAL)
+# bench_gpu_real — the GPU benchmark on real silicon (M1 ✓ … M6c ✓; M6d/T1 ✓ — the temporal apparatus)
 
 The smallest non-faked claims in the project, and the first ones that did **not** expire on silicon —
-because they were measured on silicon. `src/main.rs` is currently the **M6c** program (the alignment ×
-budget × exponent sweep); M1 (empty pass), M2 (real compute work), M3 (identity binding), M4 (render-pass
-timing), M5 (equal-budget comparison), M6a (the perceptual ruler), M6b (the Causal Continuity gate) are
-preserved in git history.
+because they were measured on silicon. `src/main.rs` is currently the **M6d/T1** program (the temporal
+apparatus, the world evolving *through* the RealityKernel); M1–M5 (the timing ladder), M6a (the perceptual
+ruler), M6b (the Causal Continuity gate), M6c (the alignment × budget × exponent sweep) are preserved in git
+history.
 
 ```bash
 cd experiments/bench_gpu_real && cargo run --release
 ```
+
+## Milestone 6d / T1 — the temporal apparatus, on the RealityKernel (apparatus, no verdict) ✓ (Ally X)
+
+M6a–M6c lived in a single frame, so they could only test allocation against *present* render difficulty —
+never the **original** Causal Continuity claim, which is about *future* consequence (drop present-perception
+`S`; spend now to reduce error *later*). That needs a world that **evolves across frames**. T1 builds only the
+apparatus and proves it trustworthy first — the same discipline as M6a.
+
+**The world runs through the kernel.** Each frame's state transition is a `reality_core::Event` committed by
+`Core::apply`, chained by `requires` (frame *t* requires frame *t−1*'s digest). So this is also the first
+**world-loop client**: the RealityKernel stops being a verified substrate and starts *carrying a world*, its
+replay-identity and lineage now operating across **time**, not within a frame.
+
+**The decoupling is emergent, not declared** (the sealed-observer rule, lifted into time). The scene is an
+occlusion edge sweeping the tile grid: a tile ahead of the edge is flat (cheap *now*) and turns
+high-frequency the frame the edge reaches it (expensive *later*). "Future consequence" is a *consequence of
+the world's dynamics*, never an authored per-tile importance map — the precondition for T3 to ask its question
+honestly.
+
+Seven checks, **no policy compared** (Ally X, Vulkan, Radeon 890M):
+
+```
+world_evolves                  8 distinct states over 8 frames
+temporal_replay_identity       commit-digest chain byte-identical across 2 runs (8 commits; head 34d29a70…)
+commit_path_severance          an orphan transition (uncommitted prerequisite) is REFUSED; legit chain refused 0
+future_reference_reproducible  frame 5 hi-fi render bit-identical across 2 calls (strict — RDNA is bit-exact here)
+temporal_error_measurable      future-frame error @4spp 0.01368 > @64spp 0.00376 > 0 (responds to samples)
+present≠future decoupling      24 tiles easy@T0=2 but hard@frame5 — EMERGENT from the sweep, not authored
+identity ⟂ render budget       commit chain unchanged by rendering at 2 budgets; T0 lineage resolves (compress≠sever)
+```
+
+The temporal apparatus is trustworthy: the world evolves through the kernel, replays identically, refuses
+severed transitions, renders reproducible futures, measures future error, and **can pose the present≠future
+question** with the decoupling emerging from dynamics. **No verdict** — that is T2 (the temporal ruler) then
+T3 (the temporal causal gate). `benchmark gain ≠ universal`.
 
 ## Milestone 6c — the alignment × budget × exponent sweep (M6b's flat loss → a measured boundary) ✓ (Ally X)
 
@@ -258,6 +293,10 @@ M6b ✓ the Causal Continuity gate, sealed + equal budget     →  uniform ε-do
 M6c ✓ alignment × budget × exponent sweep                   →  REFINED: strong claim FALSIFIED, conditional claim
                                                                SUPPORTED — causal_d23 (∝difficulty^2/3) ε-dominates
                                                                uniform at α=+1, b8 & b64 → conditional_on_neutral_ruler
+M6d/T1 ✓ temporal apparatus on the RealityKernel            →  world evolves THROUGH the kernel, replays identically,
+                                                               present≠future decoupling emerges; 7/7, no verdict
+M6d/T2   temporal ruler (future-error responds, controls)   →  prove the future-error ruler is fair before any policy
+M6d/T3   temporal causal gate (uniform/PFAL/causal/control) →  does spending NOW reduce FUTURE error? (the real test)
 ```
 
 The pinned `wgpu = "22.1"` resolved cleanly (`wgpu v22.1.0`) and compiled first try on the device; the

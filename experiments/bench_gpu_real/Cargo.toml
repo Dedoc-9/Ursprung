@@ -17,3 +17,4 @@ wgpu = "22.1"
 pollster = "0.3"      # lets us block on wgpu's async setup without an async runtime
 serde = { version = "1", features = ["derive"] }   # M2: BenchmarkObservation serialization
 serde_json = "1"
+reality_core = { path = "../reality_kernel/core_rs" }   # M6d/T1: the world evolves THROUGH the kernel

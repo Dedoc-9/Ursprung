@@ -497,7 +497,26 @@ benchmark measures the benchmark's world; it does not prove universal superiorit
   CONDITIONAL claim is SUPPORTED on silicon — causal helps only with informative priors AND the matched
   concentration exponent. `causal_continuity.STATUS = conditional_on_neutral_ruler`. A measured boundary, not
   a law. The apparatus did its job: the policy was allowed to lose, then to win narrowly, and the ruler told
-  the difference. `benchmark gain ≠ universal`, and neither does a benchmark loss.
+  the difference. `benchmark gain ≠ universal`, and neither does a benchmark loss. **M6d/T1 DONE — the TEMPORAL
+  apparatus, on the RealityKernel (Ally X, 7/7, apparatus no verdict):** M6a–M6c were single-frame and so only
+  tested allocation vs *present* render difficulty; the ORIGINAL Causal Continuity claim is about *future*
+  consequence (drop present-perception S; spend now to cut error LATER), which needs a world that EVOLVES. T1
+  builds + verifies the apparatus first (M6a discipline). The world (an occlusion edge sweeping the tile grid)
+  runs THROUGH the kernel: each frame is a `reality_core::Event` committed by `Core::apply`, chained by
+  `requires` (frame t requires frame t−1's digest) — so this is also the **first world-loop client** (kernel
+  carries a world; replay-identity + lineage now operate across TIME). The present≠future decoupling is
+  EMERGENT not declared (a tile is cheap before the edge reaches it, expensive after) — the sealed-observer
+  rule lifted into time. 7 checks, no policy: world_evolves (8 distinct states); temporal_replay_identity
+  (commit-digest chain byte-identical across 2 runs, head 34d29a70…); commit_path_severance (orphan transition
+  on an uncommitted prerequisite REFUSED, legit chain refused 0); future_reference_reproducible (frame-5 hi-fi
+  render BIT-identical across 2 calls — RDNA3.5/Vulkan is bit-exact here, no ε needed); temporal_error_measurable
+  (future-frame err @4spp 0.01368 > @64spp 0.00376 > 0); present≠future_decoupling_exists (24 tiles easy@T0=2
+  hard@frame5, emergent); identity⟂render_budget (commit chain unchanged by rendering at 2 budgets; T0 lineage
+  resolves — compress≠sever). reality_core wired as a path dep into bench_gpu_real (first cross-crate use; built
+  clean). NEXT: T2 (temporal ruler — prove future-error responds + negative controls + reproducibility floor,
+  still no winner), then T3 (the temporal causal gate — uniform/PFAL/causal/controls allocate under equal budget,
+  measured against FUTURE references: does spending now reduce future error?). Expected: another conditional
+  region, not a universal law.
 - [ ] Native (C++/Rust) **renderer/fidelity** port validated against the Python reference via conformance
   vectors. (The conformance-vector method has been demonstrated at the kernel layer: `reality_kernel/core_rs`
   validated against the Python reference via `golden_kernel.tsv`; this item remains open for PFAL/TCFF/raster.)
