@@ -39,27 +39,37 @@ When the real backend lands on the device, the *only* thing that changes is wher
 the contract (provenance, equal budget, Pareto profile) is already fixed and tested. Substrate ≠ benchmark;
 `declared ≠ verified`.
 
-## The seam plumbing (built + verified, no GPU) — `frame.py` · `timing.py` · `backends.py`
+## The seam plumbing (built + verified, no GPU) — `frame.py` · `timing.py` · `backends.py` · `observation.py`
 
 The boring structure the real backend will fill, so on the device only the GPU calls remain:
 
 ```
-frame.py     FrameArtifact (immutable; the backend CONSUMES it, never decides its validity) +
-             GoldenReplay (a benchmark artifact, not a renderer format — replays on reference / real / native)
-timing.py    GpuInterval (gpu_end − gpu_begin = the equal-budget RULER) · CpuTiming (provenance, NOT the ruler)
-             · LatencyProfile (input→photon, a SEPARATE instrument; it may sum — a physical chain — unlike the
-             fidelity profile, whose axes may not)
-backends.py  ReferenceBackend (deterministic, no pixels) · RealGpuBackend (the seam — raises; four jobs only:
-             submit · timestamp the GPU interval · keep determinism above the float boundary · capture
-             present-to-photon as a separate instrument)
+frame.py        FrameArtifact (immutable; the backend CONSUMES it, never decides its validity) +
+                GoldenReplay (a benchmark artifact, not a renderer format — a reproducible RECIPE for a frame,
+                like an Event; carries identity only — scene/seed/policy/provenance — NOT the GPU budget)
+timing.py       GpuInterval (gpu_end − gpu_begin = the equal-budget RULER) · CpuTiming (provenance, with the
+                deliberately-ugly `cpu_observed_gpu_duration` so it can't be mistaken for the ruler) ·
+                LatencyProfile (input→photon, a SEPARATE instrument; it MAY sum — a physical chain — unlike
+                the fidelity profile, whose axes may not)
+backends.py     FixtureBackend (deterministic, no pixels — a FIXTURE that validates the contract, NOT a
+                reference renderer) · RealGpuBackend (the seam — raises; four jobs only: submit · timestamp
+                the GPU interval · keep determinism above the float boundary · capture present-to-photon)
+observation.py  BenchmarkObservation — binds artifact_digest · run-provenance · backend · gpu_budget ·
+                gpu_interval · temporal_profile · provenance · (optional) latency. The harness emits ONLY
+                observations: a bare profile not bound to its conditions is UNACCOUNTED.
 ```
 
-This maps to the intended layout (`replay/`, `backends/{reference,real_gpu}`, `capture/{timestamps,frames,
-input_latency}`) — kept as flat modules here to stay runnable and dodge import fragility; the *boundaries*,
-not the folders, are the point. `run.py` (8/8) verifies: the golden round-trips and derives a
-backend-agnostic frame; the GPU interval is the ruler (CPU time is provenance); **a pixel difference is a
-measurement, not a new world state** (the frame's identity is invariant across budgets/observations);
-latency is a separate instrument; and the real backend is an honestly-empty seam.
+The architectural spine: `frame` defines *what* is measured, `backends` *who* measures, `timing` the
+*rulers*, `contract` what *comparisons* mean, and `observation` binds the measurement to its *provenance* —
+`TemporalErrorProfile without a BenchmarkObservation = UNACCOUNTED`. This maps to the intended layout
+(`replay/`, `backends/`, `capture/`) — kept flat to stay runnable; the boundaries, not the folders, are the
+point. `run.py` (11/11) verifies: the golden round-trips and derives a backend-agnostic frame; provenance
+cannot be empty or a label; the **GPU budget is an execution condition, not identity** (same artifact, two
+budgets → same identity, two observations); the GPU interval is the ruler; **a pixel difference is a
+measurement, not an identity change, not an artifact mutation, and not a provenance replacement** — the image
+hash is another receipt, never the lineage (`artifact_digest`, `temporal_profile`, and `provenance_digest`
+stay three distinct fields); latency is optional and may sum while fidelity may not; an observation without
+full provenance is UNACCOUNTED; and the real backend is an honestly-empty seam.
 
 The determinism boundary, restated: `CORE` (artifact graph / transforms / digests) is deterministic and
 above the float line; `GPU` (rendering implementation, performance observations, pixels) is below it.

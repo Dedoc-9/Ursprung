@@ -29,10 +29,12 @@ class GpuInterval:
 
 @dataclass(frozen=True)
 class CpuTiming:
-    """Recorded as run-provenance — NOT the budget ruler. Kept so the host side is inspectable."""
+    """Recorded as run-provenance — NOT the budget ruler. Kept so the host side is inspectable. Note
+    `cpu_observed_gpu_duration` is the deliberately uglier name: it is the HOST's estimate of GPU time, which
+    must never be confused with `GpuInterval.duration()` (the authoritative GPU-timestamp ruler)."""
 
     cpu_submission_latency: float
-    gpu_execution_time: float
+    cpu_observed_gpu_duration: float    # host-side observation, NOT the ruler (cf. GpuInterval.duration())
     present_latency: float
 
 

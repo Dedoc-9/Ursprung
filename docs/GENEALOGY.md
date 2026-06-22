@@ -435,8 +435,12 @@ benchmark measures the benchmark's world; it does not prove universal superiorit
   the `RealBackend` seam that raises rather than fakes. **Seam plumbing also built + verified (8/8):**
   `frame.py` (FrameArtifact + backend-agnostic GoldenReplay), `timing.py` (GpuInterval = the ruler · CpuTiming
   = provenance · LatencyProfile = separate instrument), `backends.py` (ReferenceBackend no-pixels +
-  RealGpuBackend seam). The only thing left is the `RealGpuBackend` body (Vulkan/DX12/wgpu submit + GPU
-  timestamp queries + present-to-photon) on device — deliberately boring; no new theory.
+  RealGpuBackend seam). **`observation.py` added (11/11):** `BenchmarkObservation` binds artifact_digest ·
+  run-provenance · backend · gpu_budget · gpu_interval · temporal_profile · provenance (+ optional latency) —
+  `TemporalErrorProfile without a BenchmarkObservation = UNACCOUNTED`; GPU budget is an execution condition,
+  not frame identity; provenance can't be a bare label; the image hash is a receipt, not the lineage. The only
+  thing left is the `RealGpuBackend` body (Vulkan/DX12/wgpu submit + GPU timestamp queries + present-to-photon)
+  on device — deliberately boring; no new theory.
 - [ ] Native (C++/Rust) **renderer/fidelity** port validated against the Python reference via conformance
   vectors. (The conformance-vector method has been demonstrated at the kernel layer: `reality_kernel/core_rs`
   validated against the Python reference via `golden_kernel.tsv`; this item remains open for PFAL/TCFF/raster.)

@@ -7,8 +7,10 @@ The determinism boundary, made structural:
     CORE  — deterministic artifact graph / transforms / digests   (FrameArtifact identity lives here)
     GPU   — implementation of rendering, performance observations, pixel output   (measurements live here)
 
-A pixel difference is a *measurement result*, never a new world state: nothing a backend observes can change
-the FrameArtifact's identity. The reference backend renders no pixels; the real backend is the un-faked seam.
+A pixel difference is a *measurement result*: not a new world state, not an artifact mutation, and not a
+provenance replacement — the image hash is another receipt, never the lineage. Nothing a backend observes can
+change the FrameArtifact's identity. The fixture backend renders no pixels; the real backend is the un-faked
+seam.
 """
 from __future__ import annotations
 
@@ -17,11 +19,12 @@ from frame import FrameArtifact, _digest
 from timing import GpuInterval
 
 
-class ReferenceBackend:
-    """Deterministic, no pixels. Consumes a FrameArtifact, returns a synthetic profile FIXTURE plus a GPU
-    interval that spends exactly the budget. The profile is a fixture for the harness, not a measurement."""
+class FixtureBackend:
+    """Deterministic, no pixels. NOT a reference *renderer* — a FIXTURE that validates the harness contract,
+    never fidelity. Consumes a FrameArtifact, returns a synthetic profile fixture plus a GPU interval that
+    spends exactly the budget. Its numbers are a fixture for the harness, not a measurement of anything."""
 
-    name = "reference"
+    name = "fixture"
 
     def render(self, frame: FrameArtifact, gpu_tick_budget: int):
         h = int(frame.digest(), 16)

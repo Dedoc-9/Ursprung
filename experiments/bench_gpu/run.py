@@ -1,104 +1,95 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 """
-experiments/bench_gpu/run.py — verify the seam plumbing (still no GPU, still no fidelity claim).
+experiments/bench_gpu/run.py — verify the seam plumbing + the self-describing measurement (still no GPU).
 
-Adds to the contract self-check the boring-but-load-bearing structure the real backend will fill: a
-backend-agnostic golden replay, the GPU-interval ruler (not CPU wall time), the determinism boundary
-(a pixel difference cannot change the world's identity), and latency as a separate instrument.
+Now includes BenchmarkObservation: a number cannot exist without the conditions that produced it. The
+harness emits only observations; a bare profile/interval that is not bound to its provenance is refused.
 """
 from __future__ import annotations
 
-from backends import ReferenceBackend, RealGpuBackend
-from contract import RunRecord, TemporalErrorProfile, fidelity_compare
-from frame import GoldenReplay
+from backends import FixtureBackend, RealGpuBackend
+from contract import RunRecord, TemporalErrorProfile
+from frame import FrameArtifact, GoldenReplay
+from observation import BenchmarkObservation, observe
 from timing import CpuTiming, GpuInterval, LatencyProfile
 
 
-def main():
-    golden = GoldenReplay(scene="hallway", seed=1, policy="PFAL",
-                          frame_budget_gpu_ticks=123456, provenance_digest="deadbeefcafe")
-    ref = ReferenceBackend()
-    frame = golden.frame()
-
-    # render the SAME frame at two different budgets — the world's identity must not move
-    p1, i1 = ref.render(frame, golden.frame_budget_gpu_ticks)
-    p2, i2 = ref.render(frame, golden.frame_budget_gpu_ticks * 2)
-
-    # GPU interval is the ruler; CPU timing is provenance only
-    interval = GpuInterval(begin_tick=1000, end_tick=1000 + golden.frame_budget_gpu_ticks)
-    cpu = CpuTiming(cpu_submission_latency=0.4, gpu_execution_time=4.1, present_latency=0.7)
-
-    # a good reconstruction that hides a bad loop: low fidelity error, high latency
-    good_fidelity = TemporalErrorProfile(0.1, 0.1, 0.1, 0.1)
-    bad_loop = LatencyProfile(input_to_submit=2.0, submit_to_gpu_done=4.0,
-                              gpu_done_to_present=8.0, present_to_photon=20.0)
-
-    real_seam_empty = False
+def _raises(fn, exc=ValueError):
     try:
-        RealGpuBackend().render(frame, golden.frame_budget_gpu_ticks)
-    except NotImplementedError:
-        real_seam_empty = True
-
-    checks = {
-        "1_golden_round_trips":
-            GoldenReplay.from_json(golden.to_json()) == golden,
-        "2_golden_derives_a_deterministic_backend_agnostic_frame":
-            golden.frame() == golden.frame() and len(frame.digest()) == 12,
-        "3_gpu_interval_is_the_ruler_not_cpu_wall":
-            interval.duration() == golden.frame_budget_gpu_ticks and hasattr(cpu, "gpu_execution_time"),
-        "4_pixel_difference_is_a_measurement_not_a_world_state":
-            # different budgets / observations do NOT change the frame's identity (CORE ⟂ GPU)
-            i1.duration() != i2.duration() and frame.digest() == golden.frame().digest(),
-        "5_latency_sums_fidelity_does_not":
-            hasattr(LatencyProfile, "total") and not hasattr(TemporalErrorProfile, "total")
-            and abs(bad_loop.total() - 34.0) < 1e-9,
-        "6_good_fidelity_can_hide_a_bad_loop":
-            max(good_fidelity.axes().values()) <= 0.1 and bad_loop.total() > 30.0,  # two instruments disagree, by design
-        "7_real_backend_is_an_honestly_empty_seam":
-            real_seam_empty,
-        "8_result_still_needs_provenance":
-            _refused_without_provenance(ref, golden),
-    }
-
-    print("GPU BENCHMARK — seam plumbing self-check (no GPU; no fidelity claim)\n")
-    print("   golden:", golden.to_json())
-    print("   frame identity:", frame.digest(), "(stable across budgets — CORE ⟂ GPU observation)")
-    print("   GPU-interval ruler:", interval.duration(), "ticks | CPU timing is provenance:", cpu)
-    print("   bad-loop latency total: %.1f ms while fidelity error ≤ %.1f — instruments disagree, by design"
-          % (bad_loop.total(), max(good_fidelity.axes().values())))
-    print("\nself-check:")
-    for k, v in checks.items():
-        print(("  ok   " if v else "  FAIL ") + k)
-    assert all(checks.values()), "the seam plumbing violated the contract"
-    print("\nall %d checks passed — the seam is real except for the GPU calls themselves; the world's identity"
-          " is independent of what any backend observes. Substrate ≠ benchmark." % len(checks))
-    return checks
-
-
-def _refused_without_provenance(ref, golden):
-    bare = RunRecord(device="Z2 Extreme")  # incomplete
-    try:
-        fidelity_compare(ref_to_budget_backend(ref), [golden.policy], golden.frame_budget_gpu_ticks,
-                         golden.scene, run=bare)
+        fn()
         return False
-    except ValueError:
+    except exc:
         return True
 
 
-class _Adapter:
-    """Adapt ReferenceBackend.render(frame, budget) to the contract's measure(policy, budget, scene)."""
-    def __init__(self, ref):
-        self.ref = ref
-
-    def measure(self, policy, gpu_tick_budget, scene):
-        g = GoldenReplay(scene=scene, seed=1, policy=policy, frame_budget_gpu_ticks=gpu_tick_budget,
-                         provenance_digest="x")
-        profile, _ = self.ref.render(g.frame(), gpu_tick_budget)
-        return profile
+def _run(backend="fixture"):
+    return RunRecord(device="Z2 Extreme (RDNA 3.5)", power_profile="25W", driver="x.y.z", backend=backend,
+                     resolution="1920x1080", temperature_state="sustained", algorithm_commit="deadbeef")
 
 
-def ref_to_budget_backend(ref):
-    return _Adapter(ref)
+def main():
+    golden = GoldenReplay(scene="hallway", seed=1, policy="PFAL", provenance_digest="deadbeefcafe")
+    fb = FixtureBackend()
+    frame = golden.frame()
+    run = _run("fixture")
+
+    # the SAME artifact, two budgets → same identity, two distinct observations
+    obs_1 = observe(fb, frame, run, gpu_budget=123456)
+    obs_2 = observe(fb, frame, run, gpu_budget=246912)
+
+    cpu = CpuTiming(cpu_submission_latency=0.4, cpu_observed_gpu_duration=4.1, present_latency=0.7)
+    good_fidelity = TemporalErrorProfile(0.1, 0.1, 0.1, 0.1)
+    bad_loop = LatencyProfile(2.0, 4.0, 8.0, 20.0)
+
+    # an observation built on incomplete run-provenance is UNACCOUNTED / refused at emission
+    bare_run = RunRecord(device="Z2 Extreme")
+    refused = _raises(lambda: observe(fb, frame, bare_run, gpu_budget=123456))
+    # an observation whose run-provenance backend disagrees with the measuring backend is UNACCOUNTED
+    mismatched = BenchmarkObservation(artifact_digest=frame.digest(), run=_run("real_gpu"), backend="fixture",
+                                      gpu_budget=1, gpu_interval=GpuInterval(0, 1),
+                                      temporal_profile=good_fidelity, provenance_digest="x" * 12)
+
+    real_seam_empty = _raises(lambda: RealGpuBackend().render(frame, 123456), NotImplementedError)
+
+    checks = {
+        "1_fixture_backend_is_not_a_reference_renderer": fb.name == "fixture",
+        "2_golden_round_trips_without_a_budget_field":
+            GoldenReplay.from_json(golden.to_json()) == golden and not hasattr(golden, "frame_budget_gpu_ticks"),
+        "3_provenance_cannot_be_empty_or_a_label":
+            _raises(lambda: FrameArtifact("s", "t", "p", ""))
+            and _raises(lambda: GoldenReplay("s", 1, "p", "unknown")),
+        "4_budget_is_an_execution_condition_not_identity":
+            obs_1.artifact_digest == obs_2.artifact_digest and obs_1.gpu_budget != obs_2.gpu_budget,
+        "5_pixel_diff_is_a_measurement_not_an_identity_change":
+            # different budgets/observations → same world identity, different observation digest
+            obs_1.artifact_digest == frame.digest() and obs_1.digest() != obs_2.digest(),
+        "6_gpu_interval_is_the_ruler_cpu_is_provenance":
+            obs_1.gpu_interval.duration() == 123456 and hasattr(cpu, "cpu_observed_gpu_duration")
+            and not hasattr(cpu, "gpu_execution_time"),
+        "7_latency_sums_fidelity_does_not":
+            hasattr(LatencyProfile, "total") and not hasattr(TemporalErrorProfile, "total")
+            and abs(bad_loop.total() - 34.0) < 1e-9,
+        "8_observation_binds_provenance_or_is_unaccounted":
+            obs_1.status() == "recorded" and refused and mismatched.status() == "UNACCOUNTED",
+        "9_three_fields_stay_distinct_never_collapsed":
+            len({obs_1.artifact_digest, obs_1.provenance_digest, obs_1.digest()}) == 3,
+        "10_latency_is_optional_separate_instrument":
+            obs_1.latency_profile is None and observe(fb, frame, run, 1, latency=bad_loop).latency_profile is bad_loop,
+        "11_real_backend_is_an_honestly_empty_seam": real_seam_empty,
+    }
+
+    print("GPU BENCHMARK — seam + observation self-check (no GPU; no fidelity claim)\n")
+    print("   golden:", golden.to_json())
+    print("   artifact identity:", frame.digest(), "(invariant across budgets — CORE ⟂ GPU observation)")
+    print("   obs@123456 digest:", obs_1.digest(), " obs@246912 digest:", obs_2.digest(), " (same artifact)")
+    print("   artifact ≠ provenance ≠ observation:", obs_1.artifact_digest, obs_1.provenance_digest, obs_1.digest())
+    print("\nself-check:")
+    for k, v in checks.items():
+        print(("  ok   " if v else "  FAIL ") + k)
+    assert all(checks.values()), "the seam/observation contract was violated"
+    print("\nall %d checks passed — a measurement cannot exist without the conditions that produced it; the"
+          " image hash is a receipt, not the lineage. Substrate ≠ benchmark." % len(checks))
+    return checks
 
 
 if __name__ == "__main__":
