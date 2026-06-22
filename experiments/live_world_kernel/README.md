@@ -8,9 +8,10 @@ idea from [`docs/EMBEDDED_AUTHORING.md`](../../docs/EMBEDDED_AUTHORING.md). It a
 
 If yes, the editor is a UI problem. If no, the larger engine vision collapses before it needs a renderer.
 
-**Status — VERIFIED.** Ran 2026-06-22 (`PYTHONHASHSEED=0`, Python 3, Windows): **9/9 checks PASS**, answer
-**YES — within the reference scope stated below**. `declared ≠ verified`: the YES is a property of the
-single-process *logic*, not yet of a system under concurrency, latency, or scale.
+**Status.** The commit / speculative layer was VERIFIED **9/9** on 2026-06-22 (`PYTHONHASHSEED=0`, Python 3,
+Windows). The kernel has since been **hardened** to make the *three states of a fact* explicit — committed /
+irreversible / durable — adding **+7 checks (16 total)**; re-run to confirm 16/16. `declared ≠ verified`: the
+YES is a property of single-process *logic*, not yet of a system under concurrency, latency, or scale.
 
 ```bash
 PYTHONHASHSEED=0 python3 live_world_kernel.py
@@ -73,6 +74,28 @@ code path for "edit mode." (Scope, as above: demonstrated in single-process logi
 of the substrate, shown in the small; whether it survives concurrency and scale is the next probe.
 `declared ≠ verified`.)
 
+## The three states of a fact — committed ⟂ irreversible ⟂ durable
+
+"Is it real yet?" is not one question. Objectivity is at least two **orthogonal axes** — *causal dependence*
+and *replica redundancy* — so the kernel tracks three distinct transitions, each stamped on a logical clock:
+
+- **COMMITTED** `= authority_valid ∧ in shared log ∧ replay_integrity`. Binary, at the authority gate.
+  (`t_commit`)
+- **IRREVERSIBLE** `= ∃ committed dependent`. Causal: the *first* committed event that builds on it crosses
+  its irreversibility frontier. Not a tunable count — the threshold is one. (`t_dep`)
+- **DURABLE** `= ∃ recovery path independent of the failure`. Redundancy: a replica, **or** deterministic
+  regeneration, **or** archival — **quorum is only one such path**. The invariant is the *existence* of a path
+  the failure cannot also remove, never a specific strategy. (`t_durable`)
+
+These come apart, and the self-test exhibits each: *committed but not irreversible* (nobody depends on it
+yet); *irreversible but not durable* (depended-on but single-copy — a failure destroys it); *durable but not
+irreversible* (a replicated/regenerable asset nothing yet depends on). Then a deliberate **durability
+failure** — destroy the primary store — confirms that facts with an independent path recover (`a2` via
+replica, `a3` via **regeneration, no quorum**), while a primary-only fact is reported as **severance, never a
+fabricated value** (`compress ≠ sever`). It instruments the two separate latency budgets —
+`commit → dependency` (controls *feel*) and `dependency → durable` (controls *survivability*) — and shows a
+fact reaching durable with *no* dependency, proving the axes are independent.
+
 ## Three stores, kept distinct
 
 The load-bearing correction this prototype enforces — blurring these is what makes rollback expensive:
@@ -88,7 +111,7 @@ Prediction is a *scratchpad*, not a sealed reserve. An edit is an **event**, nev
 either **promotes** the event into shared truth or **rejects** it and rewinds the rejected event with its
 entire **causal subtree** — exactly its transitive descendants, nothing unrelated.
 
-## What the self-test proves (9 checks)
+## What the self-test proves (16 checks: 9 commit/speculative + 7 three-state)
 
 1. **speculative_isolation** — a proposed edit is private; no other client and no committed truth sees it.
 2. **commit_promotes_to_truth** — an accepted edit becomes shared truth; other clients now see it.
@@ -103,6 +126,23 @@ entire **causal subtree** — exactly its transitive descendants, nothing unrela
 9. **latency_irreversibility_frontier** — rolled-back work equals causal depth; expected thrash is
    `depth × reject_probability`. The *felt-reality* analogue of the irreversibility frontier — the quantity to
    measure next: how much speculative divergence a creator tolerates before trust collapses.
+
+*The three-state layer:*
+
+10. **committed_not_irreversible** — an accepted fact with no committed dependents is committed, not yet
+    irreversible (the two are different transitions).
+11. **dependency_makes_irreversible** — committing a dependent crosses the parent's irreversibility frontier
+    and stamps `t_dep`.
+12. **durable_by_independent_path_not_quorum** — durability is satisfied by a replica *or* deterministic
+    regeneration (with zero replicas) *or* archival; the invariant is an independent recovery path, not a quorum.
+13. **axes_are_orthogonal** — one fact is irreversible-not-durable, another durable-not-irreversible (causal
+    load ⟂ replica redundancy — objectivity is not one scalar).
+14. **durability_failure_recovers_independent** — destroy the primary store; facts with an independent path
+    (replica / regeneration) recover via it.
+15. **loss_is_severance_not_a_guess** — a primary-only fact with no independent path is reported as severance,
+    never a fabricated value (`compress ≠ sever`).
+16. **three_timestamps_two_budgets** — `t_commit ≤ t_dep ≤ t_durable`; `commit→dependency` (feel) and
+    `dependency→durable` (survivability) are separate budgets, and a fact can reach durable with no dependency.
 
 ## Honest scope (what this is NOT)
 
