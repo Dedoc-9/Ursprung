@@ -419,7 +419,9 @@ benchmark measures the benchmark's world; it does not prove universal superiorit
   structural term (size/perimeter); re-run the gate. Only then is promotion on the table.
 - [ ] Real-silicon benchmark: PFAL/TCFF at equal GPU time, measuring temporal artifacts, input-to-photon
   latency, reconstruction error, and motion stability (the numbers above expire here).
-- [ ] Native (C++/Rust) port validated against the Python reference via conformance vectors.
+- [ ] Native (C++/Rust) **renderer/fidelity** port validated against the Python reference via conformance
+  vectors. (The conformance-vector method has been demonstrated at the kernel layer: `reality_kernel/core_rs`
+  validated against the Python reference via `golden_kernel.tsv`; this item remains open for PFAL/TCFF/raster.)
 - [ ] Multi-lens presentations (cinematic / competitive / VR / handheld / debug) over one committed world.
 
 ## Verify locally
