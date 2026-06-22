@@ -1,14 +1,34 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-only -->
-# bench_gpu_real — the GPU-interval ruler on real silicon (M1 ✓, M2 ✓)
+# bench_gpu_real — the GPU-interval ruler on real silicon (M1 ✓, M2 ✓, M3 ✓)
 
 The smallest non-faked claims in the project, and the first ones that did **not** expire on silicon —
-because they were measured on silicon. `src/main.rs` is currently the **M2** program (real workload
-timing); the M1 empty-pass program is preserved in git history. No window, no swapchain, no pixels, no
-fidelity claim.
+because they were measured on silicon. `src/main.rs` is currently the **M3** program (measurement bound
+to world identity); M1 (empty pass) and M2 (real workload) are preserved in git history. No window, no
+swapchain, no pixels, no fidelity claim.
 
 ```bash
 cd experiments/bench_gpu_real && cargo run --release
 ```
+
+## Milestone 3 — the measurement is bound to the world identity ✓ (verified on the Ally X)
+
+A `GoldenReplay` derives a `FrameArtifact` whose digest is the stable identity of *what is measured*;
+every `BenchmarkObservation` carries that digest. The same frame is measured 12 times — identity stays
+one, timing is an independent observation.
+
+```
+frame.digest() = 4f1cb7c2495167e7
+12 runs · identities seen: 1 · timing ok: 11 (ghosts excluded: 1) · spread 9600–11720 ns
+```
+
+The headline is the lone identity over varying timing — `identity = stable; timing = observed`, the
+same kernel distinction enforced everywhere else. And a **real ghost appeared**: run 1 returned a
+zero interval (`begin == end == 0`, a cold-start timestamp the driver hadn't validated), was flagged
+`timing_status: NonPositive`, excluded from the timing stats — yet its `artifact_digest` was still
+`4f1cb7c2…`. A ghost interval changes the number, never the identity. This was the Q2 handling we
+designed for the synthetic case firing on a genuine silicon anomaly. Six checks: same-replay→same-digest,
+same-digest→same-dispatch, observation-carries-digest, JSON round-trips, one-identity-many-timings, and
+non-positive-interval-is-a-ghost. Still no FPS / latency / PFAL / TCFF claim.
 
 ## Milestone 2 — the ruler measures real work ✓ (verified on the Ally X)
 
@@ -71,8 +91,9 @@ ruler has ample resolution for frame-scale timing.
 ```
 M1 ✓  the ruler exists on silicon                         (empty pass, 40 ns)
 M2 ✓  the ruler measures real work + BenchmarkObservation  (compute LCG, 880→30760 ns, contract JSON)
-M3    FrameArtifact digest → wgpu submission → GpuInterval  (feed the contract a real interval)
-M4    PFAL/TCFF shaders · pixel capture · present-to-photon latency · thermal runs
+M3 ✓  measurement bound to world identity                  (GoldenReplay→FrameArtifact digest; ghost caught)
+M4    render-pass timing                                    (still compute→render; no PFAL yet)
+M5    equal-budget comparison harness  ·  M6  PFAL vs TCFF on silicon  →  Causal Continuity evidence
 ```
 
 The pinned `wgpu = "22.1"` resolved cleanly (`wgpu v22.1.0`) and compiled first try on the device; the

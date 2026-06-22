@@ -447,8 +447,12 @@ benchmark measures the benchmark's world; it does not prove universal superiorit
   silicon. **M2 DONE — the ruler measures real work (Ally X):** a trivial WGSL compute LCG timed across 3
   workload sizes (7 runs each) scales 880 ns → 30760 ns (overhead-bound small end, ~linear large end),
   emitted as the contract-shaped `BenchmarkObservation` JSON; the 1M `min 6720` outlier recorded as a
-  measurement ghost (median used, never min — `timing is an event`). Still no FPS/PFAL/TCFF claim. Remaining:
-  M3 FrameArtifact→submission→GpuInterval → M4 shaders / pixels / present-to-photon / thermal.
+  measurement ghost (median used, never min — `timing is an event`). Still no FPS/PFAL/TCFF claim. **M3 DONE — measurement
+  bound to world identity (Ally X):** a `GoldenReplay` derives a `FrameArtifact` (digest 4f1cb7c2495167e7);
+  12 runs of one frame → identities seen 1, timing varies 9600–11720 ns. A REAL ghost fired — run 1 returned
+  a zero interval (cold-start timestamp), flagged `NonPositive`, excluded from stats, identity intact: a ghost
+  changes the number, never the digest (the Q2 handling firing on a genuine anomaly). 6/6. Remaining: M4
+  render-pass timing → M5 equal-budget → M6 PFAL vs TCFF on silicon → Causal Continuity evidence.
 - [ ] Native (C++/Rust) **renderer/fidelity** port validated against the Python reference via conformance
   vectors. (The conformance-vector method has been demonstrated at the kernel layer: `reality_kernel/core_rs`
   validated against the Python reference via `golden_kernel.tsv`; this item remains open for PFAL/TCFF/raster.)

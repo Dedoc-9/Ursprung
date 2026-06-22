@@ -1,31 +1,32 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-//! bench_gpu_real — Milestone 2: time a real (trivial) GPU workload, bound to its conditions.
+//! bench_gpu_real — Milestone 3: bind the GPU measurement to the WORLD IDENTITY it measured.
 //!
-//! M1 proved the ruler exists by timing an EMPTY pass (40 ns of bracket overhead). M2 replaces the
-//! empty bracket with the smallest possible REAL work — a WGSL compute shader that runs an LCG loop
-//! over N u32 values — and emits a contract-shaped `BenchmarkObservation` as JSON. Still no window,
-//! no swapchain, no pixels, no render pipeline; we are testing the ruler against real work, not a
-//! renderer.
+//! M1: the ruler exists. M2: the ruler measures real work. M3 adds no rendering and no new timing —
+//! it adds *traceability*: a `GoldenReplay` derives a `FrameArtifact` whose digest is the stable
+//! identity of what is measured, and every `BenchmarkObservation` carries that digest. The dispatch is
+//! "derived from this frame, derived from this replay." Identity is stable; timing is observed.
 //!
-//! Acceptance (M2 claims success only if all hold):
-//!   1. timestamp queries still function;
-//!   2. duration is non-zero;
-//!   3. duration INCREASES with workload size (the ruler measures work, not just overhead);
-//!   4. the observation serializes to JSON;
-//!   5. the same workload reproduces across repeated runs.
-//! Absent on purpose: no FPS / latency / PFAL / TCFF / "4.13 ms" — those are later rungs.
+//! This is the GPU analogue of the provenance kernel's digest-resolution contract: the measurement can
+//! always be traced back to the thing it measured. Still compute-only — no window, swapchain, pixels.
 //!
-//! Run on the device:  cargo run --release   (release for representative CPU-side timing)
+//! Acceptance (M3 claims success only if all hold):
+//!   1. same replay → same digest;
+//!   2. same digest → same dispatch description;
+//!   3. the observation carries the digest;
+//!   4. the observation JSON round-trips (serialize → deserialize → equal);
+//!   5. many runs of one digest → varying timing but ONE identity;
+//!   6. a non-positive interval is a ghost (flagged, excluded from stats) — never an identity change.
+//!
+//! Run on the device:  cargo run --release
 
 use std::borrow::Cow;
 use std::collections::hash_map::DefaultHasher;
+use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 
 use pollster::FutureExt as _;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-/// A real but trivial compute workload: an LCG iterated 256× per element, written to storage so the
-/// compiler cannot optimize it away. Larger arrays = more workgroups = more GPU time.
 const WORKLOAD_WGSL: &str = r#"
 @group(0) @binding(0) var<storage, read_write> data: array<u32>;
 @compute @workgroup_size(64)
@@ -34,7 +35,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (i < arrayLength(&data)) {
         var acc: u32 = i;
         for (var k: u32 = 0u; k < 256u; k = k + 1u) {
-            acc = acc * 1664525u + 1013904223u; // numerical recipes LCG — real, unoptimizable work
+            acc = acc * 1664525u + 1013904223u;
         }
         data[i] = acc;
     }
@@ -42,24 +43,8 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
 "#;
 
 const WORKLOAD_NAME: &str = "compute_lcg_iter256";
-const SIZES: [u64; 3] = [16_384, 262_144, 1_048_576]; // u32 elements; /64 workgroups, all < 65535 limit
-const REPEATS: usize = 7;
-
-/// Bound to its conditions — the contract shape (`gpu_budget`/equal-budget arrives at M4, deliberately
-/// not faked here; `workload_size` is the M2 execution condition).
-#[derive(Serialize, Debug, Clone)]
-struct BenchmarkObservation {
-    backend: String,
-    device_name: String,
-    driver: String,
-    workload: String,
-    workload_size: u64,
-    gpu_begin_tick: u64,
-    gpu_end_tick: u64,
-    timestamp_period_ns: f32,
-    gpu_duration_ns: f64,
-    provenance_digest: String,
-}
+const WORKLOAD_SIZE: u64 = 262_144; // execution condition (not identity); fixed for M3 (M2 did scaling)
+const RUNS: usize = 12;
 
 fn digest(parts: &[&str]) -> String {
     let mut h = DefaultHasher::new();
@@ -69,16 +54,71 @@ fn digest(parts: &[&str]) -> String {
     format!("{:012x}", h.finish())
 }
 
-fn median(xs: &mut [f64]) -> f64 {
-    xs.sort_by(|a, b| a.partial_cmp(b).unwrap());
-    let n = xs.len();
-    if n == 0 {
-        0.0
-    } else if n % 2 == 1 {
-        xs[n / 2]
-    } else {
-        0.5 * (xs[n / 2 - 1] + xs[n / 2])
+// --- the world description: a replay derives a frame whose digest is its stable identity ----------
+#[derive(Clone)]
+struct GoldenReplay {
+    scene: String,
+    seed: u64,
+    policy: String,
+}
+
+#[derive(Clone, PartialEq)]
+struct FrameArtifact {
+    scene_digest: String,
+    transform_digest: String,
+    policy_id: String,
+    provenance_digest: String,
+}
+
+impl GoldenReplay {
+    fn frame(&self) -> FrameArtifact {
+        let seed = self.seed.to_string();
+        FrameArtifact {
+            scene_digest: digest(&[&self.scene, &seed]),
+            transform_digest: digest(&[&self.scene, &seed, "transform"]),
+            policy_id: self.policy.clone(),
+            provenance_digest: digest(&[&self.scene, &seed, &self.policy, "provenance"]),
+        }
     }
+}
+
+impl FrameArtifact {
+    fn digest(&self) -> String {
+        digest(&[&self.scene_digest, &self.transform_digest, &self.policy_id, &self.provenance_digest])
+    }
+    /// The dispatch description derived from this frame — deterministic, so same digest → same dispatch.
+    fn dispatch_descriptor(&self) -> String {
+        format!("{}|{}|n={}", WORKLOAD_NAME, self.policy_id, WORKLOAD_SIZE)
+    }
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Copy)]
+enum TimingStatus {
+    Ok,
+    NonPositive, // end <= begin: a measurement ghost (clock re-index / power-state), not an identity change
+}
+
+fn classify(begin: u64, end: u64, period_ns: f32) -> (TimingStatus, f64) {
+    // signed on purpose — a backward interval is recorded honestly, never clamped-and-hidden
+    let ticks = end as i128 - begin as i128;
+    let status = if ticks > 0 { TimingStatus::Ok } else { TimingStatus::NonPositive };
+    (status, ticks as f64 * period_ns as f64)
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+struct BenchmarkObservation {
+    backend: String,
+    device_name: String,
+    driver: String,
+    artifact_digest: String, // the FrameArtifact identity measured (stable across runs)
+    provenance_digest: String,
+    workload: String,
+    workload_size: u64,
+    gpu_begin_tick: u64,
+    gpu_end_tick: u64,
+    timestamp_period_ns: f32,
+    gpu_duration_ns: f64,
+    timing_status: TimingStatus,
 }
 
 struct Gpu {
@@ -114,7 +154,7 @@ impl Gpu {
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
-                    label: Some("bench_gpu_real M2"),
+                    label: Some("bench_gpu_real M3"),
                     required_features: wgpu::Features::TIMESTAMP_QUERY,
                     required_limits: wgpu::Limits::default(),
                     memory_hints: wgpu::MemoryHints::default(),
@@ -167,7 +207,6 @@ impl Gpu {
         }
     }
 
-    /// One timed dispatch over `n` elements; returns (begin_tick, end_tick).
     fn time_dispatch(&self, n: u64) -> (u64, u64) {
         let buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("data"),
@@ -232,66 +271,78 @@ impl Gpu {
         (begin, end)
     }
 
-    fn observe(&self, n: u64, begin: u64, end: u64) -> BenchmarkObservation {
-        let dur = (end.saturating_sub(begin)) as f64 * self.period_ns as f64;
+    /// Measure a frame: the observation carries the frame's identity digest.
+    fn observe(&self, frame: &FrameArtifact) -> BenchmarkObservation {
+        let (begin, end) = self.time_dispatch(WORKLOAD_SIZE);
+        let (status, dur) = classify(begin, end, self.period_ns);
         BenchmarkObservation {
             backend: self.backend.clone(),
             device_name: self.device_name.clone(),
             driver: self.driver.clone(),
+            artifact_digest: frame.digest(),
+            provenance_digest: frame.provenance_digest.clone(),
             workload: WORKLOAD_NAME.into(),
-            workload_size: n,
+            workload_size: WORKLOAD_SIZE,
             gpu_begin_tick: begin,
             gpu_end_tick: end,
             timestamp_period_ns: self.period_ns,
             gpu_duration_ns: dur,
-            provenance_digest: digest(&[WORKLOAD_NAME, &n.to_string(), WORKLOAD_WGSL]),
+            timing_status: status,
         }
     }
 }
 
 fn main() {
     let gpu = Gpu::init();
-    println!("M2 — real workload timing on {} ({})\n", gpu.device_name, gpu.backend);
+    let replay = GoldenReplay { scene: "hallway".into(), seed: 1, policy: "PFAL".into() };
+    let frame = replay.frame();
+    println!("M3 — measurement bound to world identity on {} ({})", gpu.device_name, gpu.backend);
+    println!("  replay: scene={} seed={} policy={}", replay.scene, replay.seed, replay.policy);
+    println!("  frame.digest() = {}  (the stable identity of what is measured)\n", frame.digest());
 
-    let mut medians: Vec<(u64, f64)> = Vec::new();
-    let mut all_nonzero = true;
-    let mut last_obs: Option<BenchmarkObservation> = None;
+    // run the SAME frame many times — identity must stay one, timing must be observed
+    let obs: Vec<BenchmarkObservation> = (0..RUNS).map(|_| gpu.observe(&frame)).collect();
 
-    for &n in SIZES.iter() {
-        let mut durs = Vec::with_capacity(REPEATS);
-        for _ in 0..REPEATS {
-            let (b, e) = gpu.time_dispatch(n);
-            if e <= b {
-                all_nonzero = false;
-            }
-            let obs = gpu.observe(n, b, e);
-            durs.push(obs.gpu_duration_ns);
-            last_obs = Some(obs);
-        }
-        let mn = durs.iter().cloned().fold(f64::INFINITY, f64::min);
-        let mx = durs.iter().cloned().fold(0.0, f64::max);
-        let med = median(&mut durs);
-        medians.push((n, med));
-        println!(
-            "  n={:>9}  median {:>12.1} ns   (min {:.1}, max {:.1}, {} runs)",
-            n, med, mn, mx, REPEATS
-        );
-    }
+    let identities: HashSet<&str> = obs.iter().map(|o| o.artifact_digest.as_str()).collect();
+    let ok_times: Vec<f64> = obs.iter()
+        .filter(|o| o.timing_status == TimingStatus::Ok)
+        .map(|o| o.gpu_duration_ns)
+        .collect();
+    let distinct_times: HashSet<u64> = ok_times.iter().map(|t| t.to_bits()).collect();
+    let ghosts = obs.iter().filter(|o| o.timing_status == TimingStatus::NonPositive).count();
+    let (tmin, tmax) = ok_times.iter().fold((f64::INFINITY, 0.0_f64), |(a, b), &x| (a.min(x), b.max(x)));
 
-    // one observation, serialized, as the contract-shaped artifact
-    let json = serde_json::to_string(last_obs.as_ref().unwrap());
-    println!("\nobservation JSON: {}", json.as_ref().map(|s| s.as_str()).unwrap_or("<error>"));
+    println!("  {} runs · identities seen: {} · timing ok: {} (ghosts excluded: {}) · spread {:.0}–{:.0} ns",
+             RUNS, identities.len(), ok_times.len(), ghosts, tmin, tmax);
 
-    // --- acceptance criteria (M2 claims success only if all hold) ---
-    let smallest = medians.first().unwrap().1;
-    let largest = medians.last().unwrap().1;
-    let scales = medians.windows(2).all(|w| w[1].1 >= w[0].1) && largest > smallest;
+    // --- deterministic checks (don't depend on the GPU cooperating) ---
+    let r1 = GoldenReplay { scene: "hallway".into(), seed: 1, policy: "PFAL".into() };
+    let r2 = GoldenReplay { scene: "hallway".into(), seed: 1, policy: "PFAL".into() };
+    let same_replay_same_digest = r1.frame().digest() == r2.frame().digest();
+    let same_digest_same_dispatch = r1.frame().dispatch_descriptor() == r2.frame().dispatch_descriptor();
+
+    let sample = obs.first().unwrap();
+    let json = serde_json::to_string(sample).unwrap();
+    let round: Result<BenchmarkObservation, _> = serde_json::from_str(&json);
+    let json_round_trips = round.as_ref().map(|o| o == sample).unwrap_or(false);
+
+    // Q2: a non-positive interval is a ghost — flagged, excluded from stats, identity intact.
+    let (gs_eq, _) = classify(100, 100, gpu.period_ns); // equal ticks
+    let (gs_back, _) = classify(100, 90, gpu.period_ns); // backward
+    let (gs_ok, _) = classify(100, 140, gpu.period_ns);
+    let ghost_handled = gs_eq == TimingStatus::NonPositive
+        && gs_back == TimingStatus::NonPositive
+        && gs_ok == TimingStatus::Ok;
+
+    println!("\nobservation JSON: {}", json);
+
     let checks = [
-        ("1_timestamps_function", medians.iter().all(|(_, d)| d.is_finite())),
-        ("2_duration_nonzero", largest > 0.0 && all_nonzero),
-        ("3_duration_scales_with_workload", scales),
-        ("4_observation_serializes_to_json", json.is_ok()),
-        ("5_reproduces_across_runs", all_nonzero), // every repeat produced a valid non-zero interval
+        ("1_same_replay_same_digest", same_replay_same_digest),
+        ("2_same_digest_same_dispatch", same_digest_same_dispatch),
+        ("3_observation_carries_digest", sample.artifact_digest == frame.digest()),
+        ("4_observation_json_round_trips", json_round_trips),
+        ("5_one_identity_timing_observed", identities.len() == 1 && distinct_times.len() >= 2),
+        ("6_nonpositive_interval_is_a_ghost_not_identity", ghost_handled),
     ];
     println!("\nacceptance:");
     let mut ok = true;
@@ -300,10 +351,12 @@ fn main() {
         ok &= *pass;
     }
     println!(
-        "\nM2 {} — the ruler measures real work (scales {:.1}ns→{:.1}ns); still no fidelity/FPS/PFAL claim.",
+        "\nM3 {} — identity is stable ({}), timing is observed ({} distinct over {} runs). \
+         A ghost interval would change the number, never the digest.",
         if ok { "PASS" } else { "FAIL" },
-        smallest,
-        largest
+        frame.digest(),
+        distinct_times.len(),
+        RUNS
     );
-    assert!(ok, "M2 acceptance failed");
+    assert!(ok, "M3 acceptance failed");
 }
