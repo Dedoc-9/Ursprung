@@ -181,6 +181,33 @@ layer as an **analogy generator**, never a design proof. The proof is the 16/16 
 lesson is only that observable state and generative history are different objects, in physics and in engines
 alike. `declared ≠ verified`.)*
 
+## The frontier probe — observe, don't enforce (`frontier_probe.py`)
+
+The barrier — *no committed fact may depend on an uncommitted possibility* — is deliberately **not** a law
+here. Promoting a frontier discovery into a kernel rule before measuring where the frontier lives would
+violate the discipline that earns boundaries. So `frontier_probe.py` is the **instrument**, not the rule: it
+lets dependency *outrun* commitment and asks where the failure comes from.
+
+It tracks candidate creation, reads, derived commits, externalization, and rollback attempts through a
+**sealed observer** — append-only telemetry never read back by world ops; classification is a *pure* function
+over it (`telemetry ≠ control`, `observation ≠ intervention`; an instrument that moved the world it measures
+would be measuring its own shadow). The failure signal is a **contradicted dependency** — a dependent
+referenced a candidate that then changed or vanished without compensation — tagged by source. Three scenarios
+exhibit the three outcomes:
+
+```
+scenario             outcome             source     commit-barrier would prevent?
+aligned              ALIGNED             —          n/a (frontier already = commit)
+needs_promotion      NEEDS_PROMOTION     commit     yes (promote-first)
+observer_dependent   OBSERVER_DEPENDENT  observer   no (out of band — policy only)
+```
+
+So the instrument tells whether the barrier would be **redundant**, **earned**, or **insufficient** — and
+emits that classification with **no verdict** on whether to build it. `observe → measure → locate frontier →
+choose mechanism`, never `choose → build → justify`. Run: `PYTHONHASHSEED=0 python3 frontier_probe.py` (7/7
+self-checks verify the *instrument* — correct classification, dependency-allowed-to-outrun, source
+attribution, and that the observer is sealed).
+
 ## Honest scope (what this is NOT)
 
 A **logic reference**, not a performance system. No concurrency-at-scale, no networking, no UI, no renderer.
