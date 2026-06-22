@@ -1,10 +1,12 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-only -->
-# Real-Silicon Benchmark Plan (NOT built — a plan, not a result)
+# Real-Silicon Benchmark — the Measurement Contract (NOT built — a contract, not a result)
 
 This document fixes the discipline of the real-silicon benchmark **before** any implementation, so that
-"we have interesting silicon" can never quietly become "we have a validated result." It is the gate that
-would move the Causal Continuity Hypothesis from `supported_constructed` toward a **law** — and nothing in
-here is run yet.
+"we have interesting silicon" can never quietly become "we have a validated result." It is less a plan than
+a **measurement contract a harness implementation must satisfy** — the invariant the kernel introduced,
+carried into measurement: *the thing that licenses a number travels with the number.* It is the gate that
+would move the Causal Continuity Hypothesis from `supported_constructed` toward an **empirically supported
+law within the stated measurement domain** — and nothing in here is run yet.
 
 ## The reframing (the load-bearing distinction)
 
@@ -21,9 +23,11 @@ separate from the kernel result. The kernel proved the **contract** survives a s
 contact with a substrate. Two different questions; keep them apart. (For a distributed product release this
 separation is the asset: a contract that travels, and fidelity numbers that are honestly device-scoped.)
 
-## 1 — The device is a constrained ORACLE, not a target to optimize around
+## 1 — The device is a constrained measurement SUBSTRATE, not an optimization target
 
-A handheld is valuable precisely because it creates pressure the constructed benches could not:
+"Oracle" only in the narrow sense of *source of measurements* — never *source of truth*. The kernel
+rejected oracle language for the runtime itself; the hardware earns the word only as an instrument. A
+handheld is valuable precisely because it creates pressure the constructed benches could not:
 
 - **unified CPU/GPU memory (LPDDR5X)** makes copies, residency, and bandwidth *visible* — the
   cache/bandwidth frontier the lineage bench's Python dict hid;
@@ -45,7 +49,9 @@ run:
 
 Without this, a later comparison is "same code, different invisible world." This is the kernel's
 `identity includes provenance` applied to a measurement: a number without its run-provenance is an
-`UNACCOUNTED` result.
+`UNACCOUNTED` result. The difference between a benchmark and marketing, in one line: marketing treats
+`fps number → identity claim`; this contract treats `fps measurement → event with provenance`. **Timing is
+an event, not an identity.**
 
 ## 2 — "Equal GPU time" needs a strict definition (the GPU clock is the shared ruler)
 
@@ -92,16 +98,25 @@ a law promoted by a model world. A pass here (real pixels, real motion, equal GP
 is what `supported_constructed → law` requires; a loss demotes it back to a hypothesis and is kept as
 architectural information. `declared ≠ verified`.
 
+**A failed result is also a successful measurement:** it preserves the observed failure mode and prevents
+the promotion of an unsupported allocation rule. The benchmark is a *measurement boundary*, not a courtroom
+that crowns or kills the hypothesis — the gate is symmetric, and either outcome is recorded with its
+provenance.
+
 ## 5 — The missing piece is THREE harnesses, not one (they fail differently)
 
 ```
 bench_gpu/
   ├── fidelity_compare    PFAL vs TCFF vs controls at equal GPU-timestamp budget
   ├── latency_capture     input → photon (real input, real 120 Hz panel)
-  └── thermal_stability   sustained frame behaviour under throttling
+  ├── thermal_stability   sustained frame behaviour under throttling
+  └── reproducibility     capture environment + artifact digests (a benchmark run is an artifact too)
 ```
 
-A technique can reconstruct well **but** add latency; hit latency **but** degrade under heat; look stable
+The first three are the failure-mode harnesses. `reproducibility` is **not another metric** — it closes the
+provenance loop for the benchmark itself: a run is an `Artifact` like any other (run-provenance + content
+digests of inputs and results), so the thing that licenses a number travels with it. A technique can
+reconstruct well **but** add latency; hit latency **but** degrade under heat; look stable
 **but** spend impossible energy. Collapsing these into one score would recreate exactly the
 multiplicative-convenience the fidelity-laws audit just removed (`model ≠ verified structure`).
 

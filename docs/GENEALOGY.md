@@ -429,7 +429,10 @@ benchmark measures the benchmark's world; it does not prove universal superiorit
   latency, reconstruction error, and motion stability (the numbers above expire here). **Plan fixed** in
   [`REAL_SILICON_BENCHMARK.md`](REAL_SILICON_BENCHMARK.md) — device = constrained oracle (run-provenance
   recorded), GPU-timestamp budget = the shared ruler, provenance kept off the frame path, temporal error is a
-  Pareto *profile* not a summed score, three harnesses (fidelity / latency / thermal). Substrate ≠ benchmark.
+  Pareto *profile* not a summed score, three harnesses (fidelity / latency / thermal) + reproducibility.
+  Substrate ≠ benchmark. **Contract core built + verified (no GPU):** `experiments/bench_gpu/` (9/9) —
+  RunRecord (UNACCOUNTED without provenance), Pareto profile (no scalar collapse), equal-GPU-tick guard, and
+  the `RealBackend` seam that raises rather than fakes. The Vulkan/DX12/wgpu backend on device is the frontier.
 - [ ] Native (C++/Rust) **renderer/fidelity** port validated against the Python reference via conformance
   vectors. (The conformance-vector method has been demonstrated at the kernel layer: `reality_kernel/core_rs`
   validated against the Python reference via `golden_kernel.tsv`; this item remains open for PFAL/TCFF/raster.)
