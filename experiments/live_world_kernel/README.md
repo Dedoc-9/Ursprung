@@ -208,6 +208,33 @@ choose mechanism`, never `choose → build → justify`. Run: `PYTHONHASHSEED=0 
 self-checks verify the *instrument* — correct classification, dependency-allowed-to-outrun, source
 attribution, and that the observer is sealed).
 
+## The concurrency probe — geometry proposes, dependencies judge, convergence reveals (`concurrency_probe.py`)
+
+The frontier after the single-process kernel is concurrency, and the temptation there is to import a physics
+*guarantee* (Dini's theorem → "uniform convergence kills stragglers"). Graded honestly, Dini gives a *shape*,
+not a guarantee: its hypotheses (monotone convergence on a compact space) fail for live edits (not monotone)
+and for dependency surfaces (`geometric locality ≠ dependency locality`). So `concurrency_probe.py` keeps only
+what survives — **a partition is a hypothesis; the dependency graph is the judge; convergence is the
+measurement** — and enforces nothing.
+
+For a given partition and dependency graph it measures **boundary leakage** (cross-region dependencies — the
+optimization boundary becoming semantic) and whether the residual **settles** (the Dini-shaped metric,
+*unresolved cross-boundary dependencies*, but only in the **quiescent** phase; under live overload it is
+allowed to diverge, and that divergence is the repartition signal). Same world, two partitions:
+
+```
+partition            leakage   converges?   classification
+aligned              0.00      yes          GOOD_GAUGE        (boundary carries no causal traffic)
+split (quiescent)    0.25      yes          GAUGE_WITH_COST   (leaks, but settles)
+split (overloaded)   0.25      no           SEMANTIC_LEAK     (leaks faster than it settles → repartition)
+```
+
+It shows leakage is a *representation choice* not ontology (identical deps, different partition → different
+leak — Arbitrary-Boundary), that geometric and dependency locality are different relations, and that
+Dini-style convergence holds *only* in quiescence. Pure functions (sealed — no state, no enforcement); **no
+verdict** on which partition to adopt. Run: `PYTHONHASHSEED=0 python3 concurrency_probe.py` (7/7). It is the
+reconciliation-layer cousin of `prediction.py`'s Dini-style observer.
+
 ## Honest scope (what this is NOT)
 
 A **logic reference**, not a performance system. No concurrency-at-scale, no networking, no UI, no renderer.
