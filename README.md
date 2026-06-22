@@ -904,11 +904,14 @@ being kept open for.
 the renderer track. [`docs/PREDICTIVE_FIDELITY.md`](docs/PREDICTIVE_FIDELITY.md) — the prediction → membrane →
 PFAL → TCFF chain. [`docs/RENDER_VERIFICATION_RECORD.md`](docs/RENDER_VERIFICATION_RECORD.md) — features as
 experiments. [`docs/GENEALOGY.md`](docs/GENEALOGY.md) — the full genealogy & checklist.
-[`docs/REAL_SILICON_BENCHMARK.md`](docs/REAL_SILICON_BENCHMARK.md) — the measurement *contract* for the GPU
-benchmark (device as constrained oracle, GPU-timestamp budget as the shared ruler, temporal error as a Pareto
-profile). It is now **built and verified on hardware through the summit** in `experiments/bench_gpu_real`
-(M1–M6c on an Ally X); the M6b/M6c gate on a neutral ruler falsified the strong causal claim and left a
-conditional one. Substrate ≠ benchmark.
+[`docs/BOUNDARY_MAP.md`](docs/BOUNDARY_MAP.md) — **the measured boundary map for causal allocation**, stated
+once and whole: spatial conditional-negative (M6a–c) · temporal conditional-positive (T1–T3) · hidden-future
+recoverable only above a precursor threshold, where a weak signal is *harmful* (T4). The artifact worth
+preserving. [`docs/REAL_SILICON_BENCHMARK.md`](docs/REAL_SILICON_BENCHMARK.md) — the measurement *contract* for
+the GPU benchmark (device as constrained oracle, GPU-timestamp budget as the shared ruler, temporal error as a
+Pareto profile). It is now **built and verified on hardware through the temporal arc** in
+`experiments/bench_gpu_real` (M1–M6c spatial + M6d/T1–T4 temporal on an Ally X); the neutral rulers falsified
+the strong spatial causal claim and supported a conditional temporal one. Substrate ≠ benchmark.
 [`docs/MEASUREMENT_DISCIPLINE.md`](docs/MEASUREMENT_DISCIPLINE.md) — the project's epistemic boundary: the
 measurement loop, closed-world failure, what a result means, and what NOT to claim.
 [`docs/INFORMATION_INTENT.md`](docs/INFORMATION_INTENT.md) — the *next-gen direction* (research, not built):

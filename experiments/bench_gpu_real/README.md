@@ -11,6 +11,10 @@ and M6d/T3 (the temporal causal gate) are preserved in git history.
 cd experiments/bench_gpu_real && cargo run --release
 ```
 
+> **The whole result in one place:** [`docs/BOUNDARY_MAP.md`](../../docs/BOUNDARY_MAP.md) — the measured
+> boundary map for causal allocation (spatial conditional-negative · temporal conditional-positive · hidden-
+> future recoverable only above a precursor threshold). The milestone sections below are the derivation.
+
 ## Milestone 6d / T4 — the hidden-future scene + precursor sweep (the deep temporal test) ✓ (Ally X)
 
 T3's monotone scene had no hidden future (the prophet collapsed). T4 builds the scene where a sealed policy
