@@ -537,7 +537,28 @@ benchmark measures the benchmark's world; it does not prove universal superiorit
   measured budget, scored on THIS temporal ruler against FUTURE references — does spending NOW measurably reduce
   FUTURE error, and for which policies? Expected: another conditional region (future consequence matters only
   when prediction_quality × horizon × budget_scarcity clear a threshold, AND only post-disocclusion since
-  pre-warming occluded content is reset), not a universal law.
+  pre-warming occluded content is reset), not a universal law. **M6d/T3 DONE — the temporal causal gate, a
+  conditional POSITIVE (Ally X):** 5 SEALED policies (present state + own accumulation only) allocate the
+  per-frame budget under EQUAL budget (3072 samples), scored on the T2 temporal ruler vs future references; +
+  a NON-ADMISSIBLE prophet (future knowledge) as calibration ceiling. RESULT (future pixel/struct): uniform
+  0.00599/0.00875; present_pfal 0.00511/0.00754; causal_future_d1 0.00486/0.00694; causal_future_d23 0.00486/
+  0.00694; drifted 0.00809/0.01155 (worst, control behaves); prophet 0.00486/0.00694 (gap EXACTLY 0). ε floor
+  0.000053/0.000079. ε-frontier (sealed) = {causal_future_d1, causal_future_d23}. FOUR FINDINGS: (1) the
+  temporal lever PAYS OFF — causal_future ε-DOMINATES BOTH uniform (Δpixel 0.00113 ≈21× ε) AND present_pfal
+  (Δpixel 0.00025 ≈5× ε) on both axes; beating present_pfal (which ALSO avoids occluded waste) proves the win
+  is the genuine FUTURE-CAUSAL DEFICIT signal, NOT mere culling. (2) the EXPONENT did NOT matter — d1 ≡ d23
+  exactly, UNLIKE M6c: that scene had heterogeneous spatial difficulty (exponent governs concentration), here
+  all revealed tiles are equally hard and only TIMING differs → exponent has nothing to bite on (a clean
+  boundary). (3) the PROPHET COLLAPSED (gap exactly 0) → this monotone scene holds NO hidden-future opportunity
+  (present predicts future); reaching the ceiling means "present info suffices," not "universally optimal." (4)
+  CONTRAST with spatial M6 — spatial causal was falsified/conditional, TEMPORAL causal clearly HELPS; the
+  temporal lever (don't spend on soon-reset content; feed the freshly-revealed deficit) is a real efficiency
+  the budget-blind policies miss. KEY META: the SAME apparatus that FALSIFIED the spatial claim (M6b) SUPPORTS
+  the temporal one — strongest evidence it is not biased either way. HONEST SCOPE: supported UNDER the declared
+  TAA+disocclusion coupling, on THIS monotone scene where the oracle ceiling is uninformative by construction.
+  NEXT: T4 — a HIDDEN-FUTURE scene (future relevance NOT visible in present state, e.g. a tile easy now that
+  spikes hard at TF independent of the sweep) where the prophet genuinely separates from sealed policies — the
+  test of whether a sealed policy can recover future structure not already encoded in the present.
 - [ ] Native (C++/Rust) **renderer/fidelity** port validated against the Python reference via conformance
   vectors. (The conformance-vector method has been demonstrated at the kernel layer: `reality_kernel/core_rs`
   validated against the Python reference via `golden_kernel.tsv`; this item remains open for PFAL/TCFF/raster.)

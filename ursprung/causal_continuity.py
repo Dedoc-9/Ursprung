@@ -43,9 +43,36 @@ was U·C·P-weighted (the thing being optimized); strip that circularity and the
 from __future__ import annotations
 
 # Tier reached: "hypothesis" → "supported_constructed" (circular metric) → REAL SILICON, NEUTRAL ruler:
-# M6b unsupported (flat loss) → M6c sweep REFINED it to CONDITIONAL. The strong/general claim stays
-# falsified; a narrow conditional claim is supported on silicon. Never hard-code "law".
-STATUS = "conditional_on_neutral_ruler"   # general claim FALSIFIED; conditional claim supported (see SWEEP_M6C)
+# M6b unsupported (flat loss) → M6c sweep REFINED it to CONDITIONAL (SPATIAL). Then M6d/T1–T3 tested the
+# TEMPORAL form on a temporal ruler and found it SUPPORTED under a declared coupling (see TEMPORAL_GATE_M6D).
+# The strong/general spatial claim stays falsified; the temporal claim is a conditional positive. Not a law.
+STATUS = "conditional_on_neutral_ruler"   # spatial: falsified→conditional (SWEEP_M6C); temporal: conditional-positive (TEMPORAL_GATE_M6D)
+
+# M6d/T3 (real silicon, Ally X) — the TEMPORAL causal gate. The first time the hypothesis WON on a neutral
+# ruler — and the same apparatus that falsified the spatial claim is the one that supports this, evidence it
+# is not biased either way.
+TEMPORAL_GATE_M6D = (
+    "M6d lifted the test into TIME: a world that evolves through the RealityKernel (an occlusion edge sweeping "
+    "the tile grid), under a DECLARED coupling — TAA history accumulation + explicit disocclusion invalidation "
+    "(history accumulates while content is stable, RESETS when content changes). T1 proved the temporal "
+    "apparatus (replay identity in time, present≠future decoupling emergent), T2 proved the temporal RULER fair "
+    "(future error responds; emergence penalty ≈32× ε vs static exactly 0 — it distinguishes present error from "
+    "future consequence without seeing the policy). T3 then compared 5 SEALED policies (present state + own "
+    "accumulation only) at equal budget on that ruler, + a non-admissible prophet (future knowledge) as a "
+    "ceiling. RESULT: sealed future-causal allocation (serve the under-accumulated REVEALED tiles by deficit; "
+    "waste nothing on occluded content that will be reset) ε-DOMINATES BOTH uniform (≈21× ε) AND present-"
+    "difficulty (≈5× ε) on future pixel AND structural error. Beating present-difficulty (which also avoids "
+    "occluded waste) means the win is the genuine future-causal deficit signal, NOT mere culling. TWO honest "
+    "boundaries: (a) the allocation EXPONENT did NOT matter (d1 ≡ d23), unlike the spatial M6c — because here "
+    "tiles are equally hard and only TIMING differs, so concentration has nothing to bite on; (b) the prophet "
+    "COLLAPSED onto the sealed policy (gap exactly 0) — this monotone scene has NO hidden-future information "
+    "(present predicts future), so reaching the ceiling means 'present info suffices', not 'universally "
+    "optimal'. SCOPE: supported UNDER the declared coupling, on a monotone scene; `declared ≠ verified`, "
+    "`benchmark gain ≠ universal`. The discriminating test (T4) is a HIDDEN-future scene where future relevance "
+    "is not visible in present state — only there can a sealed policy fail to reach the oracle. Net: the "
+    "temporal form of Causal Continuity is a CONDITIONAL POSITIVE on silicon, a counterpoint to the spatial "
+    "form's conditional negative."
+)
 
 # M6b (real silicon, ASUS ROG Xbox Ally X / Radeon 890M, Vulkan) — the falsification-grade result.
 NEUTRAL_RULER_RESULT = (

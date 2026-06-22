@@ -1,14 +1,55 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-only -->
-# bench_gpu_real — the GPU benchmark on real silicon (M1 ✓ … M6c ✓; M6d/T1 ✓, T2 ✓ — the temporal ruler)
+# bench_gpu_real — the GPU benchmark on real silicon (M1 ✓ … M6c ✓; M6d/T1 ✓, T2 ✓, T3 ✓ — temporal causal gate)
 
 The smallest non-faked claims in the project, and the first ones that did **not** expire on silicon —
-because they were measured on silicon. `src/main.rs` is currently the **M6d/T2** program (the temporal ruler);
-M1–M5 (the timing ladder), M6a (the perceptual ruler), M6b (the Causal Continuity gate), M6c (the alignment ×
-budget × exponent sweep), and M6d/T1 (the temporal apparatus) are preserved in git history.
+because they were measured on silicon. `src/main.rs` is currently the **M6d/T3** program (the temporal causal
+gate); M1–M5 (the timing ladder), M6a (the perceptual ruler), M6b (the Causal Continuity gate), M6c (the
+alignment × budget × exponent sweep), M6d/T1 (the temporal apparatus), and M6d/T2 (the temporal ruler) are
+preserved in git history.
 
 ```bash
 cd experiments/bench_gpu_real && cargo run --release
 ```
+
+## Milestone 6d / T3 — the temporal causal gate (a conditional POSITIVE, calibration baseline) ✓ (Ally X)
+
+The first time the project's own preferred hypothesis **won** on a neutral ruler — and the same apparatus that
+*falsified* the spatial causal claim (M6b) is the one that now *supports* the temporal one, which is the
+strongest evidence it is not biased either way.
+
+Five **sealed** policies (present state + own accumulation only — never the future or the ruler) allocate the
+per-frame budget under **equal budget** (3072 samples), scored on the T2 temporal ruler against future
+references; plus a **non-admissible prophet** (sees the future) as a calibration ceiling. The only legitimate
+temporal lever under T2's coupling: among already-revealed tiles serve the **under-accumulated** ones (future-
+causal deficit) and **waste nothing on occluded content that will be reset** — pre-warming is impossible, so
+this is the honest temporal form of "drop present-perception S, allocate by future causal loss."
+
+```
+policy             future_pixel  future_struct   (equal budget 3072 samples; lower = better)
+uniform            0.00599       0.00875         budget-blind — wastes on soon-reset occluded tiles
+present_pfal       0.00511       0.00754         avoids occluded waste, but history-blind among revealed
+causal_future_d1   0.00486       0.00694    ← ε-frontier
+causal_future_d23  0.00486       0.00694    ← ε-frontier
+drifted(ctrl)      0.00809       0.01155         negative control behaves (clearly worst)
+prophet            0.00486       0.00694         oracle COLLAPSES onto causal (gap 0.00000)
+ε floor (pixel/struct) = 0.000053 / 0.000079
+```
+
+Four findings: (1) **the temporal lever pays off** — `causal_future` ε-dominates *both* uniform (Δpixel ≈ 21× ε)
+and `present_pfal` (Δpixel ≈ 5× ε), on both axes; beating `present_pfal` (which also avoids occluded waste)
+means the win is the genuine **future-causal deficit signal**, not mere culling. (2) **the exponent did NOT
+matter here** — `d1 ≡ d23` exactly, unlike M6c: that scene had heterogeneous spatial difficulty (the exponent
+governs concentration), here every revealed tile is equally hard and only *timing* differs, so the exponent
+has nothing to bite on. (3) **the prophet collapsed** (gap exactly 0) — this monotone scene holds *no hidden-
+future opportunity*: present state already predicts future relevance, so reaching the ceiling means "present
+info suffices," not "universally optimal." (4) **contrast with spatial M6**: spatial causal allocation was
+falsified/conditional, *temporal* causal allocation clearly helps — the temporal lever is a real efficiency
+(don't spend on content that resets; feed the freshly-revealed deficit) the budget-blind policies miss.
+
+**Honest scope:** supported *under the declared TAA+disocclusion coupling, on this monotone scene*, where the
+oracle ceiling is uninformative by construction. The discriminating test — a scene whose future relevance is
+**hidden** from present state, where the prophet genuinely separates from sealed policies — is **T4**.
+`benchmark gain ≠ universal`.
 
 ## Milestone 6d / T2 — the temporal RULER (apparatus, no verdict) ✓ (Ally X)
 
@@ -335,7 +376,11 @@ M6d/T1 ✓ temporal apparatus on the RealityKernel            →  world evolves
                                                                present≠future decoupling emerges; 7/7, no verdict
 M6d/T2 ✓ temporal ruler (TAA accum + disocclusion reset)    →  future error responds, neg-control 0, ε measured,
                                                                emergence penalty 32× ε vs static 0; 5/5, no verdict
-M6d/T3   temporal causal gate (uniform/PFAL/causal/control) →  does spending NOW reduce FUTURE error? (the real test)
+M6d/T3 ✓ temporal causal gate (5 sealed + prophet)          →  POSITIVE (conditional): causal_future ε-dominates
+                                                               uniform & present_pfal; prophet collapses (no hidden
+                                                               future here); exponent didn't matter (homogeneous diff)
+M6d/T4   hidden-future scene (present ≠ predictor)           →  where the prophet gets teeth: can a sealed policy
+                                                               recover future relevance NOT visible in present state?
 ```
 
 The pinned `wgpu = "22.1"` resolved cleanly (`wgpu v22.1.0`) and compiled first try on the device; the
