@@ -49,6 +49,30 @@ concurrency-at-scale (the common lethal failure: many actors, one region), no ne
 concurrency — is the next probe, not this one. The pass means the idea **earned the right to be scaled**, not
 that it has been.
 
+## What it changes — editor and runtime are one state of matter
+
+Historically, engines treat **editing** and **playing** as two different states of matter, separated by a
+*phase transition*: an authoring tool mutates an offline world (Unreal Editor, Maya, Blender) → build → export
+→ deploy → a running game nobody can author without breaking it. The arrow runs one way. A runtime edit is a
+hot-reload hack or simply impossible, because a live world has no honest way to accept an authored change while
+preserving determinism, authority, and replay — so the two states are kept in separate phases, with a wall
+between them.
+
+**This kernel collapses the phase transition.** An editing action and a gameplay action are the *same
+primitive* — an `EditEvent` committed to the one trajectory — differing only in (a) the capability the event
+requires and (b) the source that emitted it. There is no offline state to build from and ship: the world never
+leaves "running" in order to be edited. "Editing" is just a *privileged event stream into the live world*, and
+because it is the identical primitive to a gameplay mutation, it inherits replay, provenance, authority, and
+undo **for free** — as consequences of the substrate, not as bolted-on tooling. The build/deploy wall —
+historically a change of *state* — becomes a **capability check**, not a phase change.
+
+So editor and runtime are not two states of matter bridged by a pipeline; they are **one substrate**,
+distinguished only by who is allowed to emit what. The prototype shows this directly: "move the wall" and any
+in-world mutation travel the identical `propose → commit` path through the same kernel — there is no second
+code path for "edit mode." (Scope, as above: demonstrated in single-process logic. The collapse is a property
+of the substrate, shown in the small; whether it survives concurrency and scale is the next probe.
+`declared ≠ verified`.)
+
 ## Three stores, kept distinct
 
 The load-bearing correction this prototype enforces — blurring these is what makes rollback expensive:
