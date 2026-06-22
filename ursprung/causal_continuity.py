@@ -74,6 +74,25 @@ TEMPORAL_GATE_M6D = (
     "form's conditional negative."
 )
 
+# M6d/T4 (real silicon, Ally X) — the hidden-future sweep: the deep test, and the recoverability boundary.
+HIDDEN_FUTURE_T4 = (
+    "T4 built the scene T3 could not: future relevance HIDDEN from present state. The hidden channel is future "
+    "IMPORTANCE, not difficulty (a difficulty spike resets history → forbids preparation → reproduces T3's "
+    "tautology), so content is STABLE (accumulation survives) but a future event makes some tiles MATTER more "
+    "(the ruler weights per-tile error by future_importance, invisible now). Coupling fixed; a precursor knob "
+    "ρ∈[0,1] gives each tile a present signal = ρ·importance + (1−ρ)·noise; sealed policies see only the "
+    "precursor, the prophet sees true importance. The deliverable is the CURVE gap(ρ)=causal_future−prophet: "
+    "0.00242 (ρ0) → 0.00102 → 0.00039 → 0.00011 → 0.00000 (ρ1), ε≈0.000076. THREE results: (1) the channel is "
+    "REAL — at ρ=0 the prophet ε-dominates every sealed policy by ~32× ε (the first scene where the oracle is "
+    "informative); gap(ρ) MEASURES the value of future information a sealed policy cannot recover. (2) a WEAK "
+    "SIGNAL IS WORSE THAN NONE — at ρ<0.5 acting on the noisy precursor is WORSE than uniform (it starves the "
+    "truly-important tiles); there is a RECOVERABILITY THRESHOLD (~ρ0.5) below which 'trying to be causal' "
+    "backfires — a cautionary boundary for any predictive allocator with an unreliable signal. (3) the sealed "
+    "policy REACHES the oracle exactly at ρ=1 (gap 0). Net: a sealed policy can recover latent future structure "
+    "ONLY to the extent the present contains a precursor, and below a threshold the attempt is net-harmful. "
+    "`declared ≠ verified`; `benchmark gain ≠ universal`."
+)
+
 # M6b (real silicon, ASUS ROG Xbox Ally X / Radeon 890M, Vulkan) — the falsification-grade result.
 NEUTRAL_RULER_RESULT = (
     "M6b ran the actual gate on a SEALED, policy-neutral perceptual ruler (pixel/structural/temporal error vs "

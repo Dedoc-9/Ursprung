@@ -1,15 +1,55 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-only -->
-# bench_gpu_real — the GPU benchmark on real silicon (M1 ✓ … M6c ✓; M6d/T1 ✓, T2 ✓, T3 ✓ — temporal causal gate)
+# bench_gpu_real — the GPU benchmark on real silicon (M1 ✓ … M6c ✓; M6d/T1–T4 ✓ — the temporal arc)
 
 The smallest non-faked claims in the project, and the first ones that did **not** expire on silicon —
-because they were measured on silicon. `src/main.rs` is currently the **M6d/T3** program (the temporal causal
-gate); M1–M5 (the timing ladder), M6a (the perceptual ruler), M6b (the Causal Continuity gate), M6c (the
-alignment × budget × exponent sweep), M6d/T1 (the temporal apparatus), and M6d/T2 (the temporal ruler) are
-preserved in git history.
+because they were measured on silicon. `src/main.rs` is currently the **M6d/T4** program (the hidden-future
+importance sweep); M1–M5 (the timing ladder), M6a (the perceptual ruler), M6b (the Causal Continuity gate),
+M6c (the alignment × budget × exponent sweep), M6d/T1 (the temporal apparatus), M6d/T2 (the temporal ruler),
+and M6d/T3 (the temporal causal gate) are preserved in git history.
 
 ```bash
 cd experiments/bench_gpu_real && cargo run --release
 ```
+
+## Milestone 6d / T4 — the hidden-future scene + precursor sweep (the deep temporal test) ✓ (Ally X)
+
+T3's monotone scene had no hidden future (the prophet collapsed). T4 builds the scene where a sealed policy
+can genuinely fail, so the prophet finally becomes informative — and the deliverable is a *curve*, not a winner.
+
+**The hidden channel is importance, not difficulty** — chosen so it is exploitable under the *fixed* T2
+coupling. A content-difficulty spike would reset history (T3's tautology again); instead every tile's content
+is **stable** (no reset, accumulation survives), but a TF-time event makes some tiles **matter** more (the
+ruler weights per-tile error by `future_importance`, invisible in present pixels). Pre-accumulating a soon-to-
+be-important stable tile survives to TF — but only the prophet knows which. **Precursor knob ρ ∈ [0,1]**:
+each tile carries `precursor = ρ·importance + (1−ρ)·noise`; ρ=0 hides the future, ρ=1 fully signals it. Sealed
+policies see only the precursor; the prophet sees true importance. Coupling fixed; scene the only variable.
+
+Importance-weighted future error (Ally X), the curve `gap(ρ) = causal_future − prophet`:
+
+```
+ρ      uniform   precursor_pfal  causal_future   prophet    gap(causal−prophet)   causal⪯uniform?
+0.00   0.00552   0.00822         0.00722         0.00480    +0.00242 (≈32× ε)     false
+0.25   0.00552   0.00601         0.00583         0.00480    +0.00102              false
+0.50   0.00552   0.00522         0.00520         0.00480    +0.00039              true
+0.75   0.00552   0.00493         0.00491         0.00480    +0.00011              true
+1.00   0.00552   0.00500         0.00480         0.00480    +0.00000              true
+ε floor (pixel/struct) = 0.000076 / 0.000137
+```
+
+Three findings: (1) **the channel is real** — at ρ=0 the prophet ε-dominates every sealed policy by ~32× ε;
+the first scene in the arc where the oracle is informative, and `gap(ρ)` *measures the value of inaccessible
+future information* (0.00242 → 0 as the present begins to signal it). (2) **a weak signal is worse than none**
+— at ρ < 0.5 both `causal_future` and `precursor_pfal` are *worse than uniform* (acting on a noisy precursor
+*starves* the truly-important tiles more than spreading does); `causal ⪯ uniform` only flips true at ρ ≥ 0.5.
+There is a **recoverability threshold**: below it, "trying to be causal" backfires; above it, it pays — a real
+cautionary boundary for any predictive allocator with an unreliable signal. (3) **sealed reaches the ceiling
+exactly at ρ=1** (gap 0.00000): when the precursor *is* the importance signal (up to scale), the sealed policy
+*is* the oracle; and `causal_future` consistently edges `precursor_pfal`, so deficit water-fill-in-time still
+adds a little over pure-proportional.
+
+The temporal arc as one measured story: **present predicts future (T3)** → causal allocation works, reaches
+the ceiling; **future hidden (T4)** → recoverable only above a precursor threshold, and a weak signal is
+harmful. `benchmark gain ≠ universal`; the prophet is a ceiling, never a contender.
 
 ## Milestone 6d / T3 — the temporal causal gate (a conditional POSITIVE, calibration baseline) ✓ (Ally X)
 
@@ -379,8 +419,9 @@ M6d/T2 ✓ temporal ruler (TAA accum + disocclusion reset)    →  future error 
 M6d/T3 ✓ temporal causal gate (5 sealed + prophet)          →  POSITIVE (conditional): causal_future ε-dominates
                                                                uniform & present_pfal; prophet collapses (no hidden
                                                                future here); exponent didn't matter (homogeneous diff)
-M6d/T4   hidden-future scene (present ≠ predictor)           →  where the prophet gets teeth: can a sealed policy
-                                                               recover future relevance NOT visible in present state?
+M6d/T4 ✓ hidden-future importance + precursor sweep ρ       →  channel REAL (prophet separates 32× ε at ρ=0);
+                                                               gap(ρ) measures un-recoverable future info → 0 by ρ=1;
+                                                               THRESHOLD: a weak precursor (ρ<0.5) is WORSE than uniform
 ```
 
 The pinned `wgpu = "22.1"` resolved cleanly (`wgpu v22.1.0`) and compiled first try on the device; the

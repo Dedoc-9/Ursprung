@@ -1,36 +1,29 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-//! bench_gpu_real — Milestone 6d / T3: the TEMPORAL CAUSAL GATE (calibration baseline, monotone scene).
+//! bench_gpu_real — Milestone 6d / T4: the HIDDEN-FUTURE scene + precursor sweep (the deep temporal test).
 //!
-//! T1 built the temporal apparatus; T2 proved the temporal ruler fair. T3 finally compares POLICIES on it:
-//! does spending NOW measurably reduce FUTURE error, and for which policies — judged on a ruler they cannot
-//! see, at equal measured budget.
+//! T3 showed sealed causal allocation reaches the oracle ceiling — but on a MONOTONE scene where the prophet
+//! collapses onto the sealed policy (present already predicts future). That cannot answer the deep question:
+//! can a sealed policy recover future structure that is NOT visible in present state? T4 builds the scene
+//! where it can fail, and the prophet finally becomes informative.
 //!
-//! THE SEALED OBSERVER, IN TIME. Each policy maps (present revealed-mask, its OWN accumulation so far,
-//! per-frame budget) → this frame's per-tile allocation. It never sees the future, the future reference, or
-//! the ruler. So "optimize the metric" stays structurally impossible — the M6 rule, lifted into time.
+//! THE HIDDEN CHANNEL (importance, not content — chosen so it is exploitable under the FIXED T2 coupling).
+//! A content-difficulty spike would change content → trigger disocclusion reset → forbid preparation → the
+//! prophet could not separate (T3's tautology again). So instead: every tile's CONTENT is STABLE across all
+//! frames (no reset; accumulation survives), but a TF-time world event makes some tiles MATTER more — the
+//! ruler weights per-tile error by `future_importance`, set by future dynamics invisible in present pixels.
+//! Pre-accumulating a soon-to-be-important STABLE tile survives to TF and lowers weighted error — but only the
+//! prophet knows which tiles those are. The coupling is UNCHANGED from T2 (one variable moved: scene only).
 //!
-//! THE ONLY LEGITIMATE TEMPORAL LEVER (under T2's declared coupling). Disocclusion RESETS history, so
-//! pre-warming still-occluded content is wasted — an oracle could not exploit it either. What remains: among
-//! ALREADY-REVEALED tiles, serve the UNDER-ACCUMULATED ones (high future-causal deficit) and don't burn budget
-//! on occluded content that will be reset. That is the temporal form of "drop present-perception S, allocate by
-//! future causal loss" — and it is expressible from present state + own history alone.
+//! THE PRECURSOR KNOB ρ ∈ [0,1] (the temporal analogue of M6c's alignment). Each tile carries a present-
+//! observable `precursor = ρ·importance + (1−ρ)·noise`. At ρ=0 the future is genuinely hidden (precursor is
+//! noise); at ρ=1 the present fully signals it. Swept → the curve `gap(ρ) = prophet − causal_future`, which
+//! MEASURES how much latent future structure a sealed policy can recover without seeing the future: wide at
+//! ρ=0 (inaccessible), collapsing toward 0 at ρ=1 (present suffices).
 //!
-//! Five SEALED policies (admissible, equal budget):
-//!   uniform           budget-blind — spends on occluded tiles too (which reset → wasted)
-//!   present_pfal      ∝ present difficulty — deprioritises occluded but serves all revealed alike (history-blind)
-//!   causal_future_d1  ∝ future-causal deficit on revealed tiles (exponent 1)
-//!   causal_future_d23 deficit^(2/3) on revealed tiles (the M6c variance-optimal exponent, in time)
-//!   drifted           random (negative control)
-//! plus ONE NON-ADMISSIBLE prophet (sees the future) as a CALIBRATION CEILING — not a contender.
-//!
-//! HONEST SCENE CAVEAT (recorded, not hidden). This monotone occlusion sweep only ever *reveals*, so "revealed
-//! now" already implies "relevant at the future frame", and disocclusion-reset forbids pre-warming — therefore
-//! the prophet has almost no legitimate edge here, and prophet ≈ causal_future is expected. That near-tie is a
-//! PROPERTY OF THIS SCENE (no hidden-future information to exploit), NOT proof the policy reached a fundamental
-//! ceiling. The discriminating test — a scene whose future relevance is NOT visible in present state — is T4.
-//!
-//! Verdict is a Pareto VECTOR (pixel + structural future error) under ε-dominance; no scalar winner.
-//! `benchmark gain ≠ universal`.
+//! Sealed policies (uniform, precursor_pfal ∝ precursor, causal_future ∝ precursor·deficit — present
+//! precursor + own accumulation only) + one NON-ADMISSIBLE prophet (∝ true importance·deficit). Verdict is an
+//! importance-weighted Pareto VECTOR (pixel + structural). `benchmark gain ≠ universal`; the prophet is a
+//! ceiling, not a contender.
 //!
 //! Run on the device:  cargo run --release
 
@@ -45,10 +38,11 @@ const TILES_X: u32 = 8;
 const TILES: usize = (TILES_X * TILES_X) as usize;
 const REF_SAMPLES: u32 = 256;
 const TF: usize = 5;
-const HARD: f32 = 0.95;
-const EASY: f32 = 0.12;
-const B_FRAME: u32 = 512;     // per-frame allocation budget (equal for every policy)
-const TARGET: u32 = 64;       // the sealed causal policies' per-tile accumulation target (deficit basis)
+const AMP: f32 = 0.7;         // every tile's STABLE difficulty (so the lever is importance, not difficulty)
+const B_FRAME: u32 = 256;     // per-frame budget — scarce: cannot accumulate all 64 tiles to convergence
+const TARGET: u32 = 128;      // per-tile accumulation target (deficit basis)
+const IMP_HIGH: f64 = 9.0;
+const IMP_LOW: f64 = 1.0;
 
 const SCENE_WGSL: &str = r#"
 struct U { seed: u32, res: u32, tiles_x: u32, _pad: u32 };
@@ -88,22 +82,25 @@ fn fs(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
 }
 "#;
 
-fn world_amp(frame: usize) -> Vec<f32> {
-    (0..TILES).map(|ti| { let x = (ti as u32 % TILES_X) as usize; if x <= frame { HARD } else { EASY } }).collect()
+/// True future importance (set by a TF-time world event; invisible in present pixels). 8 of 64 tiles matter.
+fn importance() -> Vec<f64> { (0..TILES).map(|t| if t % 8 == 3 { IMP_HIGH } else { IMP_LOW }).collect() }
+/// Per-tile present noise, independent of importance.
+fn noise(t: usize) -> f64 { (t.wrapping_mul(2654435761) % 997) as f64 / 997.0 }
+/// Present-observable precursor: ρ·(importance signal) + (1−ρ)·noise. ρ=0 ⇒ hidden; ρ=1 ⇒ fully signalled.
+fn precursor(rho: f64, imp_norm: &[f64]) -> Vec<f64> {
+    (0..TILES).map(|t| rho * imp_norm[t] + (1.0 - rho) * noise(t)).collect()
 }
-fn revealed_at(frame: usize) -> Vec<bool> {
-    (0..TILES).map(|ti| (ti as u32 % TILES_X) as usize <= frame).collect()
-}
-fn world_state_str(frame: usize) -> String { format!("edge_col={}", frame) }
+fn deficit(acc: u32) -> u32 { TARGET.saturating_sub(acc.min(TARGET)) }
 
+fn world_state_str(frame: usize) -> String { format!("stable@f{}", frame) }
 fn evolve_through_kernel(frames: usize) -> Vec<String> {
     let mut core = Core::new();
     let mut chain = Vec::new();
     let mut prev_digest: Option<String> = None;
-    let mut prev_state = "edge_col=-1".to_string();
+    let mut prev_state = "stable@f-1".to_string();
     for t in 0..frames {
         let ns = world_state_str(t);
-        let ev = Event::new("scene", &prev_state, &ns, &format!("occlusion_sweep@f{}", t)).unwrap();
+        let ev = Event::new("scene", &prev_state, &ns, &format!("stable_world@f{}", t)).unwrap();
         let rec = core.apply(&ev, prev_digest.as_deref()).expect("commit");
         chain.push(rec.provenance_digest.clone());
         prev_digest = Some(rec.provenance_digest); prev_state = ns;
@@ -111,7 +108,6 @@ fn evolve_through_kernel(frames: usize) -> Vec<String> {
     chain
 }
 
-// ---- equal-budget integer allocation (largest-remainder; zero weight → zero; all-zero → uniform) ----
 fn hamilton(weights: &[f64], total: u32) -> Vec<u32> {
     let sum: f64 = weights.iter().map(|w| w.max(0.0)).sum();
     if sum <= 0.0 {
@@ -131,61 +127,21 @@ fn hamilton(weights: &[f64], total: u32) -> Vec<u32> {
     alloc
 }
 
-// ---- SEALED policies: (revealed_now, own_acc, frame_budget) → this frame's per-tile allocation ----
-type Policy = fn(&[bool], &[u32], u32) -> Vec<u32>;
-
-fn p_uniform(_rev: &[bool], _acc: &[u32], b: u32) -> Vec<u32> { hamilton(&vec![1.0; TILES], b) }
-fn p_present(rev: &[bool], _acc: &[u32], b: u32) -> Vec<u32> {
-    hamilton(&rev.iter().map(|&r| if r { HARD as f64 } else { EASY as f64 }).collect::<Vec<_>>(), b)
-}
-fn deficit(acc: u32) -> u32 { TARGET.saturating_sub(acc.min(TARGET)) }
-fn p_causal_d1(rev: &[bool], acc: &[u32], b: u32) -> Vec<u32> {
-    hamilton(&(0..TILES).map(|t| if rev[t] { deficit(acc[t]) as f64 } else { 0.0 }).collect::<Vec<_>>(), b)
-}
-fn p_causal_d23(rev: &[bool], acc: &[u32], b: u32) -> Vec<u32> {
-    hamilton(&(0..TILES).map(|t| if rev[t] { (deficit(acc[t]) as f64).powf(2.0 / 3.0) } else { 0.0 }).collect::<Vec<_>>(), b)
-}
-fn p_drifted(_rev: &[bool], _acc: &[u32], b: u32) -> Vec<u32> {
-    hamilton(&(0..TILES).map(|t| ((t * 40503) % 997 + 1) as f64).collect::<Vec<_>>(), b)
+/// Allocate this frame's budget by a signal (precursor for sealed, true importance for the prophet), optionally
+/// scaled by the per-tile accumulation deficit (water-fill in time). Sealed callers pass the PRECURSOR only.
+fn alloc_by_signal(signal: &[f64], acc: &[u32], b: u32, use_deficit: bool) -> Vec<u32> {
+    let w: Vec<f64> = (0..TILES).map(|t| if use_deficit { signal[t] * deficit(acc[t]) as f64 } else { signal[t] }).collect();
+    hamilton(&w, b)
 }
 
-/// Simulate a sealed policy over frames 0..=TF under the T2 coupling (accumulate; reset on disocclusion).
-/// Returns (effective samples at TF, total ALLOCATED budget — the equal-budget quantity).
-fn simulate(pol: Policy) -> (Vec<u32>, u32) {
+/// Stable-content accumulation (NO reset — content never changes). Returns (effective@TF, total allocated).
+fn simulate(mut f: impl FnMut(&[u32]) -> Vec<u32>) -> (Vec<u32>, u32) {
     let mut acc = vec![0u32; TILES];
-    let mut prev = vec![false; TILES];
     let mut allocated = 0u32;
-    for f in 0..=TF {
-        let rev = revealed_at(f);
-        for t in 0..TILES { if rev[t] != prev[t] { acc[t] = 0; } } // disocclusion invalidates history
-        let al = pol(&rev, &acc, B_FRAME);
+    for _ in 0..=TF {
+        let al = f(&acc);
         allocated += al.iter().sum::<u32>();
         for t in 0..TILES { acc[t] = (acc[t] + al[t]).min(REF_SAMPLES); }
-        prev = rev;
-    }
-    (acc, allocated)
-}
-
-/// NON-ADMISSIBLE prophet: knows the future (which tiles are hard at TF) and serves ONLY those, using the SAME
-/// deficit mechanism as the sealed causal_d23 — so any difference would be pure oracle advantage, not a tuning
-/// difference. A CALIBRATION CEILING, not a contender. In this monotone scene `revealed_now ⟹ hard_at_TF`, so
-/// the future gate is NON-BINDING and the prophet COLLAPSES onto causal_d23 (gap ≈ 0) — the cleanest possible
-/// statement that this world holds no hidden-future information to exploit.
-fn simulate_prophet() -> (Vec<u32>, u32) {
-    let hard_tf = revealed_at(TF); // future knowledge: the set of tiles hard at the future frame
-    let mut acc = vec![0u32; TILES];
-    let mut prev = vec![false; TILES];
-    let mut allocated = 0u32;
-    for f in 0..=TF {
-        let rev = revealed_at(f);
-        for t in 0..TILES { if rev[t] != prev[t] { acc[t] = 0; } }
-        let w: Vec<f64> = (0..TILES).map(|t| if rev[t] && hard_tf[t] {
-            (deficit(acc[t]) as f64).powf(2.0 / 3.0)   // identical basis to causal_d23 — only the future gate differs
-        } else { 0.0 }).collect();
-        let al = hamilton(&w, B_FRAME);
-        allocated += al.iter().sum::<u32>();
-        for t in 0..TILES { acc[t] = (acc[t] + al[t]).min(REF_SAMPLES); }
-        prev = rev;
     }
     (acc, allocated)
 }
@@ -198,7 +154,7 @@ impl Gpu {
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor { backends: wgpu::Backends::PRIMARY, ..Default::default() });
         let adapter = instance.request_adapter(&wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, force_fallback_adapter: false, compatible_surface: None }).block_on().expect("no adapter");
         let info = adapter.get_info();
-        let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor { label: Some("T3"), required_features: wgpu::Features::empty(), required_limits: wgpu::Limits::default(), memory_hints: wgpu::MemoryHints::default() }, None).block_on().expect("device");
+        let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor { label: Some("T4"), required_features: wgpu::Features::empty(), required_limits: wgpu::Limits::default(), memory_hints: wgpu::MemoryHints::default() }, None).block_on().expect("device");
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("scene"), source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(SCENE_WGSL)) });
         let stor = |b: u32| wgpu::BindGroupLayoutEntry { binding: b, visibility: wgpu::ShaderStages::FRAGMENT, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: true }, has_dynamic_offset: false, min_binding_size: None }, count: None };
         let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("bgl"), entries: &[
@@ -262,10 +218,6 @@ impl Gpu {
 }
 
 fn r_channel(px: &[u8]) -> Vec<f64> { px.iter().step_by(4).map(|&b| b as f64 / 255.0).collect() }
-fn pixel_err(a: &[u8], b: &[u8]) -> f64 {
-    let (x, y) = (r_channel(a), r_channel(b));
-    x.iter().zip(&y).map(|(p, q)| (p - q).abs()).sum::<f64>() / x.len() as f64
-}
 fn grad(px: &[u8]) -> Vec<f64> {
     let r = r_channel(px); let n = RES as usize; let mut g = vec![0.0; r.len()];
     for yy in 0..n { for xx in 0..n {
@@ -276,82 +228,95 @@ fn grad(px: &[u8]) -> Vec<f64> {
     }}
     g
 }
-fn struct_err(a: &[u8], b: &[u8]) -> f64 {
-    let (ga, gb) = (grad(a), grad(b));
-    ga.iter().zip(&gb).map(|(x, y)| (x - y).abs()).sum::<f64>() / ga.len() as f64
+fn pixel_diff_map(a: &[u8], b: &[u8]) -> Vec<f64> {
+    r_channel(a).iter().zip(r_channel(b).iter()).map(|(x, y)| (x - y).abs()).collect()
 }
-fn spread(v: &[f64]) -> f64 {
-    v.iter().cloned().fold(f64::MIN, f64::max) - v.iter().cloned().fold(f64::MAX, f64::min)
+fn grad_diff_map(a: &[u8], b: &[u8]) -> Vec<f64> {
+    grad(a).iter().zip(grad(b).iter()).map(|(x, y)| (x - y).abs()).collect()
 }
+fn per_tile_mean(perpix: &[f64]) -> Vec<f64> {
+    let n = RES as usize; let tp = (RES / TILES_X) as usize;
+    let mut sum = vec![0.0; TILES]; let mut cnt = vec![0.0; TILES];
+    for y in 0..n { for x in 0..n { let t = (y / tp) * (TILES_X as usize) + (x / tp); sum[t] += perpix[y * n + x]; cnt[t] += 1.0; } }
+    (0..TILES).map(|t| sum[t] / cnt[t]).collect()
+}
+fn spread(v: &[f64]) -> f64 { v.iter().cloned().fold(f64::MIN, f64::max) - v.iter().cloned().fold(f64::MAX, f64::min) }
 
 fn main() {
     let gpu = Gpu::init();
-    println!("M6d / T3 — the TEMPORAL CAUSAL GATE (calibration baseline, monotone scene) on {} ({})", gpu.device_name, gpu.backend);
+    println!("M6d / T4 — HIDDEN-FUTURE importance scene + precursor sweep on {} ({})", gpu.device_name, gpu.backend);
     let chain = evolve_through_kernel(TF + 1);
-    println!("world ran through the kernel ({} commits; head {}); coupling = TAA accumulation + disocclusion reset (declared)", chain.len(), chain.first().cloned().unwrap_or_default());
-    println!("sealed policies allocate the per-frame budget from present state + own accumulation only; scored on the T2 ruler vs future references\n");
+    println!("world ran through the kernel ({} commits; head {}); CONTENT stable (no reset) — the hidden channel is future IMPORTANCE, not difficulty",
+             chain.len(), chain.first().cloned().unwrap_or_default());
+    println!("ruler = importance-weighted future error; sealed policies see a precursor (ρ·importance+(1−ρ)·noise), never true importance\n");
 
+    let imp = importance();
+    let imp_norm: Vec<f64> = imp.iter().map(|&x| x / IMP_HIGH).collect();
+    let amp_all = vec![AMP; TILES];
     let budget_each = B_FRAME * (TF as u32 + 1);
-    let amp_tf = world_amp(TF);
-    let reference = gpu.render(&amp_tf, &vec![REF_SAMPLES; TILES], 0);
+    let reference = gpu.render(&amp_all, &vec![REF_SAMPLES; TILES], 0);
+
+    // importance-weighted future-error vector of an effective-sample map
     let score = |eff: &[u32], seed: u32| -> (f64, f64) {
-        let px = gpu.render(&amp_tf, eff, seed);
-        (pixel_err(&px, &reference), struct_err(&px, &reference))
+        let px = gpu.render(&amp_all, eff, seed);
+        let tp = per_tile_mean(&pixel_diff_map(&px, &reference));
+        let ts = per_tile_mean(&grad_diff_map(&px, &reference));
+        let wsum: f64 = imp.iter().sum();
+        let wp = (0..TILES).map(|t| imp[t] * tp[t]).sum::<f64>() / wsum;
+        let ws = (0..TILES).map(|t| imp[t] * ts[t]).sum::<f64>() / wsum;
+        (wp, ws)
     };
 
-    // ε floor (per axis), cross-seed on the uniform policy's effective map
-    let (eff_u, _) = simulate(p_uniform);
-    let (mut pe, mut se) = (Vec::new(), Vec::new());
-    for s in [11u32, 22, 33, 44] { let (p, st) = score(&eff_u, s); pe.push(p); se.push(st); }
+    let mut pass = 0u32; let mut total = 0u32;
+    let mut check = |name: &str, ok: bool, detail: String| {
+        total += 1; if ok { pass += 1; }
+        println!("  [{}] {:<28} {}", if ok { "PASS" } else { "FAIL" }, name, detail);
+    };
+
+    // ---- apparatus checks (the importance-weighted ruler must be trustworthy first) ----
+    let e_lo = score(&vec![8u32; TILES], 7).0;
+    let e_hi = score(&vec![64u32; TILES], 7).0;
+    check("weighted_error_responds", e_lo > e_hi && e_hi > 0.0, format!("weighted err @8spp {:.5} > @64spp {:.5} > 0", e_lo, e_hi));
+
+    let nc = score(&vec![REF_SAMPLES; TILES], 0).0;
+    check("negative_control_zero", nc == 0.0, format!("reference-as-effective weighted error = {:.6}", nc));
+
+    let (eff_u, au) = simulate(|_acc| hamilton(&vec![1.0; TILES], B_FRAME));
+    assert_eq!(au, budget_each, "uniform must spend the equal budget");
+    let (pe, se): (Vec<f64>, Vec<f64>) = [11u32, 22, 33, 44].iter().map(|&s| score(&eff_u, s)).unzip();
     let eps = [spread(&pe), spread(&se)];
+    check("reproducibility_floor", eps[0] >= 0.0 && eps[0] < 0.002, format!("ε(weighted pixel/struct) = {:.6} / {:.6}", eps[0], eps[1]));
 
-    // run the five sealed policies (equal budget) + the prophet ceiling
-    let sealed: [(&str, Policy); 5] = [
-        ("uniform", p_uniform), ("present_pfal", p_present),
-        ("causal_future_d1", p_causal_d1), ("causal_future_d23", p_causal_d23), ("drifted(ctrl)", p_drifted),
-    ];
-    let mut rows: Vec<(String, f64, f64)> = Vec::new();
-    for (name, pol) in sealed.iter() {
-        let (eff, alloc) = simulate(*pol);
-        assert_eq!(alloc, budget_each, "equal-budget violated by {}", name);
-        let (p, st) = score(&eff, 7);
-        rows.push((name.to_string(), p, st));
+    // ---- the precursor sweep: gap(ρ) = causal_future − prophet on the importance-weighted ruler ----
+    println!("\n  ρ      uniform   precursor_pfal  causal_future   prophet    gap(causal−prophet)   causal⪯uniform?");
+    let dominates = |a: (f64, f64), b: (f64, f64)| (a.0 <= b.0 + eps[0] && a.1 <= b.1 + eps[1]) && (a.0 < b.0 - eps[0] || a.1 < b.1 - eps[1]);
+    let prophet = { let (e, ab) = simulate(|acc| alloc_by_signal(&imp, acc, B_FRAME, true)); assert_eq!(ab, budget_each); score(&e, 7) };
+    let rhos = [0.0f64, 0.25, 0.5, 0.75, 1.0];
+    let mut gaps: Vec<(f64, f64)> = Vec::new();
+    for &rho in rhos.iter() {
+        let prec = precursor(rho, &imp_norm);
+        let su = score(&simulate(|_acc| hamilton(&vec![1.0; TILES], B_FRAME)).0, 7);
+        let spf = score(&simulate(|acc| alloc_by_signal(&prec, acc, B_FRAME, false)).0, 7);
+        let scf = score(&simulate(|acc| alloc_by_signal(&prec, acc, B_FRAME, true)).0, 7);
+        let gap = scf.0 - prophet.0;
+        gaps.push((rho, gap));
+        println!("  {:.2}   {:.5}   {:.5}         {:.5}        {:.5}    {:+.5}             {}",
+                 rho, su.0, spf.0, scf.0, prophet.0, gap, dominates(scf, su));
     }
-    let (eff_p, alloc_p) = simulate_prophet();
-    assert_eq!(alloc_p, budget_each, "prophet must spend the same budget");
-    let (pp, ps) = score(&eff_p, 7);
+    println!("  measured ε floor (pixel/struct) = {:.6} / {:.6}   ·   prophet is a NON-ADMISSIBLE ceiling", eps[0], eps[1]);
 
-    println!("  policy               future_pixel  future_struct   (equal budget {} samples; lower = better)", budget_each);
-    for (n, p, s) in &rows {
-        println!("    {:<18} {:.5}      {:.5}", n, p, s);
-    }
-    println!("    {:<18} {:.5}      {:.5}   ← PROPHET (non-admissible ceiling; sees the future)", "prophet", pp, ps);
-    println!("  measured ε floor (pixel/struct) = {:.6} / {:.6}\n", eps[0], eps[1]);
+    // ---- sweep-derived checks: the channel must be real (ρ=0 prophet separates) and closable (ρ=1 reached) ----
+    let gap0 = gaps.first().unwrap().1;
+    let gap1 = gaps.last().unwrap().1;
+    check("channel_real_at_rho0", gap0 > eps[0], format!("ρ=0 gap {:.5} > ε {:.6} — future is genuinely hidden; oracle separates", gap0, eps[0]));
+    check("ceiling_reached_at_rho1", gap1 <= eps[0].max(1e-6), format!("ρ=1 gap {:+.5} ≤ ε — present fully signals; sealed reaches the oracle", gap1));
+    let monotone = gaps.windows(2).all(|w| w[1].1 <= w[0].1 + eps[0]);
+    check("gap_closes_with_rho", monotone, "gap(ρ) is (weakly) decreasing — recoverability rises with precursor strength".into());
 
-    // ε-dominance frontier among the FIVE SEALED policies (prophet excluded — it is not a contender)
-    let dominates = |a: (f64, f64), b: (f64, f64)| {
-        (a.0 <= b.0 + eps[0] && a.1 <= b.1 + eps[1]) && (a.0 < b.0 - eps[0] || a.1 < b.1 - eps[1])
-    };
-    let on_frontier = |i: usize| !(0..rows.len()).any(|j| dominates((rows[j].1, rows[j].2), (rows[i].1, rows[i].2)));
-    let frontier: Vec<&str> = (0..rows.len()).filter(|&i| on_frontier(i)).map(|i| rows[i].0.as_str()).collect();
-    println!("  → ε-frontier (sealed only): {:?}", frontier);
-
-    let get = |name: &str| rows.iter().find(|r| r.0 == name).map(|r| (r.1, r.2)).unwrap();
-    let beats = |a: (f64, f64), b: (f64, f64)| dominates(a, b);   // a ε-dominates b
-    let (u, pf, c1, c23) = (get("uniform"), get("present_pfal"), get("causal_future_d1"), get("causal_future_d23"));
-    println!("  → causal_future_d23 ε-dominates uniform:      {}", beats(c23, u));
-    println!("  → causal_future_d23 ε-dominates present_pfal:  {}", beats(c23, pf));
-    println!("  → causal_future_d23 vs causal_future_d1:       {}",
-             if beats(c23, c1) { "d23 dominates d1" } else if beats(c1, c23) { "d1 dominates d23" } else { "incomparable / tied within ε" });
-    let prophet_gap_px = c23.0 - pp;
-    println!("  → prophet calibration gap (causal_d23 pixel − prophet pixel) = {:.5} (≈ε ⇒ no hidden-future opportunity in THIS scene)", prophet_gap_px);
-
-    println!("\nT3 (calibration baseline) COMPLETE — the verdict is a measured boundary, not a law. Reading: whether");
-    println!("sealed causal allocation beats uniform/present_pfal on FUTURE error tells whether the temporal lever");
-    println!("(serve under-accumulated revealed tiles, waste nothing on soon-reset occluded ones) pays off HERE.");
-    println!("The prophet's near-tie with causal is a PROPERTY OF THIS MONOTONE SCENE (present predicts future),");
-    println!("NOT a fundamental ceiling — the discriminating test is T4: a scene whose future relevance is HIDDEN");
-    println!("from present state, where the prophet can genuinely outperform a sealed policy. benchmark gain ≠ universal.");
-    // apparatus sanity (not a verdict): a frontier exists and the budget gate held for every policy.
-    assert!(!frontier.is_empty(), "no frontier — apparatus error");
+    println!("\nT4 {} — {}/{} apparatus/sweep checks. The deliverable is the CURVE gap(ρ): the value of future", if pass == total { "COMPLETE" } else { "INCOMPLETE" }, pass, total);
+    println!("information a sealed policy CANNOT recover. Wide at ρ=0 (future hidden — prophet wins), closing to ≈0 at");
+    println!("ρ=1 (present suffices). This is the temporal analogue of M6c's alignment sweep: not 'who wins', but a");
+    println!("measured boundary of how much latent future structure is recoverable from present state — coupling FIXED,");
+    println!("scene the only variable. benchmark gain ≠ universal; the prophet is a ceiling, never a contender.");
+    assert!(pass == total, "T4 apparatus/sweep sanity did not fully hold");
 }

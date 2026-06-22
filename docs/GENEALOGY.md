@@ -556,9 +556,27 @@ benchmark measures the benchmark's world; it does not prove universal superiorit
   the budget-blind policies miss. KEY META: the SAME apparatus that FALSIFIED the spatial claim (M6b) SUPPORTS
   the temporal one — strongest evidence it is not biased either way. HONEST SCOPE: supported UNDER the declared
   TAA+disocclusion coupling, on THIS monotone scene where the oracle ceiling is uninformative by construction.
-  NEXT: T4 — a HIDDEN-FUTURE scene (future relevance NOT visible in present state, e.g. a tile easy now that
-  spikes hard at TF independent of the sweep) where the prophet genuinely separates from sealed policies — the
-  test of whether a sealed policy can recover future structure not already encoded in the present.
+  NEXT: T4 — a HIDDEN-FUTURE scene (future relevance NOT visible in present state) where the prophet genuinely
+  separates from sealed policies. **M6d/T4 DONE — the hidden-future importance sweep, the deep temporal test
+  (Ally X, 6/6):** the hidden channel is future IMPORTANCE not difficulty (a difficulty spike would reset
+  history → forbid preparation → reproduce T3's tautology), so CONTENT is stable (no reset; accumulation
+  survives) but a TF event makes some tiles MATTER more — the ruler weights per-tile error by future_importance,
+  invisible in present pixels. Coupling FIXED (scene the only variable). Precursor knob ρ∈{0,.25,.5,.75,1}:
+  precursor = ρ·importance + (1−ρ)·noise; sealed policies see only the precursor, the prophet sees true
+  importance. RESULT — importance-weighted future pixel error, gap(ρ)=causal_future−prophet: ρ0 uniform 0.00552
+  / pfal 0.00822 / causal 0.00722 / prophet 0.00480 / gap +0.00242; ρ.25 gap +0.00102; ρ.5 +0.00039; ρ.75
+  +0.00011; ρ1.0 +0.00000. ε=0.000076/0.000137. THREE FINDINGS: (1) the CHANNEL IS REAL — at ρ=0 the prophet
+  ε-DOMINATES every sealed by ~32× ε (FIRST scene in the arc where the oracle is informative); gap(ρ) MEASURES
+  the value of inaccessible future information, decaying to 0 as the present signals it. (2) a WEAK SIGNAL IS
+  WORSE THAN NONE — at ρ<0.5 both causal_future AND precursor_pfal are WORSE than uniform (acting on a noisy
+  precursor STARVES the truly-important tiles more than spreading); causal⪯uniform flips true only at ρ≥0.5 → a
+  RECOVERABILITY THRESHOLD: below it "trying to be causal" backfires, above it it pays (a cautionary boundary
+  for any predictive allocator with an unreliable signal). (3) SEALED REACHES THE CEILING EXACTLY AT ρ=1 (gap
+  0.00000 — precursor IS the importance signal up to scale ⇒ sealed = oracle); causal_future consistently edges
+  precursor_pfal (deficit water-fill-in-time adds a little over pure-proportional). THE TEMPORAL ARC AS ONE
+  STORY: present-predicts-future (T3) → causal works, reaches ceiling; future-hidden (T4) → recoverable only
+  above a precursor threshold, weak signal harmful. Temporal analogue of M6c's alignment sweep, delivered. The
+  whole GPU benchmark (M1–M6c spatial + T1–T4 temporal) maps boundaries; the apparatus is the asset.
 - [ ] Native (C++/Rust) **renderer/fidelity** port validated against the Python reference via conformance
   vectors. (The conformance-vector method has been demonstrated at the kernel layer: `reality_kernel/core_rs`
   validated against the Python reference via `golden_kernel.tsv`; this item remains open for PFAL/TCFF/raster.)
