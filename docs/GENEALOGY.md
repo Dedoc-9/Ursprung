@@ -432,7 +432,11 @@ benchmark measures the benchmark's world; it does not prove universal superiorit
   Pareto *profile* not a summed score, three harnesses (fidelity / latency / thermal) + reproducibility.
   Substrate ≠ benchmark. **Contract core built + verified (no GPU):** `experiments/bench_gpu/` (9/9) —
   RunRecord (UNACCOUNTED without provenance), Pareto profile (no scalar collapse), equal-GPU-tick guard, and
-  the `RealBackend` seam that raises rather than fakes. The Vulkan/DX12/wgpu backend on device is the frontier.
+  the `RealBackend` seam that raises rather than fakes. **Seam plumbing also built + verified (8/8):**
+  `frame.py` (FrameArtifact + backend-agnostic GoldenReplay), `timing.py` (GpuInterval = the ruler · CpuTiming
+  = provenance · LatencyProfile = separate instrument), `backends.py` (ReferenceBackend no-pixels +
+  RealGpuBackend seam). The only thing left is the `RealGpuBackend` body (Vulkan/DX12/wgpu submit + GPU
+  timestamp queries + present-to-photon) on device — deliberately boring; no new theory.
 - [ ] Native (C++/Rust) **renderer/fidelity** port validated against the Python reference via conformance
   vectors. (The conformance-vector method has been demonstrated at the kernel layer: `reality_kernel/core_rs`
   validated against the Python reference via `golden_kernel.tsv`; this item remains open for PFAL/TCFF/raster.)
