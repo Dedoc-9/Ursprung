@@ -144,6 +144,43 @@ entire **causal subtree** — exactly its transitive descendants, nothing unrela
 16. **three_timestamps_two_budgets** — `t_commit ≤ t_dep ≤ t_durable`; `commit→dependency` (feel) and
     `dependency→durable` (survivability) are separate budgets, and a fact can reach durable with no dependency.
 
+## The residue — causal reconstruction as a first-class boundary
+
+The durable output of the physics/architecture debate is not an analogy; it is a **sorting rule** and the
+boundary it enforces. The one object common to every surviving correspondence (gauge freedom, the light cone,
+the field equation) is a single statement:
+
+> **A representation exposes a projection of reality; recovering the causal generator requires additional
+> structure.** Observable ≠ generator — a snapshot tells you *what is*, never *why it is*.
+
+So every subsystem that claims replay, recovery, or trustworthy editing must answer three questions, and this
+kernel is the smallest worked example of answering them:
+
+1. **What is externally observable?** — the contract surface. Keep it minimal; everything here accrues
+   dependencies (Hyrum's Law).
+2. **What invariants must survive representation changes?** — what stays fixed under LOD, serialization,
+   coordinate system, partitioning: the gauge-invariant content.
+3. **What hidden causal information is required to reconstruct or audit?** — lineage, authority, ordering: the
+   cold reserve. *And it must be capturable at the **irreversibility frontier**, not retroactively* — once an
+   output is depended upon, the causal information it needed had to already exist (see
+   [`docs/EMBEDDED_AUTHORING.md`](../../docs/EMBEDDED_AUTHORING.md)).
+
+**If a subsystem cannot answer #3, it cannot honestly promise replay, recovery, or trustworthy editing.**
+
+The gauge diagnostic, which is a *proof obligation*, not an isomorphism:
+
+> **A representation is a gauge only after you prove it cannot become causal.**
+
+In gauge theory `A ∼ A + ∇χ` is a defined equivalence class with invariant observables. In an engine, a
+representation choice (LOD, serialization, coordinates, partitioning) is a gauge *only* once `VIEW ↛ CORE` is
+proven (the cardinal invariant). If a "mere representation" leaks into authority, ordering, determinism, or
+collision outcomes, it was never gauge — it was **hidden state**. Gauge-ness is earned by proof, never assumed.
+
+*(The physics that generated this — Faraday induction, gauge freedom, retarded potentials — stays in the cold
+layer as an **analogy generator**, never a design proof. The proof is the 16/16 self-test above. The reusable
+lesson is only that observable state and generative history are different objects, in physics and in engines
+alike. `declared ≠ verified`.)*
+
 ## Honest scope (what this is NOT)
 
 A **logic reference**, not a performance system. No concurrency-at-scale, no networking, no UI, no renderer.
