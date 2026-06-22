@@ -991,7 +991,14 @@ recoverable only above a precursor threshold, where a weak signal is *harmful* (
 preserving. [`docs/EMBEDDED_AUTHORING.md`](docs/EMBEDDED_AUTHORING.md) — a **design note** (direction, not a
 verified result) on the editor as a capability of the world: an edit is an event; guarantees captured at the
 irreversibility frontier; *minimum under uncertainty*; the sealed reserve as the answer to Hyrum's Law —
-closing on the Arbitrary-Boundary Law. [`docs/REAL_SILICON_BENCHMARK.md`](docs/REAL_SILICON_BENCHMARK.md) — the measurement *contract* for
+closing on the Arbitrary-Boundary Law. [`docs/SELF_MODIFICATION_BOUNDARY.md`](docs/SELF_MODIFICATION_BOUNDARY.md)
+— a **boundary probe** (measurement contract, not a roadmap, not an architecture): where does the commit
+frontier stay *globally* definable vs *only locally* definable when a runtime modifies its own modification
+mechanism? Three actors (state · mechanism · validator), three cases (external control · authority self-edit ·
+provenance self-edit), three categorical axes (orientability via `klein_probe` · frontier locality via
+`frontier_probe` · recovery integrity via the kernel's severance). Names the boundary without assuming it
+resolves; concurrency kept deliberately separate; `declared ≠ verified`.
+[`docs/REAL_SILICON_BENCHMARK.md`](docs/REAL_SILICON_BENCHMARK.md) — the measurement *contract* for
 the GPU benchmark (device as constrained oracle, GPU-timestamp budget as the shared ruler, temporal error as a
 Pareto profile). It is now **built and verified on hardware through the temporal arc** in
 `experiments/bench_gpu_real` (M1–M6c spatial + M6d/T1–T4 temporal on an Ally X); the neutral rulers falsified
