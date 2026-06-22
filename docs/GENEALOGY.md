@@ -444,8 +444,11 @@ benchmark measures the benchmark's world; it does not prove universal superiorit
   `experiments/bench_gpu_real/` (wgpu 22.1, Vulkan) ran on the ASUS ROG Xbox Ally X (Radeon 890M, RDNA 3.5):
   the GPU-interval ruler EXISTS and is monotonic (`end > begin`), timestamp period 10 ns/tick, empty-pass
   interval 40 ns (bracket overhead, not work, not fidelity). The project's first datum that did not expire on
-  silicon. Remaining: M2 Rust BenchmarkObservation → M3 FrameArtifact→submission→GpuInterval → M4 shaders /
-  pixels / present-to-photon / thermal.
+  silicon. **M2 DONE — the ruler measures real work (Ally X):** a trivial WGSL compute LCG timed across 3
+  workload sizes (7 runs each) scales 880 ns → 30760 ns (overhead-bound small end, ~linear large end),
+  emitted as the contract-shaped `BenchmarkObservation` JSON; the 1M `min 6720` outlier recorded as a
+  measurement ghost (median used, never min — `timing is an event`). Still no FPS/PFAL/TCFF claim. Remaining:
+  M3 FrameArtifact→submission→GpuInterval → M4 shaders / pixels / present-to-photon / thermal.
 - [ ] Native (C++/Rust) **renderer/fidelity** port validated against the Python reference via conformance
   vectors. (The conformance-vector method has been demonstrated at the kernel layer: `reality_kernel/core_rs`
   validated against the Python reference via `golden_kernel.tsv`; this item remains open for PFAL/TCFF/raster.)
