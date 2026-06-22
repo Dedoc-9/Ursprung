@@ -461,8 +461,16 @@ benchmark measures the benchmark's world; it does not prove universal superiorit
   (391668 vs 391688 ticks, 0.005% apart) → admitted and compared as a Pareto vector (A dominates B on a
   declared synthetic error model — NOT a fidelity claim); a cheat with a larger effort sum measures ~1.4×
   (548156 ticks) → budget_violation → comparison REFUSED. Published rule: ±20% of target measured ticks,
-  policy-independent. 7/7. No policy declared superior — that is M6. Remaining: M6 PFAL vs TCFF on silicon
-  → the real-silicon gate for Causal Continuity → law.
+  policy-independent. 7/7. No policy declared superior — that is M6. **M6a DONE — a fair PERCEPTUAL ruler (apparatus, Ally X):**
+  against a frozen 256-sample SSAA reference, a lower-sample approximation's error is measured as a
+  policy-neutral, blind VECTOR — pixel (0.0098/0.0050/0.0027 at S=4/16/64, monotone) / structural / temporal;
+  negative control (ref vs ref) = 0.000000; reproducibility 0.000039; identity preserved (sample budget is a
+  condition, not identity); ghost handling intact (warm-up + cold-start zero interval flagged/excluded, pixels
+  unaffected); explicit limits stated. 7/7. **No policy declared superior** — that is M6b. Remaining: M6b —
+  PFAL/TCFF (and uniform/structural controls) on this perceptual ruler at equal measured GPU budget → the
+  genuine Causal Continuity gate (which can FALSIFY it: the constructed gate's metric was U·C·P-weighted/
+  self-consistent; a neutral perceptual metric removes that circularity). Honest ceiling either way:
+  supported-on-silicon within the stated domain, NOT a universal law.
 - [ ] Native (C++/Rust) **renderer/fidelity** port validated against the Python reference via conformance
   vectors. (The conformance-vector method has been demonstrated at the kernel layer: `reality_kernel/core_rs`
   validated against the Python reference via `golden_kernel.tsv`; this item remains open for PFAL/TCFF/raster.)

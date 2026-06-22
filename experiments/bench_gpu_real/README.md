@@ -1,14 +1,44 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-only -->
-# bench_gpu_real — the GPU-interval ruler on real silicon (M1 ✓ … M5 ✓)
+# bench_gpu_real — the GPU benchmark on real silicon (M1 ✓ … M5 ✓, M6a ✓)
 
 The smallest non-faked claims in the project, and the first ones that did **not** expire on silicon —
-because they were measured on silicon. `src/main.rs` is currently the **M5** program (equal-budget
-comparison harness); M1 (empty pass), M2 (real compute work), M3 (identity binding), M4 (render-pass
-timing) are preserved in git history. No window, no swapchain, no pixels read back, no fidelity claim.
+because they were measured on silicon. `src/main.rs` is currently the **M6a** program (the perceptual
+ruler); M1 (empty pass), M2 (real compute work), M3 (identity binding), M4 (render-pass timing), M5
+(equal-budget comparison) are preserved in git history.
 
 ```bash
 cd experiments/bench_gpu_real && cargo run --release
 ```
+
+## Milestone 6a — a fair PERCEPTUAL ruler (apparatus, no verdict) ✓ (verified on the Ally X)
+
+M1–M5 proved the *timing* ruler is fair. M6a proves a *perceptual-error* ruler is fair, against a frozen
+high-quality ground-truth reference (256-sample SSAA), **before any policy is compared** (that is M6b).
+Error is a **policy-neutral vector**, computed from pixels only (blind), never a scalar winner:
+
+```
+pixel_error      mean |approx − reference|     (reconstruction error)
+structural_error mean |∇approx − ∇reference|    (edges / meaningful scene change)
+temporal_error   mean |approx(seedA) − approx(seedB)|   (instability / flicker)
+```
+
+Measured on the Ally X (256×256, SSAA as the quality knob):
+
+```
+S=4   pixel_error 0.00981     S=16  0.00501     S=64  0.00274     (fewer samples → measurably worse)
+negative control  pixel_error(reference, reference) = 0.000000
+reproducibility   |pe(seedA) − pe(seedB)| = 0.000039
+error vector (S=16)  pixel/structural/temporal = 0.00497 / 0.00714 / 0.00668
+```
+
+Seven checks: the ruler **responds to real degradation** (error falls monotonically as samples rise),
+the **negative control reads exactly zero** (it doesn't invent error), it is **reproducible/blind** (two
+independent renders agree, the metric sees only pixels), error is a **vector not a scalar**, **identity is
+preserved** (sample budget is an execution condition, not the scene's identity), each render carries its
+GPU-tick budget with **ghost handling** (the first/cold render's zero interval is flagged and excluded,
+pixels unaffected), and the profile JSON round-trips. **Explicit limits:** one device, one synthetic
+scene (high-frequency + edge), SSAA as the quality proxy, whole-frame aggregates (per-tile allocation is
+M6b). **M6a declares no policy superior** — that is M6b's question, the actual Causal Continuity gate.
 
 ## Milestone 5 — equal-budget comparison is FAIR (metrology, not a verdict) ✓ (verified on the Ally X)
 
@@ -142,7 +172,8 @@ M2 ✓  the ruler measures real work + BenchmarkObservation  (compute LCG, 880�
 M3 ✓  measurement bound to world identity                  (GoldenReplay→FrameArtifact digest; ghost caught)
 M4 ✓  render-pass timing under the same contract            (offscreen 1080p, ~0.8 ms; digest == M3's)
 M5 ✓  equal-budget comparison is fair                       (perms admitted, cheat refused, Pareto vector)
-M6    PFAL vs TCFF on silicon                               →  Causal Continuity: supported_constructed → law
+M6a ✓ a fair perceptual ruler vs a frozen reference         (pixel/structural/temporal vector; blind; limits stated)
+M6b   PFAL/TCFF on the perceptual ruler, equal budget       →  Causal Continuity: supported_constructed → (or NOT) law
 ```
 
 The pinned `wgpu = "22.1"` resolved cleanly (`wgpu v22.1.0`) and compiled first try on the device; the
