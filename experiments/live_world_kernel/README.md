@@ -511,6 +511,35 @@ witness is not built. Run (from this directory): `PYTHONHASHSEED=0 python3 recon
 (7/7). The deepest form of the discipline is not "declare what you know" — it is *declare when your witnesses
 disagree.*
 
+## The witness that earns new evidence — `runtime_witness.py` (orthogonal blind spots)
+
+The static extractor sees every *declared* import but is blind to *dynamic* ones (its `RUNTIME_FRONTIER`). A
+runtime witness sees the opposite slice — every import actually *executed* at module load, including dynamic ones
+— but is blind to *un-exercised* paths. So runtime does **not** strictly dominate static; they have **orthogonal
+blind spots**, and this is the first artifact where two *real* witnesses of the same system meet with neither
+globally stronger. It is the only branch that *earns new evidence* rather than rearranging what exists.
+
+The rule that keeps the reconciliation truthful: **a witness must never deny from absence.** Runtime "did not
+observe edge e this run" is `DECLARED` (its blind spot), never `REVERSIBLE` (a denial it cannot support). The
+consequence is a finding that sharpens the whole disagreement picture: between two *honest* witnesses, conflict
+collapses to **refinement in both directions** — runtime refines static where it caught a dynamic import; static
+refines runtime where runtime was blind to an un-exercised path — and symmetric `CONTESTED` essentially never
+fires. `CONTESTED` is reserved for two witnesses both *positively* asserting incompatible things (the machinery
+still produces it; it just isn't reachable from honest absence).
+
+> ⚠ Tracing **executes the target's import-time code** (module load only — no functions, no tests). Run it on
+> trusted code. Because of that, and because the author's sandbox is down, the *tracing* ships as a candidate you
+> run; the *reconciliation discipline* — the part that must be correct — is verified synthetically (7/7:
+> runtime-refines-static-on-dynamic, static-refines-runtime-on-unexercised, corroboration, absence-is-not-denial,
+> contested-only-for-positive-conflict, strength-never-inflates, earns-new-evidence). Run (from this directory):
+> `PYTHONHASHSEED=0 python3 runtime_witness.py [trusted-repo-path]` — e.g. point it at `tests_epi\click` to trace
+> a real package and reconcile its runtime imports against the static view.
+
+This is the witness that lets a cell which is `DECLARED` under static evidence become `MEASURED` under runtime
+evidence — and the reconciler already knows what to do when the two disagree. (Next on this branch: a multi-
+witness *panel* showing one fact under static + runtime + replay at once, then the capstone that records the
+whole stack as accounting rather than aspiration.)
+
 ## Honest scope (what this is NOT)
 
 A **logic reference**, not a performance system. No concurrency-at-scale, no networking, no UI, no renderer.
