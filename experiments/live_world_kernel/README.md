@@ -536,9 +536,37 @@ still produces it; it just isn't reachable from honest absence).
 > a real package and reconcile its runtime imports against the static view.
 
 This is the witness that lets a cell which is `DECLARED` under static evidence become `MEASURED` under runtime
-evidence — and the reconciler already knows what to do when the two disagree. (Next on this branch: a multi-
-witness *panel* showing one fact under static + runtime + replay at once, then the capstone that records the
-whole stack as accounting rather than aspiration.)
+evidence — and the reconciler already knows what to do when the two disagree.
+
+> **Observed blind spot (honest ghost).** On `click` the trace returned **0 intra-package edges** — click's
+> internal imports are all *relative* (`from . import x`), and the `__import__` hook cannot yet attribute relative
+> imports (they arrive with `name=''`). The system handled it correctly (runtime contributed `DECLARED`/absence;
+> static refined runtime on all 63 modules; nothing inflated; no false denial) — the law held with a blind
+> witness. But it means *earns-new-evidence* is so far shown only synthetically; a trace that resolves relative
+> names (via the importer's `__package__` + `level`) is needed to corroborate on `click` and to catch the
+> module-level dynamic imports in `requests` (`compat.import_module`, `packages.__import__`). That fix is the
+> difference between the runtime witness earning evidence in principle and in fact.
+
+## One fact, many witnesses — `witness_panel.py` (the architecture is a lattice, not a hierarchy)
+
+`reality_status` put every boundary on one fact from *one* witness. `witness_panel` puts one fact under
+*several* witness classes at once — static, runtime, replay — and reconciles them **per axis**, surfacing the
+property only visible with ≥2 witness classes present: **evidence strength is partially ordered, not totally
+ordered.** No witness is globally strongest — static owns *declared coverage* (it sees dead/un-exercised edges
+nothing else does), runtime owns *execution reality* (dynamic behaviour invisible statically), replay owns
+*identifiability* (only `do(¬x)` establishes causal necessity). The reconciler keeps the strongest justified
+claim **for each axis** and records the rest; an absent witness is first-class, never a blank.
+
+The law it must obey while absorbing a new witness class (the key test): **no reconciled claim may be stronger
+than the witness that produced it** — `∀axis STRENGTH[reconciled] ≤ max(STRENGTH[witnesses that spoke])`; adding
+a witness may *refine* (better value at equal strength) or *extend* coverage (a new axis), never inflate. The
+self-test (7/7, synthetic + a small real static panel) demonstrates: no downstream inflation, a different witness
+topping each axis (no global winner), absent-first-class, absorbing a 4th witness without breaking the law,
+refinement-not-forced-conflict, and that every reconciled strength is one a witness *actually earned*. Run (from
+this directory): `PYTHONHASHSEED=0 python3 witness_panel.py`. The panel is not a dashboard — it is the live
+demonstration that every claim stays attached to the strongest evidence that earned it, even as witnesses are
+added. (Next on this branch: the capstone that records the whole stack as accounting — `BUILT` / `CONTRACT` /
+`ABSENT` per layer — rather than aspiration.)
 
 ## Honest scope (what this is NOT)
 
