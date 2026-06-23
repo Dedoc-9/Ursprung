@@ -74,6 +74,19 @@ never executed) from a *practical attack* (actually computed) — they are diffe
   discipline it is **set aside as non-discriminable, not declared impossible** (`absence of evidence ≠ evidence
   of absence`). To re-enter it must commit: *what, concretely, does the counter enumerate, at what cost, and
   what would prove it wrong?*
+- **UPDATE — `UNDERCOMMITTED` → `FORMULATED & EXPOSED` → `TESTED`.** The coinage was subsequently committed: the
+  round is modelled as a piecewise **2-adic affine map** branching on the modular-addition carry vector; the
+  "counter" enumerates carry-propagation paths backward, taking the unique affine inverse per fixed carry and
+  pruning carry-inconsistent branches. Falsifier committed: `Pr(carry-vector consistent | wrong branch) = ½ᵇ`
+  ⇒ no structural gradient ⇒ refuted. This is now a real, discriminable hypothesis — tested by
+  [`sha256_2adic_branch.py`](sha256_2adic_branch.py). Two corrections the audit imposes: **(A)** carries are not
+  the only nonlinearity — **Ch/Maj are AND-based and nonlinear regardless of carries**, so fixing carries does
+  *not* make the round affine and the true branching is *larger* than carry-only; **(B)** atomic carry survival
+  ≠ ½ is the *expected, already-known* result (addition is structured — it is why SAT reaches ~16–20 rounds),
+  so the decisive question is whether that local structure **compounds**, and `sha256_avalanche.py` already
+  measured that it does not (cross-round decorrelation). **Verdict regime:** *local 2-adic gradient real,
+  global compounding absent → `BOUNDED_TO_REDUCED_ROUNDS`* — never a break. The coinage is now an honest
+  reduced-round structural probe, not a path to full SHA-256.
 
 ## 3. Commitment gate (the framework lens)
 

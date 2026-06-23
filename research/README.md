@@ -19,6 +19,7 @@ self-testing); each doc carries its own provenance and sources.
 | `SHA256_STRESS_AUDIT.md` | audit of a "3-in-1" cryptanalysis proposal | full SHA-256 **unbroken**; SAT/differential = reduced-round only; GA+Hamming **refuted by avalanche**; Collatz-counter `UNDERCOMMITTED` |
 | `sha256_avalanche.py` | diffusion measurement (defensive) | measures the **absence** of gradient — `d_out ≈ 128` for every `d_in` (4/4) |
 | `collatz_reconcile.py` | structural Collatz-like map auditor | exploits the **presence** of structure (2-adic bijection + drift); corners the residual; universal claim stays `OPEN` (7/7) |
+| `sha256_2adic_branch.py` | falsification test for the carry-conditioned "2-adic reverse-Collatz" hypothesis | measures carry-branch survival; verdict regime *local gradient real, no compounding → `BOUNDED_TO_REDUCED_ROUNDS`*; never a break (the coinage, now committed & tested, not undercommitted) |
 
 ## The cross-domain pair (why both exist)
 
