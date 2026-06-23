@@ -839,8 +839,11 @@ scale.
   unbuilt. A fourth instrument, `limit_discriminator.py` (7/7), adds the **TRANSFER** rung
   (`step → sustained → transfer → recursive → open-ended`) and separates *why* the upper rungs fail — search (A)
   vs task (B) vs transfer (C) vs evaluator (D) — holding the task fixed and varying the mechanism. Its reference
-  run refutes the search explanation in a surprising way: a **stronger optimizer reached a *lower* held-out
-  ceiling**, because it over-optimized a noisy self-metric (search↔evaluator coupling). Its self-tests were also
+  run refutes the search explanation, and pointed at a search↔evaluator coupling — but a follow-up clean width
+  sweep (`inflation_vs_search.py`, 7/7) **contests** it: inflation is *persistent (~+0.07) but not explosive*,
+  flat across a 31× rise in search budget, because the discrete proposal space saturates at K≈2 (a new separator,
+  `optimization-pressure ≠ search-budget`). The honest standing claim is that evaluator inflation *exists and is
+  stable in this regime*, not that more search amplifies it. The discriminator's self-tests were also
   the occasion for a caught error worth recording: the first version gated on *expected outcomes*
   (`strong ≥ weak`), which is itself inflation — a verification that enforces the experimenter's prior. Rewritten
   to check **validity + classifier soundness** only (`experiment-ran ≠ hypothesis-confirmed`).
