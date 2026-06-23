@@ -25,6 +25,7 @@ rather than assert them. No scalar scores, no verdicts — every claim carries i
 | `witness_panel.py` | one fact, many witnesses; partial order, no global winner | IMPLEMENTED | 7/7 |
 | `discrimination_matrix.py` | rank experiments by uncertainty collapsed; `UNKNOWN` vs `UNDERCOMMITTED` gate; collapse-power | IMPLEMENTED | 12/12 |
 | `claim_ledger.py` | reconcile statements about the kernel as claims with commitment levels; enforce *evidence ≤ maturity* | IMPLEMENTED | 6/6 |
+| `self_improvement_witness.py` | prove the provable self-improvement *step* (guarded + self-modifying); mark where "recursive"/"proof" becomes inflation (`NON_ORIENTABLE`) | IMPLEMENTED | 7/7 |
 
 ## The discipline these encode — the "green-check blindspot"
 

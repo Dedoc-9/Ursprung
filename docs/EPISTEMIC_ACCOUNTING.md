@@ -47,6 +47,7 @@ paper — a measurement contract, no code}.
 | `witness_panel.py` | coexistence — one fact, many witnesses; partial order, no global winner | BUILT | verified 7/7 |
 | `discrimination_matrix.py` | experiment ranking — value = `DECLARED`→`MEASURED_BY_INTERVENTION` conversions; `UNKNOWN` (our gap) vs `UNDERCOMMITTED` (theory refuses, set aside ≠ refuted) gate | BUILT | verified 12/12 |
 | `claim_ledger.py` | reflexive — reconcile claims-about-the-kernel without category collapse; enforces *evidence ≤ maturity* (no inflation); refuses a single kernel-status scalar | BUILT | verified 6/6 |
+| `self_improvement_witness.py` | self-improvement — proves a guarded, self-modifying *step* (C1 σ-adapts, C2 held-out gain real); measures C3 = **PLATEAU** (no recursion); holds C4 unbounded/self-certified RSI at `UNDERCOMMITTED`/`NON_ORIENTABLE` (certification is external; train-only metric rises while reality falls) | BUILT | verified 7/7 |
 | `docs/SELF_MODIFICATION_BOUNDARY.md` | recursion — can a runtime define its own frontier (NON_ORIENTABLE) | CONTRACT | paper |
 | `docs/AUTHORITY_ARBITRAGE_BOUNDARY.md` | adversaries — advantage that cannot be adjudicated (SEVERED) | CONTRACT | paper |
 | `docs/ADJUDICATION_THROUGHPUT_BOUNDARY.md` | throughput — can commitment outrun verification (FLOODED) | CONTRACT | paper |
