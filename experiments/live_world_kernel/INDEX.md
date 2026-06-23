@@ -26,6 +26,7 @@ rather than assert them. No scalar scores, no verdicts — every claim carries i
 | `discrimination_matrix.py` | rank experiments by uncertainty collapsed; `UNKNOWN` vs `UNDERCOMMITTED` gate; collapse-power | IMPLEMENTED | 12/12 |
 | `claim_ledger.py` | reconcile statements about the kernel as claims with commitment levels; enforce *evidence ≤ maturity* | IMPLEMENTED | 6/6 |
 | `self_improvement_witness.py` | prove the provable self-improvement *step* (guarded + self-modifying); mark where "recursive"/"proof" becomes inflation (`NON_ORIENTABLE`) | IMPLEMENTED | 7/7 |
+| `recursion_witness.py` | the next rung — can the system improve its *ability to improve*? `d²/dt²` on held-out tasks, evaluator outside the loop. Result: **sustained, NOT recursive**; self-estimate diverges from reality | IMPLEMENTED | 7/7 |
 
 ## The discipline these encode — the "green-check blindspot"
 

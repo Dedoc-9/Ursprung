@@ -823,6 +823,20 @@ scale.
   structural signals for **authorized** red-team / architecture review — semantic leak = isolation surface to
   close, cycle = resilience/DoS surface, high fan-in = blast radius — holding `flagged ≠ exploitable` and
   shipping no exploit, payload, or targeting.
+- **The self-description stack → a falsifiable RSI ladder (`claim_ledger.py` 6/6, `self_improvement_witness.py`
+  7/7, `recursion_witness.py` 7/7; index in [`experiments/live_world_kernel/INDEX.md`](experiments/live_world_kernel/INDEX.md)).**
+  The same provenance discipline turned on the runtime's *own* claims. `claim_ledger` reconciles statements about
+  the kernel as **claims with commitment levels**, enforcing *evidence ≤ maturity* — an over-claim is rejected,
+  not trusted. The two witnesses make **recursive self-improvement an experiment, not a definition**:
+  `self_improvement_witness` *proves the provable* — a guarded, self-modifying edit measurably improves the system
+  on held-out data, the gain transferring to a clean split held **outside** the loop — and `recursion_witness`
+  runs the hard rung, measuring `d(capability)/dt` vs `d²(capability)/dt²` **on held-out tasks with the evaluator
+  outside the optimization loop**. The reference run's verdict is **sustained, NOT recursive** (d/dt +0.076;
+  d²/dt² ≈ 0 — a ceiling) and **not self-certified** (the self-estimate diverges from external reality, +0.155 vs
+  +0.054). It records its own ghosts: the meta-search **stalled at 9 search coords** where the true structure was
+  3, and its self-estimate ran **~4× ahead of reality**. `optimize ≠ evaluate`; `sustained ≠ recursive`; and
+  "proof of RSI" is held `UNDERCOMMITTED` — unavailable *in principle* for a self-judged metric, not merely
+  unbuilt.
 
 The pass means the embedded-authoring idea **earned the right to be scaled**, not that it has been: the boundary
 that actually decides the engine vision — concurrency at scale — is the next probe, not this one.
@@ -837,6 +851,14 @@ and the runtime, not a claim to have invented the pieces.
   "expires on real silicon" bound, and a *failed* hypothesis (Causal Continuity) is preserved as a load-bearing
   result rather than deleted. The deliverable is "a framework for discovering where our own assumptions fail,"
   not a leaderboard number.
+- **A falsifiable recursive-self-improvement ladder (`optimize ≠ evaluate`).** Re-poses "RSI" as a *measurable
+  experiment* rather than a definition or a vibe: a claim ladder (step → sustained → recursive → open-ended →
+  self-certified) with a sharp criterion — `d²(capability)/dt² > 0` measured on **held-out tasks**, surviving an
+  **evaluator held outside the optimization loop** — plus the structural argument that the top rung is
+  `NON_ORIENTABLE`: a self-judged metric cannot certify its own improvement from inside (a train-only optimizer
+  drives its metric up while real capability falls). The reference run answers **NO with receipts** (sustained,
+  not recursive) and surfaces *its own* stall and inflated self-estimate. Not a claim to have built RSI — a claim
+  to have made the question testable, and to have a bench that can catch itself short.
 - **`observation ≠ intervention` as a measured boundary.** A system that detects when a question is *not
   identifiable from observation alone* and refuses to resolve it — exposing the boundary instead of hiding it
   behind a high score. Most pipelines silently cross it; this one marks it and names the price of crossing.
