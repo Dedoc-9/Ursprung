@@ -488,6 +488,31 @@ measures vs owes vs finds inapplicable — no risk score, just how much it actua
 directory): `PYTHONHASHSEED=0 python3 repo_status.py [path-to-a-real-repo]` (7/7; point it at
 `..\..\..\..\Desktop\tests_epi\click` to audit a real package with provenance attached to every warning).
 
+## Measurement survives disagreement — `reconcile_status.py` (declare when witnesses conflict)
+
+`repo_status` showed provenance survives extraction with one witness. `reconcile_status` asks the harder
+question: when **two witnesses model the same system and disagree**, what does the convergence object say? The
+shallow answer — "disagreement → `DECLARED`" — is wrong by the project's own rule: the Dentatus epistemic states
+keep **conflicting evidence** distinct from **not measured**, so conflict gets its own state, **`CONTESTED`**.
+
+The four statuses are now an explicit **epistemic lattice** ordered by justification strength
+(`MEASURED_BY_INTERVENTION > MEASURED > DECLARED > N/A`), and reconciliation is governed by it. Disagreement is
+not uniform: a **stronger** witness *refines* a weaker one (the lower bound yields, its dissent **recorded** — not
+a deadlock), while **peers** at equal strength with incompatible claims become `CONTESTED` (both recorded,
+neither chosen). The headline invariant, and the file's first self-test: **reconciliation strength ≤ the
+strongest witness** — agreement preserves it, conflict can only *lower* it, nothing is raised by inheritance
+("epistemic strength may only decrease as evidence weakens"). No witness is ever silently dropped.
+
+The two real witnesses that already disagree on the same repo are `module_graph` (basename, absolute-only —
+weaker; declares where its basenames collide) and `fidelity_gap` (package-path, relative-aware — stronger): on a
+package like `click` the stronger refines the weaker per module and records the lower-bound dissent. The
+symmetric `CONTESTED` case (two peers, e.g. static vs runtime tracing) is exercised synthetically — the runtime
+witness is not built. Run (from this directory): `PYTHONHASHSEED=0 python3 reconcile_status.py [repo-path]`
+(7/7). The deepest form of the discipline is not "declare what you know" — it is *declare when your witnesses
+disagree.*
+
+## Honest scope (what this is NOT)
+
 A **logic reference**, not a performance system. No concurrency-at-scale, no networking, no UI, no renderer.
 Authority uses an **external root** anchor (the embedded-root / genesis variant is left open). The latency
 frontier is a *surrogate metric*, not a measured human-trust threshold. A Rust port (validated against this
