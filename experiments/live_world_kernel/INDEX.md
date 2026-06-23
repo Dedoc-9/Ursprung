@@ -29,7 +29,8 @@ rather than assert them. No scalar scores, no verdicts — every claim carries i
 | `recursion_witness.py` | the next rung — can the system improve its *ability to improve*? `d²/dt²` on held-out tasks, evaluator outside the loop. Result: **sustained, NOT recursive**; self-estimate diverges from reality | IMPLEMENTED | 7/7 |
 | `limit_discriminator.py` | *why* the upper rungs fail — separates search (A) / task (B) / transfer (C) / evaluator (D), adds the TRANSFER rung. This run: **A refuted**, B/C/D supported. Self-tests check **validity**, not whether a hypothesis confirmed (`experiment-ran ≠ hypothesis-confirmed`) | IMPLEMENTED | 7/7 |
 | `inflation_vs_search.py` | A↔D as a curve — inflation vs search strength K∈{1..32}. Finding: inflation **persistent (~+0.07) but not explosive**; flat across 31× budget (separator: `optimization-pressure ≠ search-budget`). Contests the endpoint coupling | IMPLEMENTED | 7/7 |
-| `transfer_representation.py` | the transfer table — reset / raw_weights / support_set / basis_structure / learned_init × (acq cost, external, inflation). Win = lower cost AND higher external AND no worse inflation. Principle: *evidence may not follow expectation* | IMPLEMENTED | (awaiting run) |
+| `transfer_representation.py` | the transfer table — reset / raw_weights / support_set / basis_structure / learned_init × (acq cost, external, inflation). Win = lower cost AND higher external AND no worse inflation. Single-run winner is **regime-dependent** (3 of 5 mechanisms flip between noise regimes) — see `transfer_robustness` | IMPLEMENTED | 7/7 |
+| `transfer_robustness.py` | replication gate — runs the transfer table across a noise×seed grid; reports whether any encoding wins in *every* regime (robust) or the winner changes (regime-dependent). A finding that doesn't replicate is not a finding | IMPLEMENTED | (awaiting run) |
 
 ## The discipline these encode — the "green-check blindspot"
 
