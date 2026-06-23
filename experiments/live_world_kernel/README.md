@@ -358,7 +358,14 @@ static model up to the frontier, stop pushing it past — *that boundary is wher
 Run (from this directory): `PYTHONHASHSEED=0 python3 fidelity_gap.py [path]` (7/7; the self-test runs on
 synthetic cases + this folder, so it passes without requests/click present — the *report* is for the path you pass).
 
-## Defensive use — structural reconnaissance (authorized red-team / architecture review)
+## Red-team / pentest phase 1 — authorized structural reconnaissance (architecture review)
+
+> **Phase 1 = reconnaissance / attack-surface mapping, not exploitation.** This stack *maps*; it ships no
+> exploit, payload, or targeting. Its differentiator over CVE/port/SAST scanners is twofold: it finds
+> **architectural / boundary** weakness (not known-bad patterns), and it attaches **epistemic provenance** to
+> every finding (`MEASURED` / `DECLARED` / `CONTESTED`) instead of a risk score — so a lead knows which findings
+> are confirmed, which need runtime confirmation, and which are contested. Use cases registered in the main
+> README and `AGENTS.md` (use case 6); full ledger + recorded blind spots in `docs/EPISTEMIC_ACCOUNTING.md`.
 
 These probes are observe-only diagnostics, but *structural reconnaissance* is exactly what an authorized red
 team or architecture review does first — and `module_graph` (+ the engine) surfaces a class of finding that

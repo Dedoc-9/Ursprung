@@ -258,6 +258,53 @@ dropped transition is forbidden**, and **optimization may compress provenance bu
 cardinal invariant. *Verified* here is the narrow, stronger claim: the runtime's distinctions **survived a
 substrate transition** — not that the runtime is complete.
 
+## The auditable-epistemology stack (`experiments/live_world_kernel/`) — and its red-team phase-1 use
+
+The first world-loop client on the kernel grew into a stack whose subject is **how much of a claim's
+justification survives extraction, compression, replay, disagreement, and time.** It is single-process logic
+(no concurrency, scale, or networking), and it obeys one invariant above all: **provenance strength is a ceiling
+set by evidence — every transformation may lower or hold it, never raise it** (strength is *partially* ordered,
+not totally ordered). The epistemic vocabulary, ordered by justification strength, plus the conflict marker:
+
+```
+MEASURED_BY_INTERVENTION  >  MEASURED  >  DECLARED  >  N/A          CONTESTED = conflicting evidence (≠ "not measured")
+```
+
+The instruments (each self-testing; all `OBSERVER`-class — observe, never enforce, never a verdict, never a
+scalar): `live_world_kernel` (commit / irreversible / durable), the three boundary probes (`frontier_probe`,
+`concurrency_probe`, `klein_probe`) bundled by `topology_provenance_engine`, the extraction pair (`module_graph`
+→ `fidelity_gap`, which separates a recoverable model defect from a runtime frontier), and the convergence stack
+that puts every boundary on one fact with provenance attached: `reality_status` (one witness) → `repo_status`
+(extraction *downgrades* strength) → `reconcile_status` (disagreement → `CONTESTED`, never inflation) →
+`runtime_witness` (earns evidence static cannot; orthogonal blind spots) → `witness_panel` (many witnesses, one
+fact, no global winner). The full ledger — every instrument marked `BUILT` / `CONTRACT` / `ABSENT` with its
+verification strength — is `docs/EPISTEMIC_ACCOUNTING.md`, and the four boundary *contracts* (not yet code) are
+`SELF_MODIFICATION` / `AUTHORITY_ARBITRAGE` / `ADJUDICATION_THROUGHPUT` / `FAILURE_MODE_MATRIX`.
+
+**Red-team / pentest phase 1 (authorized structural reconnaissance).** This stack is a *phase-1* tool — it
+**maps**, it does not exploit. Pointed at a codebase you own or are authorized to assess, it surfaces the class
+of finding CVE/port/SAST pattern-matchers miss — **architectural / boundary** weakness — and, uniquely, attaches
+**epistemic provenance** to each finding instead of a risk score:
+
+- a high fan-in module → *blast-radius concentration* (`HIGH_FAN_IN [MEASURED]`) — highest-value review target;
+- an import cycle → *resilience / DoS / re-entrancy surface* (`IN_DEPENDENCY_CYCLE [MEASURED]`);
+- a cross-package import that violates intended isolation → *privilege-boundary smell / lateral-movement surface*
+  (`concurrency_probe` leakage);
+- a dynamic import static missed → caught by `runtime_witness` and reconciled as `runtime refines static`.
+
+The discipline binds here exactly as everywhere else, and it is what keeps this defensive rather than alarmist:
+**`flagged ≠ exploitable`** (every output is an attention signal, never a confirmed vuln; a human confirms);
+phase 1 is **recon only** — it ships **no exploit, payload, or targeting**; it reads source/executes import-time
+code you are **authorized** to assess (the `runtime_witness` trace executes target code — trusted/authorized
+targets only); and it **declares its blind spots** — a *static* graph has provenance `NOT_APPLICABLE` (it cannot
+find the irreversibility frontier / point-of-no-return; that needs runtime or git), `identifiability` stays
+`DECLARED` until a replay/test-execution witness runs, and `runtime_witness` coverage is currently *over-counted*
+(it treats `from x import f` names as modules — a recorded ghost in the ledger; the strength discipline is
+unaffected, the coverage *count* is lower-confidence). The defensive wedge is the one most tooling misses: not
+*"is there a known-bad pattern here?"* but *"does the architecture's **real** boundary structure match its
+**intended** one — and how confident is each finding?"* — with every answer carrying whether it was `MEASURED`,
+`DECLARED`, or `CONTESTED`, never a single fabricated number.
+
 ## Performance work
 
 Prefer measurable experiments: **baseline → change → replay → benchmark → compare**. Preserve failed
@@ -332,6 +379,18 @@ verify → record` loop, the four LLM failure-mode guards (silent architectural 
 leakage, unreplayable behavior, unmeasured optimization claims), and *preserve failed branches* keep an LLM
 coding partner disciplined on work that has nothing to do with rendering (`docs/LLM_ON_TRACK.md`).
 
+**6. As an authorized red-team / pentest *phase-1* recon tool (`experiments/live_world_kernel/`).** The
+auditable-epistemology stack maps a target you are authorized to assess and surfaces **architectural / boundary**
+weakness that CVE/port/SAST scanners miss — blast-radius concentration (high fan-in), resilience/DoS surface
+(import cycles), isolation/lateral-movement smells (cross-package leakage), and dynamic behavior static misses
+(via `runtime_witness`) — with **epistemic provenance on every finding** (`MEASURED` / `DECLARED` / `CONTESTED`)
+instead of a risk score, so a lead knows which findings are confirmed, which need runtime confirmation, and which
+are contested. It is **phase 1 only**: it maps, it does not exploit; `flagged ≠ exploitable`; it ships no
+exploit/payload/targeting; the runtime trace executes target import-time code so it runs on **trusted/authorized**
+targets only; and it declares its blind spots (a static graph cannot find the irreversibility frontier;
+`runtime_witness` coverage is currently over-counted — see `docs/EPISTEMIC_ACCOUNTING.md`). Defensive use:
+*find and close your own structural attack surface before an adversary maps it from a leak.*
+
 **The adoption gap (what it is NOT yet).** It does not run for a stranger out of the box. CORE
 (`world_core.py`) consumes the *sealed* `Reality_Engine` kernel via `URSPRUNG_WORKBENCH`, so a new project must
 **substitute its own deterministic world / sim** behind the snapshot contract. There are **no production
@@ -373,18 +432,21 @@ The empirical phase (`experiments/`, seeded benches *outside* the 502-check core
 provenance runtimes → live/latent compression → the **RealityKernel** consolidation (the constraint surface
 above), whose **Rust CORE port is verified on real silicon** (`cargo test` 10/10) and whose **lineage-scale
 closure** proves *optimization cannot erase history* to 5×10⁵ commits with zero lineage lost. Then the **GPU
-benchmark, verified on hardware through the summit** (`experiments/bench_gpu_real`, **M1–M6c** on an ASUS ROG
-Xbox Ally X / Radeon 890M, Vulkan): the timestamp ruler exists, measures real compute *and* render work, binds
-each measurement to a world-identity digest, compares allocation policies *fairly* at equal measured GPU-tick
-budget (over-spenders refused, M5), and on a **sealed, neutral perceptual ruler** (M6a) ran the genuine Causal
-Continuity gate (M6b/M6c). **The verdict is a measured boundary, not a win:** at equal budget on a neutral
-metric the causal policy as specified did *not* beat uniform (the strong claim **falsified**), and M6c showed
-its allocation exponent was wrong (∝ difficulty¹ over-concentrates vs the variance-optimal ∝ difficulty^(2/3));
-a **conditional** claim survives (informative priors + corrected exponent) → `causal_continuity.STATUS =
-conditional_on_neutral_ruler`. The one form still untested is the *temporal* one — M6 conflated causal
-consequence with present render difficulty, so dropping present-perception `S` to help the **future** needs a
-multi-frame scene where the two are decorrelated. The durable artifact is the apparatus that could tell the
-difference.
+benchmark, verified on hardware through the summit and into the temporal arc** (`experiments/bench_gpu_real`,
+**M1–M6c (spatial) + M6d / T1–T4 (temporal)** on an ASUS ROG Xbox Ally X / Radeon 890M, Vulkan): the timestamp
+ruler exists, measures real compute *and* render work, binds each measurement to a world-identity digest,
+compares allocation policies *fairly* at equal measured GPU-tick budget (over-spenders refused, M5), and on
+**sealed, neutral perceptual rulers** ran the genuine Causal Continuity gates. **The verdict is a measured
+boundary, not a win — and the same unbiased apparatus moved the hypothesis both directions:** the **spatial**
+strong claim was **falsified** (at equal budget on a neutral metric the causal policy did *not* beat uniform;
+M6c showed its exponent wrong — ∝ difficulty¹ over-concentrates vs the variance-optimal ∝ difficulty^(2/3)),
+leaving a **conditional** spatial claim (informative priors + corrected exponent); the **temporal** form, built
+on the Rust kernel as a multi-frame scene that decorrelates causal consequence from present render difficulty
+(M6d / T1–T4 — the rig M6 could not build), came back **conditional-positive**; and the **hidden-future** form
+(T4) is recoverable only above a precursor-reliability threshold, below which a weak signal is *worse* than
+uniform → `causal_continuity.STATUS = conditional_on_neutral_ruler`; the whole boundary is consolidated in
+`docs/BOUNDARY_MAP.md`. The durable artifact is the apparatus that could tell the difference — and it told it
+both ways.
 
 **Verified means the distinctions survived a substrate transition — not that the runtime is complete.**
 *Proven:* kernel invariants, semantic preservation across implementations, the tested failure distinctions, and
@@ -393,11 +455,12 @@ learned-world verification, a real-time world substrate.
 
 **The remaining work is substrate and clients, not more laws.** Do not add another conceptual milestone without
 explicit direction; sanctioned work now is **better measurement substrates**, **stronger observer classes**, or
-**a client built on the kernel contract** — all *experiments*. The next builds: the Rust CORE at real scale
-(1e6–1e8 lineage, frame-loop integration, the Windows sub-granularity timing question), the **first world-loop
-client** on the kernel (where the substrate stops being tested in isolation and starts carrying a world), the
-**multi-frame causal test** (a scene where causal consequence and present render difficulty are decorrelated
-across frames — the rig M6 could not build, and the only way to test the *temporal* form of Causal Continuity),
-plus the standing seams — `reality_harness.NetworkChannel` (a real socket),
-`behavioral_harness.ExperimentLayer(channel="real")`, the perception compiler's lookup compiler, a real ML/RL
-adversary class, and a real estimator under intervention scarcity (unknown graph).
+**a client built on the kernel contract** — all *experiments*. Two of the prior frontiers have since landed: the
+**multi-frame causal test** is built (M6d / T1–T4, above), and the **first world-loop client on the kernel** has
+its first step in `experiments/live_world_kernel/` (the embedded-authoring kernel + the auditable-epistemology
+stack below — single-process logic; concurrency and scale remain open). The next builds: the Rust CORE at real
+scale (1e6–1e8 lineage, frame-loop integration, the Windows sub-granularity timing question), concurrency at the
+kernel (many actors, one region — the lethal test the live kernel has not faced), plus the standing seams —
+`reality_harness.NetworkChannel` (a real socket), `behavioral_harness.ExperimentLayer(channel="real")`, the
+perception compiler's lookup compiler, a real ML/RL adversary class, and a real estimator under intervention
+scarcity (unknown graph).

@@ -910,6 +910,18 @@ layer), not a turnkey product — read the use cases through that frame.
   much of a hidden world an agent-observer may see while preserving task utility, and classifies the observer's
   reconstruction regime (bounded / tradeoff / cascade-collapse) — a fit for agent sandboxes and AI evaluation
   where you must reveal enough to act without leaking the whole state.
+- **Authorized red-team / pentest *phase-1* reconnaissance (`experiments/live_world_kernel/`).** The
+  auditable-epistemology stack maps a codebase you are authorized to assess and surfaces **architectural /
+  boundary** weakness that CVE/port/SAST scanners miss — blast-radius concentration (high fan-in), resilience /
+  DoS surface (import cycles), isolation / lateral-movement smells (cross-package leakage), and dynamic behavior
+  static analysis misses (`runtime_witness`). Its differentiator: **epistemic provenance on every finding**
+  (`MEASURED` / `DECLARED` / `CONTESTED`) instead of a risk score, so a lead knows which findings are confirmed,
+  which need runtime confirmation, and which are contested between witnesses. **Phase 1 only — it maps, it does
+  not exploit:** `flagged ≠ exploitable`, no exploit/payload/targeting, runs on trusted/authorized targets (the
+  runtime trace executes import-time code), and it declares its blind spots (a static graph cannot find the
+  irreversibility frontier; `runtime_witness` coverage is currently over-counted — see
+  [`docs/EPISTEMIC_ACCOUNTING.md`](docs/EPISTEMIC_ACCOUNTING.md)). *Find and close your own structural attack
+  surface before an adversary maps it from a leak.*
 
 **For investors / strategic readers (honest framing):**
 
@@ -952,6 +964,14 @@ layer), not a turnkey product — read the use cases through that frame.
 - **Falsification-as-record.** A preserved failed hypothesis (Causal Continuity's naive form) and the
   re-specification it forced is a template for keeping negative results load-bearing instead of deleting them —
   the habit that produced most of the architecture.
+- **Epistemically-typed diagnostics / provenance-under-degradation (`experiments/live_world_kernel/`).** A
+  transferable pattern for any analysis tool: carry `measurement → status → provenance`, not `measurement →
+  status`. Every claim is tagged `MEASURED` / `MEASURED_BY_INTERVENTION` / `DECLARED` / `CONTESTED` / `N/A`;
+  evidence strength is a *partially-ordered* ceiling that may only fall as a claim passes through extraction
+  (downgrade), disagreement (refinement / `CONTESTED`), execution (orthogonal blind spots), and coexistence
+  (no global winner). The capstone ledger ([`docs/EPISTEMIC_ACCOUNTING.md`](docs/EPISTEMIC_ACCOUNTING.md)) marks
+  every instrument `BUILT` / `CONTRACT` / `ABSENT` and *leads with the misstatements its own comb caught* — a
+  reusable discipline for tools that must never claim stronger knowledge than the witness that produced it.
 
 ## Toward a fidelity operating system (direction, not built)
 
