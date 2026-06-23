@@ -538,14 +538,16 @@ still produces it; it just isn't reachable from honest absence).
 This is the witness that lets a cell which is `DECLARED` under static evidence become `MEASURED` under runtime
 evidence — and the reconciler already knows what to do when the two disagree.
 
-> **Observed blind spot (honest ghost).** On `click` the trace returned **0 intra-package edges** — click's
-> internal imports are all *relative* (`from . import x`), and the `__import__` hook cannot yet attribute relative
-> imports (they arrive with `name=''`). The system handled it correctly (runtime contributed `DECLARED`/absence;
-> static refined runtime on all 63 modules; nothing inflated; no false denial) — the law held with a blind
-> witness. But it means *earns-new-evidence* is so far shown only synthetically; a trace that resolves relative
-> names (via the importer's `__package__` + `level`) is needed to corroborate on `click` and to catch the
-> module-level dynamic imports in `requests` (`compat.import_module`, `packages.__import__`). That fix is the
-> difference between the runtime witness earning evidence in principle and in fact.
+> **Observed blind spot, and the fix (honest ghost → resolved).** The first trace returned **0 intra-package
+> edges** on `click` — its internal imports are all *relative* (`from . import x`), and the `__import__` hook
+> couldn't attribute them (they arrive with `name=''`). The system handled it correctly (runtime contributed
+> `DECLARED`/absence; static refined runtime on all 63 modules; nothing inflated; no false denial) — the law held
+> with a blind witness. The trace now **resolves relative imports** via the importer's `__package__` + `level`
+> (`_resolve_targets`, verified as a pure function in the self-test), so it should corroborate `click`'s relative
+> edges and catch the *module-level* dynamic imports in `requests` (`compat.import_module`, `packages.__import__`)
+> — the case where runtime genuinely *refines* static. The **residual** blind spot is honest and irreducible for
+> a load-only trace: imports inside functions never *called* this run stay invisible — recorded as `DECLARED`,
+> never a denial. (Re-run `runtime_witness.py "…\tests_epi\psf\requests"` to see refinement on real data.)
 
 ## One fact, many witnesses — `witness_panel.py` (the architecture is a lattice, not a hierarchy)
 

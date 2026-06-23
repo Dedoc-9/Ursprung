@@ -82,6 +82,32 @@ def reconcile_repo(static_edges, runtime_edges, modules):
 # ---------------------------------------------------------------------------------------------------
 # The runtime TRACE (IO — executes target import-time code; ships as a candidate, not asserted).
 # ---------------------------------------------------------------------------------------------------
+def _resolve_targets(importer_pkg, name, fromlist, level):
+    """Pure: resolve an import call to absolute dotted target module(s). Handles RELATIVE imports (level>0) via
+    the importer's package — the blind spot that made the first trace silent on relative-heavy packages.
+        level 0 : `name` is already absolute.
+        level L : base = importer_pkg with (L-1) trailing components stripped; target = base[.name]; each
+                  fromlist entry is a candidate submodule base[.name].entry.
+    Returns a set of candidate absolute module names (filtered to the package later)."""
+    targets = set()
+    if level == 0:
+        if name:
+            targets.add(name)
+            for f in (fromlist or ()):
+                targets.add(name + "." + f)
+        return targets
+    parts = importer_pkg.split(".") if importer_pkg else []
+    if level - 1 > 0:                                   # `from .. import x` etc. climb up the package tree
+        parts = parts[:-(level - 1)] if len(parts) >= (level - 1) else []
+    base = ".".join(parts)
+    head = (base + "." + name) if (base and name) else (name or base)
+    if head:
+        targets.add(head)
+        for f in (fromlist or ()):
+            targets.add(head + "." + f)
+    return targets
+
+
 def _locate(root):
     """Best-effort: find (sys.path dir, top package name) for a repo. Prefers a src/<pkg> layout."""
     for base in (os.path.join(root, "src"), root):
@@ -105,11 +131,11 @@ def trace_imports(src_dir, top_pkg):
     orig = builtins.__import__
 
     def hook(name, g=None, l=None, fromlist=(), level=0):
-        importer = (g or {}).get("__name__", "?")
-        if name:
-            edges.add((importer, name))
-            for f in (fromlist or ()):
-                edges.add((importer, name + "." + f))
+        g = g or {}
+        importer = g.get("__name__", "?")
+        importer_pkg = g.get("__package__") or importer    # the package relative imports resolve against
+        for tgt in _resolve_targets(importer_pkg, name or "", fromlist, level):
+            edges.add((importer, tgt))
         return orig(name, g, l, fromlist, level)
 
     builtins.__import__ = hook
@@ -157,8 +183,8 @@ def main() -> None:
                     if shown < 4:
                         print(f"    dependency({m!r}): {rec.value} [{rec.status}]  (static={sc.value}, runtime={rc.value}[{rc.status}])")
                         shown += 1
-            print("  (best-effort trace; relative-import attribution is part of runtime's blind spot — the")
-            print("   asserted discipline is the synthetic self-test below)\n")
+            print("  (relative imports now resolved via importer package+level; the residual blind spot is")
+            print("   imports inside functions NOT called this run — absence stays DECLARED, never denial)\n")
     else:
         print("  (no path given — running the verified reconciliation self-test only; pass a trusted repo path")
         print("   e.g.  python runtime_witness.py \"C:\\...\\Desktop\\tests_epi\\click\"  to trace a real package)\n")
@@ -219,6 +245,15 @@ def main() -> None:
     new_evidence = {("a", "m")} - set()
     check("earns_new_evidence", bool(new_evidence) and dep_cells(set(), {("a", "m")}, "m")[2].value == "IRREVERSIBLE",
           "runtime contributes edges absent from static (the dynamic ones) — new evidence, not a rearrangement")
+
+    # relative-import resolution (the fix for the click 0-edges ghost) — verified as a pure function
+    rel1 = _resolve_targets("click", "", ["utils"], 1)              # from . import utils  (in package click)
+    rel2 = _resolve_targets("click.sub", "models", ["X"], 1)        # from .models import X (in click.sub.*)
+    rel3 = _resolve_targets("click.sub", "pkg", [], 2)              # from ..pkg import *   (climb one level)
+    absn = _resolve_targets("click", "os.path", [], 0)             # absolute import untouched
+    check("relative_imports_resolved",
+          "click.utils" in rel1 and "click.sub.models" in rel2 and "click.pkg" in rel3 and "os.path" in absn,
+          "from . / from .mod / from ..pkg resolve to absolute dotted targets via importer package + level")
 
     print(f"\n{passed}/{total} checks. The runtime witness earns evidence the static one structurally cannot")
     print("(dynamic imports, executed at load time) and is blind to what the static one sees (un-exercised paths).")
