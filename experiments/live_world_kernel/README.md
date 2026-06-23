@@ -433,6 +433,40 @@ reason to look, not a reason to believe.
 *Sources: [Figma — How Figma's multiplayer technology works](https://www.figma.com/blog/how-figmas-multiplayer-technology-works/);
 [Aref & Wilson, Balance and Frustration in Signed Networks](https://arxiv.org/abs/1712.04628).*
 
+## The convergence object — `reality_status.py` (every boundary on one fact)
+
+The probes each measure one boundary. `reality_status(event_id)` is where they **meet on the same object**:
+given a committed fact, it returns a structured state vector — for each boundary, where this fact currently
+stands. No scalar score, no verdict. The move that makes it more than an observability dashboard: **every cell
+reports the provenance of its own verdict** — `MEASURED` (a real kernel computation), `MEASURED_BY_INTERVENTION`
+(a `do(¬eid)` replay), `DECLARED` (the axis applies but its probe is a contract, not code — a pointer, never a
+fabricated verdict), or `N/A` (the axis does not apply to this event). A dashboard that fills unmeasured cells
+with green is the dashboard that lies; this one says which cells it actually measured.
+
+Four axes are live today (the kernel computes them) and three are `DECLARED`:
+
+```
+reality_status('a1'):
+    commitment       COMMITTED              [MEASURED]
+    dependency       IRREVERSIBLE           [MEASURED]                 (a2 depends on a1)
+    durability       FRAGILE                [MEASURED]                 (primary-only; no independent path)
+    authority        DECLARED               [DECLARED]                 (AUTHORITY_ARBITRAGE_BOUNDARY.md)
+    verification     DECLARED               [DECLARED]                 (no t_verified; ADJUDICATION_THROUGHPUT)
+    orientability    N/A                    [N/A]                      (not a self-modification)
+    identifiability  NECESSARY              [MEASURED_BY_INTERVENTION] (do(¬closure) changes the world)
+    candidate risk:  IRREVERSIBLE_AND_FRAGILE [MEASURED] · FLOODED_CASCADE [DECLARED]
+    KNOWN: [commitment, dependency, durability, identifiability]   PENDING: [authority, verification]
+```
+
+So a fact can be *committed, irreversible, causally necessary — and fragile*, with two boundaries still owed.
+The aggregator never diverges from the kernel's own primitives (`is_committed` / `is_irreversible` /
+`recovery_paths`), computes causal necessity by **intervention** (`do(¬eid)` replay — `stable ≠ causal`: an
+event whose effect was later erased comes back `INERT`), and surfaces only the forward-matrix risk the kernel can
+actually support (`IRREVERSIBLE_AND_FRAGILE`), leaving `FLOODED_CASCADE` `DECLARED` because there is no
+`t_verified` to measure. It becomes a complete diagnostic language only as the three contract probes are built —
+and it will not pretend otherwise. Run (from this directory): `PYTHONHASHSEED=0 python3 reality_status.py` (7/7;
+first check is the discipline gate — every cell must carry its own provenance).
+
 ## Honest scope (what this is NOT)
 
 A **logic reference**, not a performance system. No concurrency-at-scale, no networking, no UI, no renderer.
