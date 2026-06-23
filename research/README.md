@@ -20,6 +20,9 @@ self-testing); each doc carries its own provenance and sources.
 | `sha256_avalanche.py` | diffusion measurement (defensive) | measures the **absence** of gradient — `d_out ≈ 128` for every `d_in` (4/4) |
 | `collatz_reconcile.py` | structural Collatz-like map auditor | exploits the **presence** of structure (2-adic bijection + drift); corners the residual; universal claim stays `OPEN` (7/7) |
 | `sha256_2adic_branch.py` | falsification test for the carry-conditioned "2-adic reverse-Collatz" hypothesis | measures carry-branch survival; verdict regime *local gradient real, no compounding → `BOUNDED_TO_REDUCED_ROUNDS`*; never a break (the coinage, now committed & tested, not undercommitted) |
+| `carry_markov_ck.py` | the Chapman–Kolmogorov bridge, computed exactly on the carry chain | local structured kernel `K` (off-diag 0.25) → uniform via CK composition + spectral gap λ₂=0.5; `composition ≠ flattening`; declared as the 2-adic-axis illustration, not the 2²⁵⁶ round operator (measured by avalanche) |
+| `sha256_degree.py` | algebraic-degree / integral "correlation vacancy" of reduced-round SHA-256 | step-addressable SHA-256 **anchored to hashlib** (round function verified, not assumed); degree machinery checked on known-degree functions; low-round vacancy real, closes as degree saturates → `BOUNDED_TO_REDUCED_ROUNDS`; the FUP idea re-cast correctly over GF(2) (higher-order derivatives, not fractals) |
+| `carry_anf.py` | exact ANF + algebraic degree of the modular-addition carries (no statistics) | verifies the carry recurrence's closed form (`⊕_j X_jY_j∏(X_k⊕Y_k)`) and pins the degree law **`deg(C_{i+1}) = i+2`** (+1 per bit) — *caught an off-by-one in the proposed `i+1` summary*; the concrete local mechanism behind degree saturation |
 
 ## The cross-domain pair (why both exist)
 
