@@ -45,6 +45,7 @@ paper — a measurement contract, no code}.
 | `reconcile_status.py` | disagreement — the lattice; CONTESTED; strength never inflates | BUILT | transitive (imported & exercised by runtime_witness 8/8, witness_panel 7/7); confirm committed |
 | `runtime_witness.py` | execution — earns evidence static cannot (dynamic imports) | BUILT | verified 8/8 (discipline); **coverage over-counts — see ghosts** |
 | `witness_panel.py` | coexistence — one fact, many witnesses; partial order, no global winner | BUILT | verified 7/7 |
+| `discrimination_matrix.py` | experiment ranking — value = `DECLARED`→`MEASURED_BY_INTERVENTION` conversions; `UNKNOWN` (our gap) vs `UNDERCOMMITTED` (theory refuses, set aside ≠ refuted) gate | BUILT | verified 7/7 |
 | `docs/SELF_MODIFICATION_BOUNDARY.md` | recursion — can a runtime define its own frontier (NON_ORIENTABLE) | CONTRACT | paper |
 | `docs/AUTHORITY_ARBITRAGE_BOUNDARY.md` | adversaries — advantage that cannot be adjudicated (SEVERED) | CONTRACT | paper |
 | `docs/ADJUDICATION_THROUGHPUT_BOUNDARY.md` | throughput — can commitment outrun verification (FLOODED) | CONTRACT | paper |
