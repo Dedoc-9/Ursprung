@@ -467,7 +467,26 @@ actually support (`IRREVERSIBLE_AND_FRAGILE`), leaving `FLOODED_CASCADE` `DECLAR
 and it will not pretend otherwise. Run (from this directory): `PYTHONHASHSEED=0 python3 reality_status.py` (7/7;
 first check is the discipline gate — every cell must carry its own provenance).
 
-## Honest scope (what this is NOT)
+## Contact with reality — `repo_status.py` (epistemic provenance must downgrade, not inherit)
+
+`reality_status` ran over a hand-built kernel fact, where the evidence is strong. `repo_status` feeds the **same
+convergence object from a real extracted system** — a source tree parsed by `fidelity_gap` / `module_graph` —
+where the evidence is much weaker, and answers the question that follows: *can epistemic provenance survive
+contact with reality?* The answer is **yes, by getting weaker — honestly.** The kernel can say
+`identifiability = NECESSARY [MEASURED_BY_INTERVENTION]` because it replays its own log; a static parser **cannot
+replay**, so that same cell must come back `DECLARED` — never inherit the kernel's strength. The failure mode the
+probe exists to refuse is the extractor silently keeping certainty it didn't earn (`declared ≠ verified`).
+
+So over a static extraction: `commitment` is reframed as extraction-*presence* (`MEASURED`, but flagged as
+weaker than authority-gated commitment); `dependency` is `MEASURED` **as a lower bound** (dynamic importers are
+invisible); `durability` / `authority` / `orientability` are `N/A` (no such mechanism in an import graph);
+`verification` and `identifiability` are `DECLARED` (the latter explicitly downgraded — "static cannot replay");
+and dynamic-import blind spots propagate as `UNRESOLVED_DEPENDENCY [DECLARED]`, never silently resolved. The
+self-test's headline check is that **`MEASURED_BY_INTERVENTION` appears nowhere** over static evidence — nothing
+was upgraded. A repo-level *epistemic coverage* line reports how many axis-cells the extraction genuinely
+measures vs owes vs finds inapplicable — no risk score, just how much it actually knows. Run (from this
+directory): `PYTHONHASHSEED=0 python3 repo_status.py [path-to-a-real-repo]` (7/7; point it at
+`..\..\..\..\Desktop\tests_epi\click` to audit a real package with provenance attached to every warning).
 
 A **logic reference**, not a performance system. No concurrency-at-scale, no networking, no UI, no renderer.
 Authority uses an **external root** anchor (the embedded-root / genesis variant is left open). The latency
