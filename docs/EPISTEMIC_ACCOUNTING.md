@@ -51,6 +51,8 @@ paper — a measurement contract, no code}.
 | `recursion_witness.py` | RSI ladder — capability across generations on **held-out tasks**, evaluator outside the loop. **sustained YES** (d/dt +0.076), **recursive NO** (d²/dt² ≈0, ceiling), **self-certified NO** (self-estimate +0.155 vs real +0.054). Ghosts: meta-search **stalled at 9 coords** (true support 3) after 4 edits; self-estimate ~4× inflated vs reality | BUILT | verified 7/7 |
 | `limit_discriminator.py` | limiter discrimination — separates **A** search / **B** task / **C** transfer / **D** evaluator, task held fixed. This run: **A REFUTED**, **B SUPPORTED** (task ceiling, no acceleration), **C SUPPORTED** *for raw-weight-carry* (entangled few-sample weights transfer distortion; structure-level transfer untested), **D SUPPORTED** (self-estimate +0.073). The endpoint "search↔evaluator coupling" (0.075<0.082) is **CONTESTED** — a clean width sweep (`inflation_vs_search`) did not reproduce it; the two points differed in generations & loop type, not clean pressure. Self-tests verify **validity + classifier soundness** (incl. `verdicts_consistent_with_data`), never an expected outcome | BUILT | verified 7/7 |
 | `inflation_vs_search.py` | A↔D as a *curve* — inflation = proxy − external vs search strength K∈{1,2,4,8,16,32}. Finding: inflation is **persistent (~+0.07) but NOT explosive** — flat across a 31× budget rise (93→2883 evals) because K≥2 yield *identical* optimizers (small discrete proposal space ⇒ best-of-K → greedy-best at K≈2). New separator **optimization-pressure ≠ search-budget** (`d(budget)/dK>0`, `d(pressure)/dK≈0`). "more search → more inflation" **not observed** ⇒ the earlier endpoint coupling is CONTESTED. A *more constrained, more useful* statement than the explosive-coupling suspicion. Self-tests = validity + classifier soundness | BUILT | verified 7/7 |
+| `transfer_representation.py` | transfer table — encodings (reset/raw_weights/support_set/basis_structure/learned_init) × (cost, external, inflation); win = lower cost + higher external + no-worse inflation. Single-run winner is **regime-dependent** (3 of 5 mechanisms flip between noise regimes). Cost-axis degeneracy (theta unreachable ⇒ all costs pinned) was caught by combing and fixed (relative reachable threshold) | BUILT | verified 7/7 |
+| `transfer_robustness.py` | replication gate — transfer table across a 3×3 noise×seed grid. Verdict **REGIME_DEPENDENT** and stronger: **6/9 regimes have no winner, all 3 wins cluster at one seed ⇒ no robust transfer advantage** (apparent winners are sampling flukes, not mechanism effects). Self-tests = validity + stability-verdict soundness | BUILT | verified 7/7 |
 | `docs/SELF_MODIFICATION_BOUNDARY.md` | recursion — can a runtime define its own frontier (NON_ORIENTABLE) | CONTRACT | paper |
 | `docs/AUTHORITY_ARBITRAGE_BOUNDARY.md` | adversaries — advantage that cannot be adjudicated (SEVERED) | CONTRACT | paper |
 | `docs/ADJUDICATION_THROUGHPUT_BOUNDARY.md` | throughput — can commitment outrun verification (FLOODED) | CONTRACT | paper |
@@ -133,6 +135,15 @@ appearing *nowhere* over static evidence.
   pressure. Net update, in the charitable and correct reading: inflation EXISTS, is MEASURABLE, and is STABLE in
   this regime — a tighter, more useful claim than the explosive-coupling suspicion it replaced. The open question
   moves to transfer: *what changes external capability without raising inflation?*
+
+- **The RSI→transfer arc's net result is deflationary, and that is the finding.** Across the self-improvement
+  ladder (`self_improvement_witness` → `recursion_witness` → `limit_discriminator` → `inflation_vs_search` →
+  `transfer_representation` → `transfer_robustness`): a self-improvement *step* is real and provable; *recursion*
+  (d²/dt²>0) is not observed; the evaluator gap is *persistent but not explosive*; and across a 3×3 regime grid
+  **no transfer encoding robustly beats the cold baseline** (wins are sparse and seed-clustered — sampling flukes).
+  The durable artifact is not a capability but the *method*: each witness tightened the rules under which the next
+  could claim anything, and that epistemic loop — not the optimizer — is the only thing that measurably compounded.
+  `expectation may follow evidence; evidence may not follow expectation`.
 
 ## What this ledger does and does not establish
 
