@@ -1014,6 +1014,14 @@ can't keep up) — measured as `t_dep < t_verified` against the kernel's irrever
 decomposition `SEVERED` (information loss) / `FLOODED` (throughput deficit) / `INTERVENTION_ONLY` (identifiability
 limit); the proof-carrying floor (`grounded_claim`) reverses the asymmetry for the check-adjudicable class. Kept
 a separate probe (split-before-unify); throughput is a declared-rate model, `integrity ≠ truth`.
+[`docs/FAILURE_MODE_MATRIX.md`](docs/FAILURE_MODE_MATRIX.md) — the **cross-boundary diagnostic layer** over the
+four (connective tissue, not a new ontology): the boundary docs ask *"can this happen?"*, the matrix asks *"if I
+observe X, which boundary am I hitting?"* Four orthogonal failure axes (`NON_ORIENTABLE` / `SEVERED` / `FLOODED`
+/ `INTERVENTION_ONLY`) — *independent invariants, not "conservation laws"* (nothing is conserved); a
+forward table (failure → consequence, incl. the `FLOODED → SEVERED` cascade across the irreversibility frontier)
+and an inverse one (observation → candidate set **+ the discriminating test that collapses it**). Routes toward a
+boundary, never a verdict (`observation → candidate set, never cause`); orthogonality is the hypothesis it
+*tests*, and an unmatched symptom is evidence of an unmodeled fifth axis.
 [`docs/REAL_SILICON_BENCHMARK.md`](docs/REAL_SILICON_BENCHMARK.md) — the measurement *contract* for
 the GPU benchmark (device as constrained oracle, GPU-timestamp budget as the shared ruler, temporal error as a
 Pareto profile). It is now **built and verified on hardware through the temporal arc** in
