@@ -53,6 +53,7 @@ paper — a measurement contract, no code}.
 | `inflation_vs_search.py` | A↔D as a *curve* — inflation = proxy − external vs search strength K∈{1,2,4,8,16,32}. Finding: inflation is **persistent (~+0.07) but NOT explosive** — flat across a 31× budget rise (93→2883 evals) because K≥2 yield *identical* optimizers (small discrete proposal space ⇒ best-of-K → greedy-best at K≈2). New separator **optimization-pressure ≠ search-budget** (`d(budget)/dK>0`, `d(pressure)/dK≈0`). "more search → more inflation" **not observed** ⇒ the earlier endpoint coupling is CONTESTED. A *more constrained, more useful* statement than the explosive-coupling suspicion. Self-tests = validity + classifier soundness | BUILT | verified 7/7 |
 | `transfer_representation.py` | transfer table — encodings (reset/raw_weights/support_set/basis_structure/learned_init) × (cost, external, inflation); win = lower cost + higher external + no-worse inflation. Single-run winner is **regime-dependent** (3 of 5 mechanisms flip between noise regimes). Cost-axis degeneracy (theta unreachable ⇒ all costs pinned) was caught by combing and fixed (relative reachable threshold) | BUILT | verified 7/7 |
 | `transfer_robustness.py` | replication gate — transfer table across a 3×3 noise×seed grid. Verdict **REGIME_DEPENDENT** and stronger: **6/9 regimes have no winner, all 3 wins cluster at one seed ⇒ no robust transfer advantage** (apparent winners are sampling flukes, not mechanism effects). Self-tests = validity + stability-verdict soundness | BUILT | verified 7/7 |
+| `rsi_engine.py` | **RSI engine (capstone)** — self-modify only through a reconciler gate (external gain ∧ replication ∧ calibration); naive proxy-runaway control. Gated: real external gain (+0.041), **inflation −0.090** (underconfident — safe); naive: proxy +0.072 but external −0.024 (self-deception, inflation +0.096). Both promoted **once in 60 rounds** ⇒ verified gains are *rare* — a single verified step, not a sustained sequence. The gate invariant *is* the self-test (every promotion provably cleared all gates; verified capability cannot regress) | BUILT | verified 7/7 |
 | `docs/SELF_MODIFICATION_BOUNDARY.md` | recursion — can a runtime define its own frontier (NON_ORIENTABLE) | CONTRACT | paper |
 | `docs/AUTHORITY_ARBITRAGE_BOUNDARY.md` | adversaries — advantage that cannot be adjudicated (SEVERED) | CONTRACT | paper |
 | `docs/ADJUDICATION_THROUGHPUT_BOUNDARY.md` | throughput — can commitment outrun verification (FLOODED) | CONTRACT | paper |
@@ -143,7 +144,13 @@ appearing *nowhere* over static evidence.
   **no transfer encoding robustly beats the cold baseline** (wins are sparse and seed-clustered — sampling flukes).
   The durable artifact is not a capability but the *method*: each witness tightened the rules under which the next
   could claim anything, and that epistemic loop — not the optimizer — is the only thing that measurably compounded.
-  `expectation may follow evidence; evidence may not follow expectation`.
+  `expectation may follow evidence; evidence may not follow expectation`. The capstone `rsi_engine` makes the
+  conclusion executable: an "RSI engine" defined defensibly is not a runaway optimizer but a self-modifier that
+  promotes an edit *only* through a reconciler gate (external gain ∧ replication ∧ calibration). Run head-to-head
+  with a naive proxy-runaway, the gated engine improved on reality while staying under-confident (negative
+  inflation) and the runaway deceived itself (proxy up, reality down) — but the gate promoted just **once in 60
+  rounds**: verified self-improvement is real and rare, and the conservatism *is* the mechanism, not a safety
+  bolt-on. The only loop that recursively self-improved here was the verification discipline itself.
 
 ## What this ledger does and does not establish
 
