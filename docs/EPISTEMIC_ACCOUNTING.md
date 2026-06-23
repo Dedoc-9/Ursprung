@@ -49,6 +49,7 @@ paper — a measurement contract, no code}.
 | `claim_ledger.py` | reflexive — reconcile claims-about-the-kernel without category collapse; enforces *evidence ≤ maturity* (no inflation); refuses a single kernel-status scalar | BUILT | verified 6/6 |
 | `self_improvement_witness.py` | self-improvement — proves a guarded, self-modifying *step* (C1 σ-adapts, C2 held-out gain real); measures C3 = **PLATEAU** (no recursion); holds C4 unbounded/self-certified RSI at `UNDERCOMMITTED`/`NON_ORIENTABLE` (certification is external; train-only metric rises while reality falls) | BUILT | verified 7/7 |
 | `recursion_witness.py` | RSI ladder — capability across generations on **held-out tasks**, evaluator outside the loop. **sustained YES** (d/dt +0.076), **recursive NO** (d²/dt² ≈0, ceiling), **self-certified NO** (self-estimate +0.155 vs real +0.054). Ghosts: meta-search **stalled at 9 coords** (true support 3) after 4 edits; self-estimate ~4× inflated vs reality | BUILT | verified 7/7 |
+| `limit_discriminator.py` | limiter discrimination — separates **A** search / **B** task / **C** transfer / **D** evaluator, task held fixed. This run: **A REFUTED** (stronger search reached a *lower* ceiling 0.075<0.082 — search↔evaluator coupling: harder search overfits the noisy self-metric), **B SUPPORTED** (task ceiling, no acceleration), **C SUPPORTED** *for raw-weight-carry* (entangled few-sample weights transfer distortion; structure-level transfer untested), **D SUPPORTED** (self-estimate +0.073). Self-tests verify **validity + classifier soundness** (incl. `verdicts_consistent_with_data`), never an expected outcome | BUILT | verified 7/7 |
 | `docs/SELF_MODIFICATION_BOUNDARY.md` | recursion — can a runtime define its own frontier (NON_ORIENTABLE) | CONTRACT | paper |
 | `docs/AUTHORITY_ARBITRAGE_BOUNDARY.md` | adversaries — advantage that cannot be adjudicated (SEVERED) | CONTRACT | paper |
 | `docs/ADJUDICATION_THROUGHPUT_BOUNDARY.md` | throughput — can commitment outrun verification (FLOODED) | CONTRACT | paper |
@@ -107,6 +108,17 @@ appearing *nowhere* over static evidence.
   import it). Confirm `reconcile_status.py` is committed — `runtime_witness` and `witness_panel` import it.
 - **Single-process logic throughout.** No concurrency, networking, scale, or wall-clock throughput. `runtime_witness`
   tracing executes target import-time code (candidate, trusted code only).
+- **A self-test enforced an expected outcome (caught externally, fixed).** `limit_discriminator`'s first version
+  asserted `strong ≥ weak` and `carry < reset` as pass/fail gates — but those are *theory expectations*, not
+  correctness invariants. When the data refuted them (`A` was genuinely REFUTED; raw-weight-carry genuinely
+  failed), the bench reported "broken" instead of "interesting." **A verification gate that enforces the
+  experimenter's predicted result is itself a form of inflation** — it launders a prior into a green check.
+  Rewritten so self-tests check **validity + classifier soundness** only, including `verdicts_consistent_with_data`
+  (fires iff a verdict contradicts its own numbers). New separators this surfaced:
+  `experiment-ran ≠ hypothesis-confirmed`; `measurement-valid ≠ prediction-true`. It also exposed two domain
+  ghosts worth keeping: fair-carry weight transfer was *negative* here (entangled few-sample estimates transfer
+  distortion), and a *stronger* search reached a *lower* held-out ceiling (search↔evaluator coupling — harder
+  optimization of a noisy self-metric overfits it).
 
 ## What this ledger does and does not establish
 
