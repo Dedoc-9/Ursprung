@@ -37,7 +37,15 @@ from __future__ import annotations
 import math
 from itertools import combinations
 
-from reality_status import DECLARED, MEASURED_BY_INTERVENTION
+# The epistemic-status vocabulary is canonically defined ONCE in reality_status.py (single source of truth,
+# shared with reconcile_status / witness_panel / runtime_witness). Import it when available; fall back to a
+# *declared* local mirror ONLY when running standalone — never a silent fork (`compress ≠ sever`). In-repo the
+# import always wins, so the two never diverge; the fallback exists solely so the file runs in isolation.
+try:
+    from reality_status import DECLARED, MEASURED_BY_INTERVENTION
+except ImportError:                                   # standalone fallback — MUST mirror reality_status.py
+    DECLARED = "DECLARED"
+    MEASURED_BY_INTERVENTION = "MEASURED_BY_INTERVENTION"
 
 
 class _State:
