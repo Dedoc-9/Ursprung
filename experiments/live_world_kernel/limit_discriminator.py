@@ -10,7 +10,8 @@ The four competing hypotheses for the prior stall, each with a discriminating te
 
   A  search-limited      a stronger meta-search escapes the plateau and reaches a higher held-out ceiling
   B  task-limited        even strong search saturates; no acceleration appears
-  C  not-compositional   prior learning does NOT lower the cost of acquiring later capabilities
+  C  weak-transfer       the TESTED transfer representation (raw-weight carry) does NOT lower acquisition cost
+                         (representation-relative: a poor transfer encoding can fail even where transfer exists)
   D  evaluator-limited   the self-estimate decouples from external capability
 
 THE DESIGN RULE THIS FILE NOW OBEYS (it did not, and was rightly caught): a self-test verifies that the
@@ -239,11 +240,12 @@ def build_synthesis(c):
     parts.append("acceleration is " + ("ABSENT even under strong search (B: a real task ceiling)"
                  if c["B"] == SUPPORTED else "PRESENT under strong search (B refuted: candidate acceleration)"))
     if c["C"] == SUPPORTED:
-        parts.append("prior learning did NOT lower acquisition cost (C: not compositional)")
+        parts.append("raw-weight carry did NOT lower acquisition cost (C: THIS transfer representation fails — "
+                     "structure/support-level transfer untested, so transfer-in-general is not refuted)")
     elif c["C"] == PARTIAL:
-        parts.append("prior learning lowers cost but ADDITIVELY, without compounding (C-partial: transfer, not acceleration)")
+        parts.append("raw-weight carry lowers cost but ADDITIVELY, without compounding (C-partial: transfer, not acceleration)")
     else:
-        parts.append("prior learning COMPOUNDS — acquisition cost collapses (C refuted: compositional acceleration)")
+        parts.append("raw-weight carry COMPOUNDS — acquisition cost collapses (C refuted: compositional acceleration)")
     parts.append("the self-estimate " + ("runs ahead of reality (D: evaluator decoupled)"
                  if c["D"] == SUPPORTED else "tracks reality (D refuted)"))
     tail = ("d^2(capability)/dt^2 > 0 would require MULTIPLICATIVE/compositional transfer; "
@@ -259,7 +261,7 @@ def report(R):
         "hypotheses": {
             "A_search_limited":    {"verdict": c["A"], "evidence": f"strong ceiling {c['ceil_s']:.3f} vs weak {c['ceil_w']:.3f} (strong active {len(R['strong_opt'].active)} coords; true {len(FAMILY_SUPPORT)})"},
             "B_task_limited":      {"verdict": c["B"], "evidence": f"strong-search gain {c['fh_strong']:.0%} in first half (accel={c['accel_strong']})"},
-            "C_not_compositional": {"verdict": c["C"], "evidence": f"carry Σ{c['carry_t']} vs reset Σ{c['reset_t']} (transfer={c['transfer_present']}); per-task carry {R['carry_costs']} reset {R['reset_costs']}"},
+            "C_raw_weight_transfer": {"verdict": c["C"], "evidence": f"carry Σ{c['carry_t']} vs reset Σ{c['reset_t']} (transfer={c['transfer_present']}); per-task carry {R['carry_costs']} reset {R['reset_costs']} — SCOPE: raw-weight carry only, not transfer-in-general"},
             "D_evaluator_limited": {"verdict": c["D"], "evidence": f"self-estimate - reality mean {R['inflation_mean']:+.3f}, slope {R['inflation_slope']:+.4f}/gen"},
         },
         "ladder": {
@@ -323,7 +325,7 @@ def main():
     # 5. every hypothesis received a classification (the discrimination is complete)
     allowed = {SUPPORTED, REFUTED, UNDETERMINED, PARTIAL}
     check("hypotheses_classified",
-          all(rep["hypotheses"][h]["verdict"] in allowed for h in ("A_search_limited", "B_task_limited", "C_not_compositional", "D_evaluator_limited")),
+          all(rep["hypotheses"][h]["verdict"] in allowed for h in ("A_search_limited", "B_task_limited", "C_raw_weight_transfer", "D_evaluator_limited")),
           "A/B/C/D each assigned a verdict in {SUPPORTED, REFUTED, UNDETERMINED, PARTIAL}")
 
     # 6. NO verdict contradicts its own numbers (the failure the discriminator was built to catch — now on itself)
