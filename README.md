@@ -1022,6 +1022,13 @@ forward table (failure → consequence, incl. the `FLOODED → SEVERED` cascade 
 and an inverse one (observation → candidate set **+ the discriminating test that collapses it**). Routes toward a
 boundary, never a verdict (`observation → candidate set, never cause`); orthogonality is the hypothesis it
 *tests*, and an unmatched symptom is evidence of an unmodeled fifth axis.
+[`docs/EPISTEMIC_ACCOUNTING.md`](docs/EPISTEMIC_ACCOUNTING.md) — **the ledger** of the live_world_kernel stack as
+*auditable epistemology as infrastructure*: every instrument and boundary marked `BUILT` / `CONTRACT` / `ABSENT`
+with its verification strength, the one invariant (provenance strength is a monotone-non-increasing ceiling,
+*partially* ordered), the convergence stack (`reality_status → repo_status → reconcile_status → runtime_witness →
+witness_panel`), and a recorded-ghosts section that *leads* with the misstatements the comb caught (e.g.
+`runtime_witness` over-counting coverage by treating `from x import f` names as modules). Accounting, not
+aspiration — written to refuse looking more complete than it is.
 [`docs/REAL_SILICON_BENCHMARK.md`](docs/REAL_SILICON_BENCHMARK.md) — the measurement *contract* for
 the GPU benchmark (device as constrained oracle, GPU-timestamp budget as the shared ruler, temporal error as a
 Pareto profile). It is now **built and verified on hardware through the temporal arc** in
