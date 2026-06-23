@@ -1006,6 +1006,14 @@ axis: advantage reconstructability (`RECONSTRUCTABLE / VIA_INDEPENDENT_WITNESS /
 witness substrate is *derived as an anti-arbitrage necessity*, not chosen — stated with its falsifier, and the
 honest residual that layering relocates unadjudicability to the bootstrap (genesis). The strongest reduction is
 **non-representability**, bounded by genesis; `declared ≠ verified`.
+[`docs/ADJUDICATION_THROUGHPUT_BOUNDARY.md`](docs/ADJUDICATION_THROUGHPUT_BOUNDARY.md) — the third of the triad,
+about *timing* not authority: **can commitment outrun verification?** A system reconstructable *in principle*
+becomes effectively non-reconstructable when verification cannot keep pace with production (the reduced, testable
+core of Brandolini's Law). Isolates a failure mode the other two miss — `FLOODED` (witness exists, reconstruction
+can't keep up) — measured as `t_dep < t_verified` against the kernel's irreversibility frontier; clean
+decomposition `SEVERED` (information loss) / `FLOODED` (throughput deficit) / `INTERVENTION_ONLY` (identifiability
+limit); the proof-carrying floor (`grounded_claim`) reverses the asymmetry for the check-adjudicable class. Kept
+a separate probe (split-before-unify); throughput is a declared-rate model, `integrity ≠ truth`.
 [`docs/REAL_SILICON_BENCHMARK.md`](docs/REAL_SILICON_BENCHMARK.md) — the measurement *contract* for
 the GPU benchmark (device as constrained oracle, GPU-timestamp budget as the shared ruler, temporal error as a
 Pareto profile). It is now **built and verified on hardware through the temporal arc** in
