@@ -227,9 +227,11 @@ fractal-cut rejected; Wilder import = wild boundary ⊃ finite support).
 |---|---|---|---|
 | `scale/causal_budget.py` | Causal Budget Theorem: transmit-by-causality, the budget object | IMPLEMENTED | awaiting run |
 | `scale/test_causal_budget.py` | cut lossless (actual + conservative) · potential⊇changed · cut⇒Δ=0 · unsafe-cut-breaks (tight) · budget ordering · determinism | IMPLEMENTED | awaiting run |
+| `scale/reachability_algebra.py` | discrete forms verified == engine: Potential=`Supp((I∨A)^H eᵢ)` (not bare `A^H`), transmit=principal-up-set min, compute=indicator closure | IMPLEMENTED | awaiting run |
+| `scale/test_reachability_algebra.py` | potential==reflexive ball · bare-power-undercounts · transmit-min · feasible-is-up-set · compute-closure · determinism | IMPLEMENTED | awaiting run |
 
 ```powershell
-cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\scale"; $env:PYTHONHASHSEED="0"; python test_causal_budget.py; python causal_budget.py
+cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\scale"; $env:PYTHONHASHSEED="0"; python test_causal_budget.py; python causal_budget.py; python test_reachability_algebra.py; python reachability_algebra.py
 ```
 
 ## Genealogy — this composes verified pieces, it does not reinvent them

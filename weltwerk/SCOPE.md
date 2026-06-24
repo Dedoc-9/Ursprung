@@ -214,6 +214,24 @@ wireframe), and a pre-launch network test harness (fork normal-vs-laggy, measure
 in one spot ⇒ causal radius = everything); it does not remove latency (100 ms is still 100 ms); it does
 not make distributed authority, trust, or security easy. `replication ≠ networking`.
 
+### Formal formulation (sharp discrete objects, each verified == a measured quantity)
+
+`reachability_algebra.py` / `test_reachability_algebra.py` check these against the running engine — a
+formalism is adopted only once shown equal to the operational quantity.
+
+- **Potential** `= |Supp((I∨A)^H eᵢ)|` over the boolean semiring — the ball of radius `H`, verified ==
+  `cons.touched`. The bare `|Supp(A^H eᵢ)|` (exactly-length-`H` walks) is **rejected**: on a bipartite
+  ring it is parity-restricted and *undercounts* the ball (shown strictly smaller in test). Static
+  topology only; dynamic teleport chords ⇒ a time-ordered product `∏ₜ(I∨Aₜ)`, not a power.
+- **Selective computation** `= 𝒞(c) = c·𝕀(Δc≠0)` for *propagation*; the *computed* set is its
+  **neighborhood-closure** `N(diverged)` (you must simulate c to learn `Δc`), i.e. the frontier-overhead
+  ring — a measured `≥ 0` surplus over `|changed|`.
+- **Selective transmission** `= T* = argmin_{T ⊆ R_H(x)} |T|` s.t. `L(T)=0`, with `L(T)=0 ⟺ T ⊇
+  changed`. The feasible region is a **principal up-set**; its minimum is uniquely the generator
+  `changed`. This is *not* a Sperner-family / set-cover problem (no combinatorial hardness) — the
+  content is the necessity+sufficiency proof, not a search. Optimal Transport applies only to the
+  declared *lossy* `Δ(out|Δp)<ε` extension, where fidelity is traded for bandwidth.
+
 ## Boundaries — what is NOT shown (consolidated, standing)
 
 - **Line A is still `O(N·H)`.** Knowing actual reality is paid in full every step; only the
