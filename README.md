@@ -869,6 +869,24 @@ and the runtime, not a claim to have invented the pieces.
   drives its metric up while real capability falls). The reference run answers **NO with receipts** (sustained,
   not recursive) and surfaces *its own* stall and inflated self-estimate. Not a claim to have built RSI — a claim
   to have made the question testable, and to have a bench that can catch itself short.
+
+  > **Theorem (verified self-improvement is a branching process).** Model the stream of *verified* self-edits —
+  > edits that pass external + replicated + calibrated checks — as a Bienaymé–Galton–Watson branching process:
+  > each verified edit independently yields a random number of verified successors with **mean `m`** (the expected
+  > verified edits generated per verified edit) and offspring generating function `f(s)=Σ pₖ sᵏ`. By the classical
+  > extinction criterion: **(1)** if `m ≤ 1` (non-degenerate) the verified-improvement stream goes **extinct with
+  > probability 1** — recursive self-improvement is impossible, *independent of self-modification power or
+  > compute*; **(2)** if `m > 1` the stream **survives with probability `1 − q`**, where `q` is the smallest fixed
+  > point of `f` in `[0,1]`, and since `q > 0` in general survival is never certain for one trajectory. Two riders
+  > the stack forces: **(3)** `m` must be the *verified* mean — a proxy mean `m̂ > 1` with `m ≤ 1` is exactly the
+  > runaway (looks self-sustaining, goes extinct), so **`m̂ > 1 ≥ m` is the formal signature of self-deception**;
+  > **(4)** open-endedness is *asymptotic* — no finite run proves it, the strongest evidence is "supercritical and
+  > surviving after N." **Corollary (measured):** the toy domain is subcritical (`m < 1`), so the single-promotion
+  > plateau in `rsi_engine` is almost-sure extinction, not a tuning artifact. The branching mathematics is
+  > classical; the contribution is the mapping (*verified* edits as offspring; `m̂ > 1 ≥ m` as the runaway) — and
+  > "can we build RSI?" reduces to the operational question *is the **verified** branching mean `> 1`, robustly,
+  > with `m` itself externally estimated?* Verified numerically (Monte-Carlo vs the analytic extinction fixed
+  > point) in [`experiments/live_world_kernel/verified_improvement_theorem.py`](experiments/live_world_kernel/verified_improvement_theorem.py).
 - **`observation ≠ intervention` as a measured boundary.** A system that detects when a question is *not
   identifiable from observation alone* and refuses to resolve it — exposing the boundary instead of hiding it
   behind a high score. Most pipelines silently cross it; this one marks it and names the price of crossing.
