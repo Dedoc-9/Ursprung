@@ -172,10 +172,18 @@ at toy scale; "OS for worlds" is aspiration, not a delivered system.)
   a per-chunk `== A` comparison each tick; op-count favours it, but wall-clock is unmeasured.
   *Gate to B:* allocator proven cheaper in *practice*, not just in entity-steps.
   *Falsifier:* if the comparison cost dominates, pruning is a wall-clock loss despite the op-count win.
-- **Phase B — VIEW (causality renderer, not a game renderer).** Status: UNBUILT. Render the invisible
-  structures: committed (solid/blue) · speculative branch (dashed) · potential cone (green) · actual
-  divergence (red) · observer attention (yellow). Purpose: a debugger for causality, and a visual
-  sanity check on every number above.
+- **Phase B — VIEW (causality renderer, not a game renderer).** Status: BEGUN (`view/causal_view.py`,
+  test 4/4). Renders the chunk ring coloured by the proven nesting `changed ⊆ allocated ⊆ potential ⊆
+  all`: BLUE unaffected · GREEN potential · YELLOW allocated · RED actual (= transmit). A measurement
+  instrument that makes `potential ≠ allocated ≠ actual ≠ transmitted` visible, and a sanity check on
+  every count above. *Remaining:* per-tick animation (watch the cone spread / re-converge); wire to a
+  live edit loop rather than precomputed scenarios.
+- **NEXT SCIENTIFIC GATE — amplifying-dynamics probe.** Asks the one question the dissipative toy models
+  cannot: is sparse divergence a property of *causal structure* or a side effect of *dissipative
+  physics*? Every world measured so far damps perturbations (`perturbation → decay`); the hard case is
+  `perturbation → growth` (a market where price moves beget more trading). If `|Actualₜ| ≈ |Potentialₜ|`
+  there, the allocation/replication advantage disappears — **falsifying the economics, not the
+  correctness** (the table below). The VIEW will *show* it if it happens: the red region eats the green.
 - **Phase C — agent worlds.** Status: UNBUILT. *The real stress test of the central law:* current
   coupling is resource diffusion with static chunk membership. *Falsifier (the important one):* if
   **agents migrating across chunks** make actual divergence *non-sparse*, the pruned allocator's

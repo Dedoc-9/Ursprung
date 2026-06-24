@@ -256,6 +256,28 @@ count is exact, not an artifact.)
 cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\scale"; $env:PYTHONHASHSEED="0"; python test_agent_transport.py; python agent_transport_bench.py
 ```
 
+### VIEW — the causal debugger (`view/causal_view.py`)
+
+Phase B, begun. Not a game renderer — a **measurement instrument** that makes the four sets impossible
+to accidentally merge. It runs the verified engine and emits a self-contained HTML wireframe of the
+chunk ring (teleport edges as arcs), coloured by the proven nesting `changed ⊆ allocated ⊆ potential ⊆
+all`: **BLUE** unaffected · **GREEN** potential (could differ) · **YELLOW** allocated (simulated, didn't
+change) · **RED** actual divergence (= transmit set). The panel shows the four counts and the
+transmit/broadcast saving; an edit switcher contrasts a local edit (small lit region) against a GLOBAL
+edit (whole ring lit). VIEW reveals committed measurements; it does not recompute causality in the
+browser.
+
+| File | What it is | Maturity | Evidence |
+|---|---|---|---|
+| `view/causal_view.py` | engine → self-contained HTML causal debugger (4-set colouring + counts) | IMPLEMENTED | awaiting run |
+| `view/test_causal_view.py` | validity: nesting holds · 4 classes partition all chunks · counts == engine · determinism | IMPLEMENTED | awaiting run |
+
+```powershell
+cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\view"; $env:PYTHONHASHSEED="0"; python test_causal_view.py; python causal_view.py
+```
+
+(`causal_view.py` writes `causal_view.html` — open it in a browser.)
+
 ## Genealogy — this composes verified pieces, it does not reinvent them
 
 - **commit/speculative/recovery discipline** ← `experiments/live_world_kernel/live_world_kernel.py`
