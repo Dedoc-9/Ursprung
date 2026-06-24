@@ -90,10 +90,10 @@ def measure(n: int, r: float, eps: float, c: int, delta: float, tau: float, hori
 
 
 if __name__ == "__main__":
-    N, EPS, C, DELTA, TAU, H = 200, 0.25, 100, 1e-3, 1e-6, 60
+    N, EPS, C, DELTA, TAU, H = 200, 0.25, 100, 1e-3, 1e-6, 220   # H>N ⇒ saturated cone (unconfounded)
     print("amplify.py — does divergence stay sparse when dynamics AMPLIFY?\n")
-    print(f"  CML ring N={N} eps={EPS} perturb δ={DELTA}@{C} tol τ={TAU} horizon={H}\n")
+    print(f"  CML ring N={N} eps={EPS} perturb δ={DELTA}@{C} tol τ={TAU} horizon={H} (cone saturates)\n")
     for r in (2.8, 3.3, 3.5, 3.7, 3.9, 4.0):
         m = measure(N, r, EPS, C, DELTA, TAU, H)
         print(f"  r={r:<4} {m['regime']:<12} peak_actual={m['peak_actual']:>4}/{N}  "
-              f"sparsity={m['sparsity_vs_world']:.2f}  within_cone={m['within_cone']}")
+              f"sparsity/cone={m['sparsity_vs_cone']:.2f}  within_cone={m['within_cone']}")

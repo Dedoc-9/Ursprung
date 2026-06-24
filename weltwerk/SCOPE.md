@@ -124,8 +124,9 @@ mechanism* whose transfer remains to be tested. `proof-of-correctness ≠ proof-
 | `Potential ⊇ Actual` | Strong *within declared models* |
 | Divergence-aware allocation (correctness) | Strong *within declared models* |
 | Sparsity persists under *dissipative* agent transport | Measured: **yes** (peak actual flat ~4 vs cone→81; sparsity 0.05) |
-| Sparsity persists under *amplifying* dynamics (positive feedback) | Unknown — **the primary remaining economic falsifier** |
-| Sparsity persists under player economies | Unknown (likely governed by dissipative-vs-amplifying, not topology) |
+| Sparsity persists under *amplifying* dynamics (positive feedback) | Measured: **NO** — dense in the chaotic regime (sparsity_vs_cone 0.04 dissipative → 0.98 chaotic, cone saturated) |
+| Economic win is bounded to *dissipative / sub-critical* dynamics | Measured: **yes** — the determinant is the dynamical regime (Lyapunov sign), not coupling type |
+| Sparsity persists under player economies | Unknown — but reduces to: are those dynamics sub-critical or chaotic? |
 | MMO-scale scheduler | Direction only |
 | World OS / causal substrate | Vision |
 
@@ -147,12 +148,16 @@ recorded so the document tracks what could still break, not only what survived.
   no longer the open falsifier; it folded into the one below.
 - **Long-range coordination** — markets, guilds, global auctions, chat, shared objectives may create
   dense dependency graphs whose Actual divergence is *also* dense.
-- **Positive feedback / amplifying dynamics** — **THE primary remaining economic falsifier.** Every
-  model measured so far is dissipative (diffusion attenuates; the ecology renormalises), which is *why*
-  divergence stayed sparse in all of them, transport included. A system where small edits *grow* rather
-  than damp would keep divergence dense regardless of coupling type, collapsing the pruned allocator's
-  advantage. This subsumes the transport and (likely) the player-economy concerns: the question is not
-  *how* divergence spreads but *whether the dynamics amplify or dissipate it.*
+- **Positive feedback / amplifying dynamics** — **MEASURED; the falsifier FIRES** (`amplify.py` +
+  bench, on a coupled map lattice with the gain swept dissipative→chaotic, cone saturated). Result:
+  `sparsity_vs_cone` rises 0.04 (fixed-point) → 0.21 (chaos onset, r≈3.57) → **0.98** (full chaos,
+  r=4.0) — divergence fills the entire reachable cone. So the economic advantage **collapses in the
+  chaotic / amplifying regime**: pruned ≈ conservative ≈ full, no win. Correctness is untouched
+  (reconstruction stays exact; this is purely an economics result). This confirms and subsumes the
+  transport/economy concerns: the determinant is the **dynamical regime** — `perturbation → decay` vs
+  `perturbation → growth`, i.e. the sign of the Lyapunov exponent — *not* the coupling channel. Every
+  earlier sparse result (diffusion, ecology, dissipative transport) was sub-critical; this is the one
+  super-critical test, and it goes dense.
 - **Observation overhead** — the pruned allocator does extra bookkeeping (per-chunk `== A`) to decide
   whether divergence exists. Wall-clock behaviour is unmeasured; op-count favours it, wall-clock may not.
 - **Network dominance** — even if simulation allocation stays sparse, networking and latency
