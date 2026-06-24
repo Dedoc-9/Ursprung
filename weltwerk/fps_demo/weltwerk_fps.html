@@ -302,14 +302,23 @@ function applyDamageOnAllocated(world,rootId,dmg){ // same cascade but only touc
     e.hp-=d; if(e.hp<=0&&e.alive){e.alive=false;const sp=e.kind==="barrel"?18:e.kind==="crate"?8:0;
       if(sp>0)for(const nid of neighborhoodOn(world,e))q.push([nid,sp]);}} }
 
+// ---- collision (Phase 2 feel: can't walk through entities) ----
+const PR=0.45;                                   // player radius
+function footprint(e){ if(e.kind==="zone")return 0; const w=(e.kind==="wall"||e.kind==="keep")?5:e.kind==="gate"?4:e.kind==="npc"?0.7:1.1; return w/2; }
+function collides(x,z){ for(const e of entities){ if(!e.alive)continue; const hw=footprint(e); if(hw<=0)continue;
+  if(Math.abs(x-e.x)<hw+PR && Math.abs(z-e.z)<hw+PR) return true; } return false; }
+
 // ---- main loop ----
 let last=performance.now();
 function frame(now){
   const dt=Math.min(0.05,(now-last)/1000); last=now;
-  // movement
+  // movement (axis-separated so you stop at walls and slide along them, not clip through)
   const sp=6*dt; const fx=Math.sin(player.yaw),fz=Math.cos(player.yaw);
-  if(keys["KeyW"]){player.x-=fx*sp;player.z-=fz*sp;} if(keys["KeyS"]){player.x+=fx*sp;player.z+=fz*sp;}
-  if(keys["KeyA"]){player.x-=fz*sp;player.z+=fx*sp;} if(keys["KeyD"]){player.x+=fz*sp;player.z-=fx*sp;}
+  let dx=0,dz=0;
+  if(keys["KeyW"]){dx-=fx*sp;dz-=fz*sp;} if(keys["KeyS"]){dx+=fx*sp;dz+=fz*sp;}
+  if(keys["KeyA"]){dx-=fz*sp;dz+=fx*sp;} if(keys["KeyD"]){dx+=fz*sp;dz-=fx*sp;}
+  if(!collides(player.x+dx, player.z)) player.x+=dx;
+  if(!collides(player.x, player.z+dz)) player.z+=dz;
   player.vy-=14*dt; player.y+=player.vy*dt; if(player.y<=1.6){player.y=1.6;player.vy=0;player.onGround=true;}
   camera.position.set(player.x,player.y,player.z);
   camera.rotation.set(player.pitch,player.yaw,0,"YXZ");
