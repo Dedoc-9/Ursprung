@@ -278,6 +278,23 @@ cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\view"; $env:PYTHONH
 
 (`causal_view.py` writes `causal_view.html` — open it in a browser.)
 
+**Regime-aware view** (`view/regime_view.py`) — the question the amplification gate left open is visual:
+*where in a real world is reality sparse enough for the allocator to matter?* Renders a heterogeneous
+world (mostly dissipative, with an embedded chaotic band); the **regime is measured** (perturb-and-watch,
+not read off the gain) and coloured GREEN sparse (allocator works) / PURPLE marginal / ORANGE chaotic
+(allocator fails). An edit-footprint overlay shows the contrast: a local edit in a green region stays a
+small red pocket; an edit in the orange band floods the cone. The panel calls it: *allocator helps here:
+YES/NO.*
+
+| File | What it is | Maturity | Evidence |
+|---|---|---|---|
+| `view/regime_view.py` | regime map (measured) + edit-footprint over a heterogeneous CML world → HTML | IMPLEMENTED | awaiting run |
+| `view/test_regime_view.py` | validity: regime measure deterministic · footprint ⊆ cone · well-defined · classes valid | IMPLEMENTED | awaiting run |
+
+```powershell
+cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\view"; $env:PYTHONHASHSEED="0"; python test_regime_view.py; python regime_view.py
+```
+
 ## Genealogy — this composes verified pieces, it does not reinvent them
 
 - **commit/speculative/recovery discipline** ← `experiments/live_world_kernel/live_world_kernel.py`

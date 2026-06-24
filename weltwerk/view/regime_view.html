@@ -1,0 +1,64 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Weltwerk — regime-aware causal view</title>
+<style>
+ body{{background:#0d1117;color:#d0d6e0;font:14px/1.5 ui-monospace,Menlo,Consolas,monospace;margin:0;padding:24px}}
+ h1{{font-size:18px;margin:0 0 2px}} .sub{{color:#8b95a6;margin:0 0 16px;max-width:920px}}
+ .btns{{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}}
+ button{{background:#161b22;color:#d0d6e0;border:1px solid #30363d;border-radius:6px;padding:7px 11px;cursor:pointer;font:inherit}}
+ button.on{{border-color:#58a6ff;background:#1b2533;color:#fff}}
+ .legend{{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0;font-size:12.5px}}
+ .legend div{{display:flex;align-items:center;gap:6px}} .sw{{width:13px;height:13px;border-radius:3px}}
+ .lab{{color:#8b95a6;font-size:12px;margin:14px 0 3px}}
+ .panel{{margin:16px 0;padding:13px 16px;background:#11161d;border:1px solid #21262d;border-radius:8px}}
+ .verdict{{font-size:16px;font-weight:bold}} .note{{color:#8b95a6;font-size:12.5px;max-width:920px;margin-top:14px}}
+</style></head><body>
+<h1>Weltwerk — regime-aware causal view</h1>
+<p class="sub">A heterogeneous world (mostly dissipative, with an embedded chaotic band). The regime is
+<b>measured</b> by perturb-and-watch, not read off the dynamics. The allocator belongs to the GREEN
+regions; in ORANGE regions divergence fills the reachable cone and there is no win.</p>
+<div class="legend">
+ <div><span class="sw" style="background:#2ea043"></span>sparse — allocator works</div>
+ <div><span class="sw" style="background:#8957e5"></span>marginal / saturated</div>
+ <div><span class="sw" style="background:#e3742f"></span>chaotic — allocator fails</div>
+ <div><span class="sw" style="background:#1f6feb"></span>committed</div>
+ <div><span class="sw" style="background:#da3633"></span>actual divergence</div>
+</div>
+<p class="lab">REGIME MAP (measured local spread per region)</p>
+<svg id="regime" width="980" height="44" viewBox="0 0 980 44"></svg>
+<div class="btns" id="btns"></div>
+<p class="lab">EDIT FOOTPRINT (blue committed · green potential cone · red actual divergence)</p>
+<svg id="foot" width="980" height="44" viewBox="0 0 980 44"></svg>
+<div class="panel"><span class="verdict" id="verdict"></span><div id="detail" style="color:#8b95a6;font-size:12.5px;margin-top:5px"></div></div>
+<p class="note">The regime map answers the question the amplification result raised: <b>where is reality
+sparse enough for the causal allocator to matter?</b> Edit inside a green region and the footprint stays
+a small red pocket (cheap counterfactual / replication). Edit inside the orange band and red floods the
+reachable cone — the allocator degenerates to full simulation there. Same engine, same correctness; only
+the economics differ, and the difference is the local dynamical regime.</p>
+<script>
+const DATA = {"regime": ["marginal", "sparse", "sparse", "marginal", "sparse", "sparse", "sparse", "sparse", "marginal", "sparse", "sparse", "marginal", "sparse", "sparse", "sparse", "sparse", "marginal", "sparse", "sparse", "marginal", "marginal", "marginal", "marginal", "marginal", "marginal", "marginal", "chaotic", "chaotic", "chaotic", "chaotic", "chaotic", "chaotic", "chaotic", "chaotic", "chaotic", "chaotic", "chaotic", "chaotic", "chaotic", "chaotic", "marginal", "marginal", "marginal", "marginal", "marginal", "marginal", "sparse", "sparse", "sparse", "sparse", "marginal", "sparse", "sparse", "sparse", "sparse", "marginal", "sparse", "sparse", "marginal", "sparse"], "regime_frac": [0.15, 0.117, 0.117, 0.15, 0.1, 0.117, 0.117, 0.1, 0.15, 0.117, 0.117, 0.15, 0.067, 0.133, 0.117, 0.1, 0.15, 0.1, 0.133, 0.183, 0.183, 0.267, 0.317, 0.317, 0.367, 0.383, 0.433, 0.467, 0.483, 0.45, 0.483, 0.5, 0.483, 0.417, 0.45, 0.45, 0.45, 0.467, 0.45, 0.433, 0.35, 0.3, 0.317, 0.283, 0.2, 0.15, 0.083, 0.117, 0.1, 0.1, 0.15, 0.1, 0.117, 0.133, 0.067, 0.15, 0.117, 0.117, 0.15, 0.1], "footprints": {"dissipative region @8": {"edit": 8, "classes": ["potential", "potential", "potential", "potential", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential"], "spread": 0.15, "regime": "marginal"}, "chaotic band @32": {"edit": 32, "classes": ["potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential"], "spread": 0.48333333333333334, "regime": "chaotic"}, "band boundary @25": {"edit": 25, "classes": ["potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "actual", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential", "potential"], "spread": 0.38333333333333336, "regime": "marginal"}}};
+const N = DATA.regime.length, W = 980, cw = W/N;
+const RC = {{sparse:"#2ea043", marginal:"#8957e5", chaotic:"#e3742f"}};
+const FC = {{committed:"#1f6feb", potential:"#2ea043", actual:"#da3633"}};
+function strip(id, colors){{
+  let s=""; for(let i=0;i<N;i++) s+=`<rect x="${{i*cw+0.5}}" y="6" width="${{cw-1}}" height="30" fill="${{colors[i]}}"/>`;
+  document.getElementById(id).innerHTML=s;
+}}
+strip("regime", DATA.regime.map(r=>RC[r]));
+const names=Object.keys(DATA.footprints);
+function showEdit(name){{
+  const f=DATA.footprints[name];
+  strip("foot", f.classes.map(c=>FC[c]));
+  // mark the edit chunk
+  const svg=document.getElementById("foot");
+  svg.innerHTML += `<rect x="${{f.edit*cw}}" y="2" width="${{cw}}" height="40" fill="none" stroke="#fff" stroke-width="1.5"/>`;
+  const help = f.regime==="sparse";
+  document.getElementById("verdict").innerHTML =
+    `edit @${{f.edit}} — region regime: <span style="color:${{RC[f.regime]}}">${{f.regime.toUpperCase()}}</span> — allocator helps here: `+
+    `<span style="color:${{help?'#2ea043':'#e3742f'}}">${{help?'YES':'NO'}}</span>`;
+  document.getElementById("detail").textContent =
+    `divergence spread = ${{(100*f.spread).toFixed(0)}}% of world (sparse<15% · marginal<40% · chaotic≥40%)`;
+  for(const b of document.querySelectorAll("#btns button")) b.classList.toggle("on", b.dataset.n===name);
+}}
+const btns=document.getElementById("btns");
+for(const name of names){{const b=document.createElement("button");b.textContent=name;b.dataset.n=name;b.onclick=()=>showEdit(name);btns.appendChild(b);}}
+showEdit(names[0]);
+</script></body></html>
