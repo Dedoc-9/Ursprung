@@ -29,6 +29,28 @@ guard against: beautiful math + debugger + toy ecology that never touches *does 
 realistic gameplay?* — which is why the roadmap keeps returning to amplification, transport, and
 long-range coupling.
 
+### Two products, split by the Potential/Actual line
+
+The arc separates naturally into two products, and the split is the same `Potential` vs `Actual`
+distinction the whole project turns on:
+
+- **Product A — World Author** (`authoring/`): text → causal topology → **structural analysis** →
+  wireframe. Reachability, SCC / feedback detection, load-bearing & bottleneck analysis, blast radius,
+  regime warnings. Operates purely on **Potential** (the structural dependency graph) — so it is
+  **exact and regime-INDEPENDENT**, useful at authoring time before any simulation, assets, or
+  networking exist. It reports *where structural risk lives*; it is a linter, not an oracle
+  (`structural-cycle ≠ measured-amplification`). The fortress demo already proved this: it caught a
+  5-node feedback SCC the author didn't know they wrote.
+- **Product B — World Runtime** (`scale/`, the kernel): topology → simulation → divergence → allocation
+  → (networking). Operates on **Actual** divergence — so its economic value is **regime-contingent**
+  (cheap iff λ≤0, per the determinant below). This is where the MMO/FPS ambitions live, and where the
+  open questions remain.
+
+A's value does **not** depend on B's sparsity conditions — which is why A is the lower-risk near-term
+asset. Studios already have rendering, networking, ECS, asset pipelines; what they lack is *"show me the
+causal structure of my game and where I've accidentally built feedback / runaway influence / a
+bottleneck / a dead zone."* A answers that.
+
 ## The central law — theorem, mechanism, ambition (kept distinct)
 
 The arc converged on one principle. To keep it from inflating, it is split into a theorem (proven), a

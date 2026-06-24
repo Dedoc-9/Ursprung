@@ -335,6 +335,24 @@ causal topology is the durable artifact, meshes a regenerable projection.
 cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\authoring"; $env:PYTHONHASHSEED="0"; python test_world_spec.py; python world_spec.py; python topology_view.py
 ```
 
+**Causal design linter** (`authoring/world_lint.py`) — the "World Author" core: a structural diagnostic
+pass that does what no renderer can — *"show me where I've accidentally built feedback, runaway
+influence, a bottleneck, or a dead zone."* Reports **feedback clusters** (SCCs — amplification risk),
+**load-bearing** nodes (top blast radius), **exposure** (in-reach), **bottlenecks** (structural
+criticality = influence lost on removal), and **isolated** nodes. It operates purely on **Potential**
+(structural reachability), so it is **exact and regime-independent** — useful before any simulation,
+assets, or networking exist. Structural *risks*, not behavioral verdicts (`structural-cycle ≠
+measured-amplification`). This turns the fortress's one-off SCC catch into a repeatable pass.
+
+| File | What it is | Maturity | Evidence |
+|---|---|---|---|
+| `authoring/world_lint.py` | causal design linter: feedback / load-bearing / bottleneck / dead-zone diagnostics | IMPLEMENTED | awaiting run |
+| `authoring/test_world_lint.py` | SCC exact · criticality finds the bottleneck · load-bearing rank · isolated detected · determinism | IMPLEMENTED | awaiting run |
+
+```powershell
+cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\authoring"; $env:PYTHONHASHSEED="0"; python test_world_lint.py; python world_lint.py
+```
+
 ## Genealogy — this composes verified pieces, it does not reinvent them
 
 - **commit/speculative/recovery discipline** ← `experiments/live_world_kernel/live_world_kernel.py`
