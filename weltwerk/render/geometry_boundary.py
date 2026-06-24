@@ -147,7 +147,8 @@ class TopologyAdapter(GeometryAdapter):
 
 
 def main():
-    WORLD = """
+    import textwrap
+    WORLD = textwrap.dedent("""
     world "Frontier"
     entity generator:
       position 0 0 -8
@@ -161,7 +162,7 @@ def main():
     entity tree:
       position -10 0 6
       health 30
-    """
+    """)
     w = CausalWorld(WORLD)
     w.apply_event("destroy", "generator")
     before = w.authority_hash()

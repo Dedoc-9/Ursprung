@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: AGPL-3.0-only
+  Weltwerk World Studio (Phase 6) — an IDE for building worlds whose logic can be understood before they
+  become expensive. Three panes over ONE world model; .wrk text is the authority.
+  LEFT .wrk editor + mode + export · CENTER playable 3D projection · RIGHT causal inspector + validation.
+  DESIGN mode: edits change canonical .wrk. SIMULATION mode: actions fire causal events (text unchanged).
+  Mirrors authoring/world_format+world_design+world_validate, net/causal_net, render/geometry_boundary.
+  NOT claimed: MMO scale, UE5, latency. The renderer is a projection; delete the app and world.wrk remains.
+-->
+<html lang="en"><head><meta charset="utf-8"><title>Weltwerk World Studio</title>
+<style>
+ html,body{margin:0;height:100%;background:#0d1117;color:#d0d6e0;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;overflow:hidden}
+ #wrap{display:flex;height:100vh}
+ .col{height:100%;box-sizing:border-box}
+ #left{width:300px;min-width:300px;border-right:1px solid #21262d;padding:9px 11px;overflow:auto}
+ #center{flex:1;position:relative}
+ #right{width:340px;min-width:340px;border-left:1px solid #21262d;padding:9px 11px;overflow:auto}
+ #cv{display:block;width:100%;height:100%}
+ #cross{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border:1px solid #fff;border-radius:50%;opacity:.6;pointer-events:none}
+ h2{font-size:12px;margin:9px 0 4px;color:#fff}.k{color:#8b95a6}
+ textarea{width:100%;height:230px;background:#0b0f14;color:#cdd3df;border:1px solid #30363d;border-radius:6px;font:11px ui-monospace,monospace;box-sizing:border-box}
+ button{background:#161b22;color:#d0d6e0;border:1px solid #30363d;border-radius:6px;padding:4px 8px;cursor:pointer;font:inherit;margin:3px 3px 0 0}
+ button.on{border-color:#58a6ff;background:#1b2533;color:#fff}
+ .tab{display:inline-block;padding:4px 8px;border:1px solid #30363d;border-bottom:none;border-radius:6px 6px 0 0;cursor:pointer;background:#11161d}
+ .tab.on{background:#1b2533;color:#fff}
+ .pane{border:1px solid #30363d;border-radius:0 6px 6px 6px;padding:8px;min-height:300px;white-space:pre-wrap}
+ svg{width:100%;height:280px;background:#0b0f14;border-radius:6px}
+ .blue{color:#1f6feb}.green{color:#2ea043}.red{color:#da3633}.orange{color:#e3742f}.yellow{color:#d29922}
+ .BLOCK{color:#da3633}.WARN{color:#e3742f}.INFO{color:#2ea043}
+ #vbanner{padding:6px 9px;border-radius:6px;margin:6px 0;font-weight:bold}
+ text{cursor:pointer}
+</style></head><body>
+<div id="wrap">
+ <div id="left" class="col">
+  <h2>world.wrk <span class="k">— the authority</span></h2>
+  <div><button id="mDesign" class="on" onclick="setMode('design')">DESIGN</button><button id="mSim" onclick="setMode('sim')">SIMULATION</button></div>
+  <div class="k" id="modehint">DESIGN: edits change canonical .wrk</div>
+  <textarea id="src" spellcheck="false" oninput="onEdit()"></textarea>
+  <h2>Export <span class="k">(world survives the app)</span></h2>
+  <div>
+   <button onclick="dl('world.wrk',serializeWrk(spec),'text/plain')">world.wrk</button>
+   <button onclick="dl('snapshot.json',exportSnapshot(),'application/json')">snapshot.json</button>
+   <button onclick="dl('graph.json',exportGraph(),'application/json')">graph.json</button>
+   <button onclick="dl('metrics.json',exportMetrics(),'application/json')">metrics.json</button>
+  </div>
+ </div>
+
+ <div id="center"><canvas id="cv"></canvas><div id="cross"></div></div>
+
+ <div id="right" class="col">
+  <div id="vbanner"></div>
+  <div>
+   <span class="tab on" data-t="graph" onclick="setTab('graph')">Graph</span>
+   <span class="tab" data-t="health" onclick="setTab('health')">Health</span>
+   <span class="tab" data-t="questions" onclick="setTab('questions')">Questions</span>
+   <span class="tab" data-t="timeline" onclick="setTab('timeline')">Timeline</span>
+  </div>
+  <div class="pane" id="pane"></div>
+ </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ===== world model (mirror world_format/world_design/world_validate) =====
+const REVERSED=new Set(["depends_on","powered_by","fed_by","sustained_by","needs"]);
+const DECLARED_FEEDBACK=new Set(["feedback","regulates","balances","stabilizes","damps"]);
+let spec, adj, radj, labels, runtime, mode="design", tab="graph", selected=null, events=[], tlIndex=0;
+
+function parseWrk(text){ const s={name:"world",entities:{},order:[]}; let cur=null;
+  for(let raw of text.split("\n")){ const line=raw.split("#")[0]; if(!line.trim())continue;
+    const ind=line.length-line.trimStart().length,t=line.trim(),tok=t.split(/\s+/);
+    if(ind===0){
+      if(tok[0]==="world"){s.name=t.slice(5).trim().replace(/"/g,"");cur=null;}
+      else if(tok[0]==="zone"){cur=null;}
+      else if(t.includes(" at ")){const nm=tok[0];const c=t.split(" at ")[1].split(",").map(Number);cur={id:nm,pos:[c[0]||0,c[1]||0,c[2]||0],health:100,rel:[]};s.entities[nm]=cur;s.order.push(nm);}
+      else if(tok[0]==="entity"){const nm=tok[1].replace(/:$/,"");cur={id:nm,pos:[0,0,0],health:100,rel:[]};s.entities[nm]=cur;s.order.push(nm);}
+      else if(t.endsWith(":")){const nm=t.slice(0,-1);cur={id:nm,pos:[0,0,0],health:100,rel:[]};s.entities[nm]=cur;s.order.push(nm);}
+      else if(cur&&tok.length>=2){cur.rel.push([tok[0],tok[1]]);}
+    } else if(cur){ let key,val; if(t.includes(":")){[key,val]=t.split(/:(.*)/s);}else{const p=t.split(/\s+/);key=p[0];val=p.slice(1).join(" ");}
+      key=key.trim();val=(val||"").trim();
+      if(key==="position"){const p=val.split(/[\s,]+/).map(Number);cur.pos=[p[0]||0,p[1]||0,p[2]||0];}
+      else if(key==="health")cur.health=parseInt(val)||100;
+      else if(key!=="zone")val.split(/\s+/).filter(Boolean).forEach(tg=>cur.rel.push([key,tg]));
+    }
+  }
+  return s;
+}
+function serializeWrk(s){ const L=[`world "${s.name}"`,""]; for(const id of s.order){const e=s.entities[id];
+  L.push(`entity ${id}:`); if(e.pos[0]||e.pos[1]||e.pos[2])L.push(`  position ${e.pos.join(" ")}`);
+  L.push(`  health ${e.health}`); for(const[r,t]of e.rel)L.push(`  ${r} ${t}`); L.push("");} return L.join("\n").replace(/\n+$/,"\n"); }
+function buildGraph(s){ const a={},r={},lb={}; for(const id of s.order){a[id]=new Set();r[id]=new Set();}
+  for(const id of s.order)for(const[rel,tg]of s.entities[id].rel){ if(!a[tg]){a[tg]=new Set();r[tg]=new Set();}
+    const[src,dst]=REVERSED.has(rel)?[tg,id]:[id,tg]; a[src].add(dst);r[dst].add(src);lb[src+">"+dst]=rel; } return {a,r,lb}; }
+function reach(g,s){const seen=new Set(),st=[...(g[s]||[])];while(st.length){const n=st.pop();if(!seen.has(n)){seen.add(n);st.push(...(g[n]||[]));}}return seen;}
+function blast(id){return reach(adj,id).size;}
+function nodes(){return Object.keys(adj);}
+function sccsAll(){const seen=new Set(),out=[];for(const n of nodes().sort()){if(seen.has(n))continue;const f=reach(adj,n);const c=[...new Set([n,...[...f].filter(m=>reach(adj,m).has(n))])];c.forEach(x=>seen.add(x));if(c.length>1)out.push(c);}return out;}
+
+// ===== validation gate (mirror world_validate) =====
+function validate(){ const out=[]; let canPlay=true; const N=nodes().length||1;
+  for(const c of sccsAll()){ const ms=new Set(c); let declared=false;
+    for(const s of c)for(const d of adj[s])if(ms.has(d)&&DECLARED_FEEDBACK.has(labels[s+">"+d]))declared=true;
+    if(declared)out.push({level:"INFO",kind:"declared feedback",subj:c});
+    else{out.push({level:"BLOCK",kind:"undeclared feedback",subj:c});canPlay=false;} }
+  const peak=Math.max(0,...nodes().map(blast))/N;
+  out.push(peak>=0.5?{level:"WARN",kind:"high coupling — Actual≈Potential, compression unavailable"}:{level:"INFO",kind:"sparse — causal compression available"});
+  return {out,canPlay,peak}; }
+
+// ===== designer questions (from graph/runtime) =====
+function answer(q){ if(!selected&&q!=="loops"&&q!=="spof"&&q!=="coupled")return "select an entity (click a block or graph node) first";
+  if(q==="breaks"){const r=reach(adj,selected);return `removing ${selected} breaks (${r.size}): {${[...r].sort().join(", ")||"∅"}}`;}
+  if(q==="depends"){const d=reach(radj,selected);return `${selected} depends on: {${[...d].sort().join(", ")||"∅"}}`;}
+  if(q==="loops"){const l=sccsAll();return l.length?l.map(c=>"loop: "+c.sort().join(" → ")).join("\n"):"no feedback loops";}
+  if(q==="spof"){const ranked=nodes().sort((a,b)=>blast(b)-blast(a)).filter(n=>blast(n)>0).slice(0,3);return "single points of failure (top blast):\n"+ranked.map(n=>`  ${n}: breaks ${blast(n)}`).join("\n");}
+  if(q==="coupled"){const v=validate();return `peak coupling ${Math.round(v.peak*100)}% — ${v.peak>=0.5?"tightly coupled":"loosely coupled"}`;}
+}
+
+// ===== timeline (derived from event history, NOT a second store) =====
+function cumulativeDiverged(){const d=new Set();for(let i=0;i<tlIndex;i++){const t=events[i];reach(adj,t).forEach(x=>d.add(x));d.add(t);}return d;}
+function fireEvent(target){ if(mode!=="sim"){return;} if(!validate().canPlay){flash("blocked: fix validation before simulating");return;}
+  if(!runtime[target]||!runtime[target].alive)return; runtime[target].alive=false; runtime[target].state="destroyed";
+  for(const x of reach(adj,target))if(runtime[x])runtime[x].state="disabled";
+  events.push(target); tlIndex=events.length; syncColors(); renderRight(); }
+
+// ===== export (world survives the app) =====
+function dl(name,text,type){const b=new Blob([text],{type});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;a.click();}
+function exportSnapshot(){return JSON.stringify({world:spec.name,entities:spec.order.map(id=>({id,pos:spec.entities[id].pos,health:spec.entities[id].health,state:(runtime[id]||{}).state||"ok"}))},null,2);}
+function exportGraph(){const e=[];for(const s in adj)for(const d of adj[s])e.push([s,labels[s+">"+d],d]);return JSON.stringify({nodes:nodes(),edges:e},null,2);}
+function exportMetrics(){const v=validate();return JSON.stringify({coupling_peak:v.peak,can_play:v.canPlay,validations:v.out,loops:sccsAll(),events:events},null,2);}
+
+// ===== rebuild =====
+function rebuild(){ const g=buildGraph(spec); adj=g.a; radj=g.r; labels=g.lb;
+  if(!runtime)runtime={}; for(const id of nodes())if(!runtime[id])runtime[id]={alive:true,state:"ok"};
+  for(const id in runtime)if(!adj[id])delete runtime[id];
+  events=events.filter(e=>adj[e]); if(tlIndex>events.length)tlIndex=events.length;
+  makeEntities(); syncColors(); renderRight(); }
+function onEdit(){ if(mode!=="design")return; try{spec=parseWrk(document.getElementById("src").value);}catch(e){return;}
+  runtime={}; events=[]; tlIndex=0; rebuild(); }
+
+// ===== RIGHT inspector =====
+function setTab(t){tab=t;for(const el of document.querySelectorAll(".tab"))el.classList.toggle("on",el.dataset.t===t);renderRight();}
+function renderRight(){
+  const v=validate(); const bn=document.getElementById("vbanner");
+  bn.className=v.canPlay?"INFO":"BLOCK"; bn.style.background=v.canPlay?"#11281a":"#2d1518";
+  bn.textContent=v.canPlay?"✓ CAN PLAY":"⛔ BLOCKED — fix validation before simulating";
+  const p=document.getElementById("pane");
+  if(tab==="graph"){ p.innerHTML=graphSVG(); wireGraph(); }
+  else if(tab==="health"){ let s=`REGIME: ${v.peak>=0.5?"expanding (dangerous coupling)":v.peak>=0.25?"bounded":"stable"}\nCOUPLING: ${Math.round(v.peak*100)}%\n\nVALIDATION:\n`;
+    for(const it of v.out){const sj=it.subj?" {"+it.subj.sort().join(", ")+"}":"";s+=`  <span class=${it.level}>[${it.level}]</span> ${it.kind}${sj}\n`;}
+    s+=`\n<span class=k>MEASURED STRUCTURE, NOT PREDICTION</span>`; p.innerHTML=s; }
+  else if(tab==="questions"){ p.innerHTML=
+    `<button onclick="qa('breaks')">what breaks if I remove this?</button>`+
+    `<button onclick="qa('depends')">who depends on this?</button>`+
+    `<button onclick="qa('loops')">where are my loops?</button>`+
+    `<button onclick="qa('spof')">single points of failure?</button>`+
+    `<button onclick="qa('coupled')">is this world tightly coupled?</button>`+
+    `<div id="qout" style="margin-top:8px">selected: ${selected||"(none — click an entity)"}</div>`; }
+  else if(tab==="timeline"){ const d=cumulativeDiverged();
+    p.innerHTML=`event history (derived, not a 2nd store):\n`+
+      `<input type="range" min="0" max="${events.length}" value="${tlIndex}" style="width:100%" oninput="tlIndex=+this.value;syncColors();renderRight()">\n`+
+      `t${tlIndex}: ${tlIndex===0?"initial":"destroy "+events[tlIndex-1]}\n`+
+      `diverged so far (${d.size}): {${[...d].sort().join(", ")||"∅"}}\n`+
+      `sequence: ${events.join(" → ")||"(none — switch to SIMULATION and click a block)"}`; }
+}
+function qa(q){document.getElementById("qout").textContent=answer(q);}
+function graphSVG(){ const W=320,H=280,pos={},ns=nodes(); const scc=new Set();sccsAll().forEach(c=>c.forEach(x=>scc.add(x)));
+  const pot=selected?reach(adj,selected):new Set();
+  ns.forEach((id,i)=>{const a=2*Math.PI*i/ns.length;pos[id]=[W/2+Math.cos(a)*110,H/2+Math.sin(a)*110];});
+  let s=`<svg viewBox="0 0 ${W} ${H}">`;
+  for(const src in adj)for(const d of adj[src]){if(!pos[src]||!pos[d])continue;const hot=selected&&pot.has(src)&&pot.has(d);
+    s+=`<line x1="${pos[src][0]}" y1="${pos[src][1]}" x2="${pos[d][0]}" y2="${pos[d][1]}" stroke="${hot?'#2ea043':'#30363d'}" stroke-width="${hot?1.6:.8}"/>`;}
+  for(const id in pos){const[x,y]=pos[id];let f="#1f6feb";const r=runtime[id];if(r&&r.state==="disabled")f="#da3633";else if(selected&&pot.has(id))f="#2ea043";
+    s+=`<circle cx="${x}" cy="${y}" r="7" fill="${f}" stroke="${id===selected?'#fff':(scc.has(id)?'#e3742f':'none')}" stroke-width="2" data-id="${id}"/>`;
+    s+=`<text x="${x+9}" y="${y+3}" fill="#c9d1d9" font-size="9" data-id="${id}">${id}</text>`;}
+  return s+"</svg>";
+}
+function wireGraph(){for(const el of document.querySelectorAll("#pane [data-id]"))el.onclick=()=>{selected=el.dataset.id;syncColors();renderRight();};}
+function flash(m){const bn=document.getElementById("vbanner");const o=bn.textContent;bn.textContent=m;setTimeout(()=>renderRight(),1200);}
+
+// ===== CENTER: 3D voxel projection (mirror geometry_boundary: read-only projection) =====
+let scene,camera,renderer,raycaster,meshes={},gmat;
+const player={x:0,z:22,y:1.6,vy:0,yaw:Math.PI,pitch:0,onGround:true};const keys={};
+const TCOL={generator:0xcf5b3a,reactor:0xcf5b3a,power:0xd29922,turret:0x9e6a6a,gate:0x8b6f47,base:0x586069,tree:0x2f7d32,rock:0x6e7681,house:0xb08968};
+function colFor(id){const r=runtime[id];if(r&&r.state==="disabled")return 0xda3633;if(r&&!r.alive)return 0x5a5f66;return TCOL[id]||0x8b949e;}
+function initScene(){scene=new THREE.Scene();scene.background=new THREE.Color(0x0b0f14);scene.fog=new THREE.Fog(0x0b0f14,30,110);
+  camera=new THREE.PerspectiveCamera(75,1,0.1,400);renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true});resize();
+  scene.add(new THREE.AmbientLight(0x8a929c,.8));const dl=new THREE.DirectionalLight(0xffffff,.7);dl.position.set(18,40,12);scene.add(dl);
+  const gnd=new THREE.Mesh(new THREE.PlaneGeometry(120,120),new THREE.MeshLambertMaterial({color:0x161b22}));gnd.rotation.x=-Math.PI/2;scene.add(gnd);
+  scene.add(new THREE.GridHelper(120,60,0x21262d,0x161b22));raycaster=new THREE.Raycaster();}
+function makeEntities(){for(const k in meshes)scene.remove(meshes[k]);meshes={};const ids=spec.order,n=ids.length||1;
+  ids.forEach((id,i)=>{const e=spec.entities[id];let x=e.pos[0],z=e.pos[2];if(Math.abs(x)>22||Math.abs(z)>22||(x===0&&z===0)){const a=2*Math.PI*i/n;x=Math.cos(a)*12;z=Math.sin(a)*12;}
+    const m=new THREE.Mesh(new THREE.BoxGeometry(2,2,2),new THREE.MeshLambertMaterial({color:TCOL[id]||0x8b949e}));m.position.set(x,1,z);m.userData.id=id;meshes[id]=m;scene.add(m);});}
+function syncColors(){for(const id in meshes){const m=meshes[id],r=runtime[id];m.visible=!r||r.alive!==false;m.material.color.setHex(colFor(id));}}
+function resize(){const r=document.getElementById("center").getBoundingClientRect();renderer.setSize(r.width,r.height);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();}
+window.addEventListener("resize",resize);
+cv.addEventListener("click",()=>{if(document.pointerLockElement!==cv)cv.requestPointerLock();else pick();});
+document.addEventListener("mousemove",e=>{if(document.pointerLockElement===cv){player.yaw-=e.movementX*.0024;player.pitch=Math.max(-1.4,Math.min(1.4,player.pitch-e.movementY*.0024));}});
+document.addEventListener("keydown",e=>{keys[e.code]=true;if(e.code==="Space"&&player.onGround){player.vy=6;player.onGround=false;}});
+document.addEventListener("keyup",e=>{keys[e.code]=false;});
+function pick(){raycaster.setFromCamera({x:0,y:0},camera);const h=raycaster.intersectObjects(Object.values(meshes).filter(m=>m.visible));
+  if(!h.length)return;const id=h[0].object.userData.id;selected=id;
+  if(mode==="sim")fireEvent(id); else {syncColors();renderRight();}}
+function collide(x,z){for(const id in meshes){const m=meshes[id];if(!m.visible)continue;if(Math.abs(x-m.position.x)<1.45&&Math.abs(z-m.position.z)<1.45&&player.y<m.position.y+1)return true;}return false;}
+function support(x,z){let t=1.6;for(const id in meshes){const m=meshes[id];if(!m.visible)continue;if(Math.abs(x-m.position.x)<1.45&&Math.abs(z-m.position.z)<1.45)t=Math.max(t,m.position.y+1+1.6);}return t;}
+let last=performance.now();
+function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;const sp=7*dt,fx=Math.sin(player.yaw),fz=Math.cos(player.yaw);let dx=0,dz=0;
+  if(keys["KeyW"]){dx-=fx*sp;dz-=fz*sp;}if(keys["KeyS"]){dx+=fx*sp;dz+=fz*sp;}if(keys["KeyA"]){dx-=fz*sp;dz+=fx*sp;}if(keys["KeyD"]){dx+=fz*sp;dz-=fx*sp;}
+  if(!collide(player.x+dx,player.z))player.x+=dx;if(!collide(player.x,player.z+dz))player.z+=dz;
+  player.vy-=16*dt;player.y+=player.vy*dt;const s=support(player.x,player.z);if(player.y<=s){player.y=s;player.vy=0;player.onGround=true;}
+  camera.position.set(player.x,player.y,player.z);camera.rotation.set(player.pitch,player.yaw,0,"YXZ");renderer.render(scene,camera);requestAnimationFrame(frame);}
+
+// ===== modes =====
+function setMode(m){mode=m;document.getElementById("mDesign").classList.toggle("on",m==="design");document.getElementById("mSim").classList.toggle("on",m==="sim");
+  document.getElementById("src").readOnly=(m==="sim");
+  document.getElementById("modehint").textContent=m==="design"?"DESIGN: edits change canonical .wrk":"SIMULATION: click a block to fire a causal event (text unchanged)";}
+
+// default world (has an undeclared loop to show the BLOCK gate; remove a relation or declare to unblock)
+document.getElementById("src").value=
+`world "Fortress"
+entity generator:
+  position 14 0 -6
+  emits power
+entity reactor:
+  powered_by generator
+  feeds turret
+entity turret:
+  powered_by reactor
+  protects gate
+entity gate:
+  depends_on turret
+  blocks courtyard
+entity courtyard:
+  feeds reactor`;
+initScene(); spec=parseWrk(document.getElementById("src").value); runtime={}; rebuild(); requestAnimationFrame(frame);
+</script></body></html>
