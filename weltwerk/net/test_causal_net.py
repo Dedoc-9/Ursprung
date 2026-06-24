@@ -17,7 +17,8 @@ Run:  PYTHONHASHSEED=0 python3 test_causal_net.py
 """
 from __future__ import annotations
 
-from causal_net import (DEMO, Server, reconnect_snapshot, replicate_event, run_stream, state_hash)
+from causal_net import (DEMO, DENSE_WORLD, SPARSE_WORLD, Server, reconnect_snapshot, replicate_event,
+                        run_stream, state_hash, world_compression)
 
 # a coupled world (a feedback loop) to exercise the honest "actual approaches potential" case
 COUPLED = """
@@ -84,8 +85,19 @@ def test_no_superluminal():
     return check("no_superluminal", ok, f"destroy leaf 'tree' changes only itself: {changed}")
 
 
+def test_sparse_beats_dense():
+    # directive §4: a sparse world must show higher causal compression than a dense one
+    sparse = world_compression(SPARSE_WORLD, "generator")
+    dense = world_compression(DENSE_WORLD, "generator")
+    ok = sparse["compression"] > dense["compression"]
+    return check("sparse_beats_dense", ok,
+                 f"sparse {int(sparse['compression']*100)}% > dense {int(dense['compression']*100)}% "
+                 f"(sparse fp {sparse['footprint']}/{sparse['world']}, dense fp {dense['footprint']}/{dense['world']})")
+
+
 def main():
     results = [
+        test_sparse_beats_dense(),
         test_causal_equals_naive(),
         test_byte_saving_positive(),
         test_scope_honest(),

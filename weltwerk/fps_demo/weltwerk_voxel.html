@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: AGPL-3.0-only
+  Weltwerk — Causal Voxel/FPS Projection (Phase 5). Make the substrate visible.
+  The voxel layer is a PROJECTION; the causal graph (from world.wrk) is authoritative. No game truth in
+  meshes. Mirrors authoring/world_format + net/causal_net. No MMO / latency / UE claim.
+  Controls: click 3D = capture mouse · WASD · mouse look · SPACE jump · LEFT-CLICK interact/destroy entity
+            (or remove terrain block) · E place block · F1 normal · F2 causal view · F3 network view.
+-->
+<html lang="en"><head><meta charset="utf-8"><title>Weltwerk — Causal Voxel</title>
+<style>
+ html,body{margin:0;height:100%;background:#0d1117;color:#d0d6e0;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;overflow:hidden}
+ #cv{display:block}
+ #hud{position:fixed;top:10px;left:10px;background:rgba(13,17,23,.82);border:1px solid #21262d;border-radius:8px;padding:9px 11px;max-width:300px;pointer-events:none}
+ #panel{position:fixed;top:10px;right:10px;width:330px;background:rgba(13,17,23,.9);border:1px solid #21262d;border-radius:8px;padding:9px 11px;white-space:pre-wrap}
+ #cross{position:fixed;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border:1px solid #fff;border-radius:50%;opacity:.7;pointer-events:none}
+ b{color:#fff}.k{color:#8b95a6}.blue{color:#1f6feb}.green{color:#2ea043}.red{color:#da3633}.orange{color:#e3742f}.yellow{color:#d29922}
+ button{background:#161b22;color:#d0d6e0;border:1px solid #30363d;border-radius:6px;padding:4px 8px;cursor:pointer;font:inherit;margin:3px 3px 0 0;pointer-events:auto}
+ #bottom{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);background:rgba(13,17,23,.85);border:1px solid #21262d;border-radius:8px;padding:7px 12px}
+</style></head><body>
+<canvas id="cv"></canvas><div id="cross"></div>
+<div id="hud"></div>
+<div id="panel"></div>
+<div id="bottom"><button onclick="loadWorld('dense')">Dense world</button><button onclick="loadWorld('sparse')">Sparse world</button> <span class="k">· F1 normal · F2 causal · F3 network · click=destroy entity · E=place</span></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ===== world.wrk parse (with 'NAME at x,y,z' voxel syntax) + causal graph (mirror world_format) =====
+const REVERSED=new Set(["depends_on","powered_by","fed_by","sustained_by","needs"]);
+let spec, adj, radj, runtime, mode=1, lastEvent=null, eventLayers=[], eventTick=0, eventClock=0;
+
+function parseVoxel(text){
+  const s={name:"world",entities:{},order:[]}; let cur=null;
+  for(let raw of text.split("\n")){ const line=raw.split("#")[0]; if(!line.trim())continue;
+    const ind=line.length-line.trimStart().length, t=line.trim(), tok=t.split(/\s+/);
+    if(ind===0){
+      if(tok[0]==="world"){ s.name=t.slice(5).trim().replace(/"/g,""); cur=null; }
+      else if(tok[0]==="zone"){ cur=null; }
+      else if(t.includes(" at ")){ const nm=tok[0]; const co=t.split(" at ")[1].split(",").map(Number);
+        cur={id:nm,pos:[co[0]||0,co[1]||0,co[2]||0],health:100,rel:[]}; s.entities[nm]=cur; s.order.push(nm); }
+      else if(tok[0]==="entity"){ const nm=tok[1].replace(/:$/,""); cur={id:nm,pos:[0,0,0],health:100,rel:[]}; s.entities[nm]=cur; s.order.push(nm); }
+      else if(t.endsWith(":")){ const nm=t.slice(0,-1); cur={id:nm,pos:[0,0,0],health:100,rel:[]}; s.entities[nm]=cur; s.order.push(nm); }
+      else if(cur && tok.length>=2){ cur.rel.push([tok[0],tok[1]]); }   // un-indented relation (directive style)
+    } else if(cur){ let key,val; if(t.includes(":")){[key,val]=t.split(/:(.*)/s);}else{const p=t.split(/\s+/);key=p[0];val=p.slice(1).join(" ");}
+      key=key.trim();val=(val||"").trim();
+      if(key==="position"){const p=val.split(/[\s,]+/).map(Number);cur.pos=[p[0]||0,p[1]||0,p[2]||0];}
+      else if(key==="health")cur.health=parseInt(val)||100;
+      else if(key!=="zone")val.split(/\s+/).filter(Boolean).forEach(tg=>cur.rel.push([key,tg]));
+    }
+  }
+  return s;
+}
+function buildGraph(s){ const a={},r={}; for(const id of s.order){a[id]=new Set();r[id]=new Set();}
+  for(const id of s.order) for(const [rel,tg] of s.entities[id].rel){ if(!a[tg]){a[tg]=new Set();r[tg]=new Set();}
+    const [src,dst]=REVERSED.has(rel)?[tg,id]:[id,tg]; a[src].add(dst); r[dst].add(src);} return {a,r}; }
+function reach(g,start){const seen=new Set(),st=[...(g[start]||[])];while(st.length){const n=st.pop();if(!seen.has(n)){seen.add(n);st.push(...(g[n]||[]));}}return seen;}
+function blast(id){return reach(adj,id).size;}
+function nodes(){return Object.keys(adj);}
+function sccsAll(){const seen=new Set(),out=[];for(const n of nodes().sort()){if(seen.has(n))continue;const fwd=reach(adj,n);const c=[...new Set([n,...[...fwd].filter(m=>reach(adj,m).has(n))])];c.forEach(x=>seen.add(x));if(c.length>1)out.push(c);}return out;}
+function cascadeLayers(target){ const layers=[],seen=new Set([target]); let frontier=new Set([target]);
+  while(true){ const nxt=new Set(); for(const f of frontier)for(const m of (adj[f]||[]))if(!seen.has(m)){nxt.add(m);seen.add(m);} if(!nxt.size)break; layers.push([...nxt]); frontier=nxt; } return layers; }
+
+// ===== causal event: destroy → animate the wave (mirror causal_net) =====
+function destroyEvent(target){ if(!runtime[target]||!runtime[target].alive)return;
+  lastEvent=target; eventLayers=cascadeLayers(target); eventTick=0; eventClock=0;
+  runtime[target].alive=false; runtime[target].status="destroyed";
+  renderPanel(); }
+function advanceEvent(dt){ if(!lastEvent)return; eventClock+=dt;
+  if(eventClock>0.5 && eventTick<eventLayers.length){ eventClock=0;
+    for(const id of eventLayers[eventTick]){ if(runtime[id]){runtime[id].status="disabled";} } eventTick++; renderPanel(); syncColors(); } }
+function divergedSet(){ const d=new Set(); if(!lastEvent)return d; d.add(lastEvent);
+  for(let i=0;i<eventTick;i++)for(const id of eventLayers[i])d.add(id); return d; }
+
+// ===== replication report (mirror causal_net) =====
+function report(){
+  const N=nodes().length||1; const peak=Math.max(0,...nodes().map(blast))/N;
+  const coupling=peak>=0.5?"HIGH":peak>=0.25?"MEDIUM":"LOW";
+  let potential=0,actual=0,bn=0,bc=0;
+  if(lastEvent){ const fp=reach(adj,lastEvent); potential=fp.size; actual=divergedSet().size-1; bn=(fp.size)*16; bc=8; }
+  const comp=lastEvent&&potential? Math.round(100*(1-(reach(adj,lastEvent).size+1)/N)) : 0;
+  return {N,coupling,potential,actual,comp,bn,bc};
+}
+function renderPanel(){
+  const r=report();
+  let s=`<b>Replication Report</b>\n<span class=k>MEASURED STRUCTURE, NOT PREDICTION</span>\n\n`+
+    `world entities: ${r.N}\nworld coupling: ${r.coupling}\n`;
+  if(lastEvent){ s+=`\nevent: destroy ${lastEvent}\n`+
+    `<span class=green>potential</span> (could affect): ${r.potential}\n`+
+    `<span class=red>actual</span> (changed so far): ${divergedSet().size-1}\n`+
+    `world compression: ${r.comp}%  ${r.comp>=50?'<span class=green>(sparse: high)</span>':'<span class=orange>(coupled: low)</span>'}\n`; }
+  if(mode===3){ s+=`\n<b>NETWORK VIEW</b>\nnaive: ${r.potential} entity records (${r.bn}B)\n`;
+    if(lastEvent){ const d=[...divergedSet()].filter(x=>x!==lastEvent); s+=`  ${d.map(x=>x+":update").join("\n  ")||"(none yet)"}\n`; }
+    s+=`causal: 1 event (${r.bc}B)\n  event: ${lastEvent||"—"}_destroyed\n  client derives: ${lastEvent?[...reach(adj,lastEvent)].join(", "):"—"}\n`;
+    s+=`\n<span class=k>fewer bytes; SAME derivation scope. scope win only when sparse.</span>`; }
+  else { s+=`\n<span class=k>F1 normal · F2 causal · F3 network\nclick an entity block to destroy it</span>`; }
+  document.getElementById("panel").innerHTML=s;
+}
+
+// ===== three.js voxel projection =====
+let scene,camera,renderer,raycaster,meshes={},ground=[];
+const player={x:0,z:24,y:1.6,vy:0,yaw:Math.PI,pitch:0,onGround:true}; const keys={};
+const TYPECOL={tree:0x2f7d32,rock:0x6e7681,house:0xb08968,generator:0xcf5b3a,power:0xd29922,turret:0x9e6a6a,gate:0x8b6f47,base:0x586069};
+function colFor(id){ if(mode===2){ const dv=divergedSet();
+    if(dv.has(id))return 0xda3633; if(lastEvent&&reach(adj,lastEvent).has(id))return 0x2ea043;
+    const scc=new Set(); sccsAll().forEach(c=>c.forEach(x=>scc.add(x))); if(scc.has(id))return 0xe3742f; return 0x1f6feb; }
+  return TYPECOL[id]||TYPECOL[(spec.entities[id]||{}).id]||0x8b949e; }
+function initScene(){ scene=new THREE.Scene(); scene.background=new THREE.Color(0x0b0f14); scene.fog=new THREE.Fog(0x0b0f14,30,120);
+  camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,400); renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true}); renderer.setSize(innerWidth,innerHeight);
+  scene.add(new THREE.AmbientLight(0x8a929c,0.8)); const dl=new THREE.DirectionalLight(0xffffff,0.7); dl.position.set(20,40,12); scene.add(dl);
+  raycaster=new THREE.Raycaster(); buildVoxelGround(); }
+function buildVoxelGround(){ ground.forEach(m=>scene.remove(m)); ground=[];
+  const mat=new THREE.MeshLambertMaterial({color:0x161b22}); const geo=new THREE.BoxGeometry(2,1,2);
+  for(let x=-20;x<=20;x+=2)for(let z=-20;z<=20;z+=2){ const m=new THREE.Mesh(geo,mat.clone()); m.position.set(x,-0.5,z); m.userData.ground=true; scene.add(m); ground.push(m); } }
+function makeEntities(){ for(const k in meshes)scene.remove(meshes[k]); meshes={};
+  // map .wrk positions (could be large like 50,5,50) into the arena by scaling down
+  const ids=spec.order, n=ids.length||1;
+  ids.forEach((id,i)=>{ const e=spec.entities[id]; let x=e.pos[0],z=e.pos[2];
+    // if positions look large/sparse, lay them on a ring for visibility
+    if(Math.abs(x)>20||Math.abs(z)>20||(x===0&&z===0)){ const a=2*Math.PI*i/n; x=Math.cos(a)*12; z=Math.sin(a)*12; }
+    const m=new THREE.Mesh(new THREE.BoxGeometry(2,2,2),new THREE.MeshLambertMaterial({color:TYPECOL[id]||0x8b949e}));
+    m.position.set(x,1,z); m.userData.id=id; meshes[id]=m; scene.add(m); }); }
+function syncColors(){ for(const id in meshes){ const m=meshes[id],r=runtime[id]; m.visible=!r||r.alive!==false; m.material.color.setHex(colFor(id)); } }
+
+function loadWorld(which){ const txt = which==="dense"?DENSE:SPARSE; spec=parseVoxel(txt);
+  const g=buildGraph(spec); adj=g.a; radj=g.r; runtime={}; for(const id of nodes())runtime[id]={alive:true,status:"ok"};
+  lastEvent=null; eventLayers=[]; eventTick=0; makeEntities(); syncColors(); renderPanel(); renderHud(which); }
+function renderHud(which){ document.getElementById("hud").innerHTML=`<b>Weltwerk Causal Voxel</b>\n<span class=k>${which} world — projection of world.wrk</span>\nmode: ${mode===1?"F1 normal":mode===2?"<span class=green>F2 causal</span>":"<span class=yellow>F3 network</span>"}\n<span class=k>the graph is authoritative; blocks are a view</span>`; }
+
+// ===== controls =====
+cv.addEventListener("click",()=>{ if(document.pointerLockElement!==cv)cv.requestPointerLock(); else interact(); });
+document.addEventListener("mousemove",e=>{ if(document.pointerLockElement===cv){ player.yaw-=e.movementX*0.0024; player.pitch=Math.max(-1.4,Math.min(1.4,player.pitch-e.movementY*0.0024)); }});
+document.addEventListener("keydown",e=>{ keys[e.code]=true;
+  if(e.code==="F1"){mode=1;e.preventDefault();} if(e.code==="F2"){mode=2;e.preventDefault();} if(e.code==="F3"){mode=3;e.preventDefault();}
+  if(["F1","F2","F3"].includes(e.code)){syncColors();renderPanel();renderHud(document.getElementById("hud").textContent.includes("sparse")?"sparse":"dense");}
+  if(e.code==="Space"&&player.onGround){player.vy=6.2;player.onGround=false;}
+  if(e.code==="KeyE")placeBlock(); });
+document.addEventListener("keyup",e=>{keys[e.code]=false;});
+function interact(){ raycaster.setFromCamera({x:0,y:0},camera);
+  const hits=raycaster.intersectObjects(Object.values(meshes).filter(m=>m.visible).concat(ground));
+  if(!hits.length)return; const o=hits[0].object;
+  if(o.userData.id){ destroyEvent(o.userData.id); syncColors(); }      // interact = destroy causal entity → event
+  else if(o.userData.ground && o.position.y>-0.6){ scene.remove(o); ground=ground.filter(g=>g!==o); }  // remove terrain
+}
+function placeBlock(){ const a=player.yaw; const bx=Math.round((player.x-Math.sin(a)*3)/2)*2, bz=Math.round((player.z-Math.cos(a)*3)/2)*2;
+  const m=new THREE.Mesh(new THREE.BoxGeometry(2,1,2),new THREE.MeshLambertMaterial({color:0x30363d})); m.position.set(bx,0.5,bz); m.userData.ground=true; scene.add(m); ground.push(m); }
+function collide(x,z){ for(const id in meshes){ const m=meshes[id]; if(!m.visible)continue; if(Math.abs(x-m.position.x)<1.45&&Math.abs(z-m.position.z)<1.45&&player.y<m.position.y+1) return true;} return false; }
+function support(x,z){ let top=1.6; for(const id in meshes){ const m=meshes[id]; if(!m.visible)continue; if(Math.abs(x-m.position.x)<1.45&&Math.abs(z-m.position.z)<1.45) top=Math.max(top,m.position.y+1+1.6);} return top; }
+let last=performance.now();
+function frame(now){ const dt=Math.min(.05,(now-last)/1000); last=now; advanceEvent(dt);
+  const sp=7*dt,fx=Math.sin(player.yaw),fz=Math.cos(player.yaw); let dx=0,dz=0;
+  if(keys["KeyW"]){dx-=fx*sp;dz-=fz*sp;} if(keys["KeyS"]){dx+=fx*sp;dz+=fz*sp;}
+  if(keys["KeyA"]){dx-=fz*sp;dz+=fx*sp;} if(keys["KeyD"]){dx+=fz*sp;dz-=fx*sp;}
+  if(!collide(player.x+dx,player.z))player.x+=dx; if(!collide(player.x,player.z+dz))player.z+=dz;
+  player.vy-=16*dt; player.y+=player.vy*dt; const s=support(player.x,player.z); if(player.y<=s){player.y=s;player.vy=0;player.onGround=true;}
+  camera.position.set(player.x,player.y,player.z); camera.rotation.set(player.pitch,player.yaw,0,"YXZ"); renderer.render(scene,camera); requestAnimationFrame(frame); }
+window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+
+// ===== the two demonstration worlds (.wrk with 'at' syntax) =====
+const DENSE=`world "Dense"
+zone base
+generator at 0,5,-8
+emits power
+power at 0,5,-4
+feeds turret
+turret at 0,5,0
+feeds gate
+gate at 0,5,4
+feeds base
+base at 0,5,8`;
+const SPARSE=`world "Sparse"
+zone forest
+tree at -10,5,10
+rock at 10,5,10
+house at 0,5,14
+generator at 0,5,-8
+emits power
+power at 0,5,-4
+feeds turret
+turret at 0,5,0`;
+
+initScene(); loadWorld("dense"); requestAnimationFrame(frame);
+</script></body></html>

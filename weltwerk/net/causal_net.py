@@ -116,6 +116,50 @@ def run_stream(world_text: str, events: list) -> dict:
     return s.runtime
 
 
+def world_compression(world_text: str, target: str) -> dict:
+    """World-relative compression: how much of the WHOLE world a causal event LEAVES UNTOUCHED.
+    A broadcast system syncs all N entities; causal replication touches only the footprint = reach(target).
+    compression = 1 − footprint/N.  Sparse worlds (mostly isolated) ⇒ high; dense (coupled) ⇒ low.
+    This is the dense-vs-sparse demonstration (Potential=whole world / broadcast, Actual=causal footprint)."""
+    s = Server(world_text)
+    n = len(s.cg.nodes) or 1
+    fp = ({target} | s.cg.reach_ge1(target)) if target in s.cg.nodes else {target}
+    return {"world": n, "footprint": len(fp), "compression": round(1 - len(fp) / n, 2)}
+
+
+# the two demonstration worlds (directive §4). DENSE: a full chain (event reaches everything).
+DENSE_WORLD = """
+world "Dense"
+entity generator:
+  emits power
+entity power:
+  feeds turret
+entity turret:
+  feeds gate
+entity gate:
+  feeds base
+entity base:
+  health 100
+"""
+
+# SPARSE: mostly isolated terrain + one short causal chain (event reaches little).
+SPARSE_WORLD = """
+world "Sparse"
+entity tree:
+  health 30
+entity rock:
+  health 50
+entity house:
+  health 100
+entity generator:
+  emits power
+entity power:
+  feeds turret
+entity turret:
+  health 80
+"""
+
+
 def reconnect_snapshot(server: Server) -> dict:
     """A reconnecting client gets a full snapshot (recovery) and matches the server."""
     return {k: dict(v) for k, v in server.runtime.items()}
