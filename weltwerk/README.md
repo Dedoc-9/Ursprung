@@ -172,6 +172,35 @@ reconstruction stays byte-identical to a full honest sim *under coupling* — th
 cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\scale"; $env:PYTHONHASHSEED="0"; python test_light_cone.py; python light_cone_bench.py
 ```
 
+#### Teleport / two-layer cost (`scale/teleport.py`) — potential cone vs actual divergence
+
+The light-cone run surfaced the real architectural distinction: the conservative cone reached 60 chunks
+while **actual** divergence peaked at 5 — a ~12× gap between *what could be affected* and *what was*.
+That is the difference between **dependency analysis** (potential reachability — a safe, pessimistic
+upper bound, what a compiler computes) and **change propagation** (measured divergence — the truth).
+This is a first-class principle for the project going forward:
+
+```
+World → Fork → POTENTIAL cone (safe upper bound) ⊇ ACTUAL divergence (measured lower bound)
+```
+
+A **teleport edge** (auction house, guild storage, portal, global market) is where the two layers come
+apart: it makes the potential cone *explode* (a far chunk is reachable in one hop) but can leave actual
+divergence *sparse* (an attenuated perturbation barely moves the far region). So an observer that
+re-simulates only where divergence is **measured**, not merely **reachable**, recovers the win exactly
+where the conservative cone loses it — and it is provably correct, because a chunk can diverge only if
+one of its inputs actually diverged. **The observer stops being descriptive and becomes the allocator.**
+
+| File | What it is | Maturity | Evidence |
+|---|---|---|---|
+| `scale/teleport.py` | ring+teleport topology; two reconstructions — conservative (dependency) and pruned (change-propagation/allocator) | IMPLEMENTED | awaiting run |
+| `scale/test_teleport.py` | both reconstructions == brute (incl. the pruned allocator) · pruned⊆conservative · teleport explodes cone · transmits · pruned<naive · determinism | IMPLEMENTED | awaiting run |
+| `scale/teleport_bench.py` | ring vs teleport: potential cone explosion vs actual sparsity; conservative vs pruned cost | IMPLEMENTED | awaiting run |
+
+```powershell
+cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\scale"; $env:PYTHONHASHSEED="0"; python test_teleport.py; python teleport_bench.py
+```
+
 ## Genealogy — this composes verified pieces, it does not reinvent them
 
 - **commit/speculative/recovery discipline** ← `experiments/live_world_kernel/live_world_kernel.py`
