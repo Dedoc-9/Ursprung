@@ -146,6 +146,32 @@ prediction. `fork-cheap ≠ simulation-cheap`.
 cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\scale"; $env:PYTHONHASHSEED="0"; python test_cow.py; python scale_bench.py
 ```
 
+#### Light-cone (`scale/light_cone.py`) — when chunks are COUPLED, how fast does an edit travel?
+
+`cow_world`'s flat marginal cost was mortgaged to chunk-local rules. This probe removes that
+assumption: a ring of chunks with nearest-neighbour resource diffusion, so a local edit *propagates*.
+It measures the consequence rather than assuming it away.
+
+The finding: there is a finite **information velocity** (~2 chunks/tick on a ring, set by *coupling*,
+not by world size), so the dirty cone grows ~linearly in radius and its volume ~quadratically in
+horizon. Two honest consequences, both measured: (1) because velocity is size-independent, the
+**saturation horizon grows with world diameter** — bigger worlds give a *longer* safe-preview window;
+(2) the counterfactual win is now **conditional** — a short preview in a large coupled world is cheap,
+a long one costs as much as a full re-sim (the cone fills the world). We also separate the
+**conservative cone we pay to simulate** from the **actual divergence** (diffusion can round to an
+identical value at the frontier), reporting both. Crux (`test_light_cone.py`): by-difference
+reconstruction stays byte-identical to a full honest sim *under coupling* — the harder correctness case.
+
+| File | What it is | Maturity | Evidence |
+|---|---|---|---|
+| `scale/light_cone.py` | coupled ring world + cone reconstruction; measures radius / velocity / saturation / cf_cost | IMPLEMENTED | awaiting run |
+| `scale/test_light_cone.py` | crux equivalence under coupling · actual⊆cone · monotone · velocity≤2 · cost==cone-volume · saturation · **non-vacuous-propagates** (ghost-guard) · determinism | IMPLEMENTED | awaiting run |
+| `scale/light_cone_bench.py` | velocity vs world size; cf_cost vs horizon; the safe-preview window | IMPLEMENTED | awaiting run |
+
+```powershell
+cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\scale"; $env:PYTHONHASHSEED="0"; python test_light_cone.py; python light_cone_bench.py
+```
+
 ## Genealogy — this composes verified pieces, it does not reinvent them
 
 - **commit/speculative/recovery discipline** ← `experiments/live_world_kernel/live_world_kernel.py`

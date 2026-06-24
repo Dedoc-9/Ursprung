@@ -226,7 +226,10 @@ def genesis(n_entities: int, n_chunks: int, seed: int = 0) -> Snapshot:
     buckets: dict[int, list] = {c: [] for c in range(n_chunks)}
     for eid in range(n_entities):
         c = eid % n_chunks
-        species = "prey" if eid % 2 == 0 else "pred"
+        # species must alternate WITHIN a chunk, not by eid parity — else (with even n_chunks) every
+        # entity in a chunk shares eid parity and the chunk becomes all-prey or all-pred, making
+        # "cull predators in chunk X" a silent no-op (a measured ghost: cost-true, meaning-empty).
+        species = "prey" if (eid // n_chunks) % 2 == 0 else "pred"
         buckets[c].append(Ent(eid=eid, species=species, energy=6))
     for c in range(n_chunks):
         snap[c] = ChunkState(ents=tuple(buckets[c]), resource=20)
