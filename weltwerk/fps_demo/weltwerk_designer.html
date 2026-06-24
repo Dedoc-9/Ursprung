@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: AGPL-3.0-only
+  Weltwerk — Interactive Causal World Designer (Product A).
+  WorldSpec is the AUTHORITY. This is a projection + editing interface, not a runtime.
+    designer action → edit causal intent → regenerate world.wrk text → rebuild graph → re-lint → update views
+  Mirrors the verified Python authority (authoring/world_format.py + world_design.py). The .wrk TEXT
+  stays the source of truth; every visual edit re-serializes to it (deterministic round-trip).
+  No FPS, no networking, no UE, no AI. "MEASURED STRUCTURE, NOT RUNTIME PREDICTION."
+-->
+<html lang="en"><head><meta charset="utf-8"><title>Weltwerk — Causal World Designer</title>
+<style>
+ html,body{margin:0;height:100%;background:#0d1117;color:#d0d6e0;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;overflow:hidden}
+ #wrap{display:flex;height:100vh}
+ .col{height:100%;overflow:auto;box-sizing:border-box;padding:10px 12px}
+ #left{width:300px;min-width:300px;border-right:1px solid #21262d}
+ #mid{flex:1;position:relative;border-right:1px solid #21262d}
+ #right{width:340px;min-width:340px}
+ h2{font-size:13px;margin:10px 0 5px;color:#fff} .k{color:#8b95a6}
+ textarea{width:100%;height:240px;background:#0b0f14;color:#cdd3df;border:1px solid #30363d;border-radius:6px;font:11px ui-monospace,monospace;box-sizing:border-box}
+ button,select{background:#161b22;color:#d0d6e0;border:1px solid #30363d;border-radius:6px;padding:4px 8px;cursor:pointer;font:inherit;margin:3px 3px 0 0}
+ svg{position:absolute;inset:0;width:100%;height:100%}
+ .legend{position:absolute;left:10px;bottom:8px;font-size:11px;background:rgba(13,17,23,.7);padding:6px 8px;border-radius:6px}
+ .blue{color:#1f6feb}.green{color:#2ea043}.red{color:#da3633}.orange{color:#e3742f}.k2{color:#8b95a6}
+ .panel{padding:9px 11px;background:#11161d;border:1px solid #21262d;border-radius:7px;margin-bottom:9px;white-space:pre-wrap}
+ .bar{color:#2ea043} .warn{color:#e3742f} .lbl{color:#6b7280;font-size:10.5px;letter-spacing:.3px}
+ text{cursor:pointer;user-select:none}
+ #conn{color:#bc8cff}
+</style></head><body>
+<div id="wrap">
+ <div id="left" class="col">
+  <h2>world.wrk <span class="k">(source of truth)</span></h2>
+  <textarea id="src" spellcheck="false"></textarea>
+  <div><button onclick="rebuildFromText()">Rebuild from text</button></div>
+  <h2>Add relation</h2>
+  <div class="k2">drag a node onto another, OR pick + Add:</div>
+  <div>
+   <select id="esrc"></select>
+   <select id="etype"></select>
+   <select id="edst"></select>
+   <button onclick="addRelFromControls()">Add</button>
+  </div>
+  <div class="k2" id="conn"></div>
+  <h2>Selected entity</h2>
+  <div class="panel" id="editpanel">click a node</div>
+ </div>
+
+ <div id="mid">
+  <svg id="g" viewBox="0 0 700 600" preserveAspectRatio="xMidYMid meet"></svg>
+  <div class="legend">
+   <span class="blue">●</span>dependency <span class="green">●</span>potential(sel)
+   <span class="red">●</span>actual <span class="orange">●</span>feedback/SCC
+  </div>
+ </div>
+
+ <div id="right" class="col">
+  <h2>World Health Report</h2>
+  <div class="lbl">MEASURED STRUCTURE, NOT RUNTIME PREDICTION</div>
+  <div class="panel" id="health"></div>
+  <h2>Replication outlook <span class="k">(design hint)</span></h2>
+  <div class="lbl">STRUCTURAL HINT — NOT NETWORKING, NOT LATENCY</div>
+  <div class="panel" id="repl"></div>
+  <h2>Timeline scrubber</h2>
+  <div class="k2">schedule destroy events (select a node → "schedule"), then scrub:</div>
+  <div><button id="schedbtn" onclick="schedule()">schedule destroy</button><button onclick="clearTL()">clear</button></div>
+  <input id="tl" type="range" min="0" max="0" value="0" style="width:100%" oninput="scrub(this.value)">
+  <div class="panel" id="tlpanel">t0 — initial</div>
+ </div>
+</div>
+<script>
+// ===== mirror of world_format.py / world_design.py (Python remains the authority) =====
+const REVERSED=new Set(["depends_on","powered_by","fed_by","sustained_by","needs"]);
+const RELTYPES=["protects","powers","powered_by","depends_on","blocks","feeds","supplies","defends","consumes","sustains","emits","owns","attacks","allied_with","trades_with"];
+let spec, adj, radj, selected=null, relType="protects", timeline=[], tlIndex=0, dragSrc=null;
+
+function parseWrk(text){
+  const s={name:"world",zones:[],entities:{},order:[]}; let cur=null;
+  for(let raw of text.split("\n")){ const line=raw.split("#")[0]; if(!line.trim())continue;
+    const ind=line.length-line.trimStart().length, t=line.trim(), tok=t.split(/\s+/);
+    if(ind===0){ cur=null;
+      if(tok[0]==="world"){ s.name=t.slice(5).trim().replace(/"/g,"")||"world"; }
+      else if(tok[0]==="zone"){ tok.slice(1).forEach(z=>{if(!s.zones.includes(z))s.zones.push(z);}); }
+      else if(tok[0]==="zones:"){ t.slice(6).split(/\s+/).filter(Boolean).forEach(z=>s.zones.push(z)); }
+      else if(t==="entities:"){}
+      else if(tok[0]==="entity"){ const n=tok[1].replace(/:$/,""); cur={id:n,zone:"",pos:[0,0,0],health:100,rel:[]}; s.entities[n]=cur; s.order.push(n); }
+      else if(t.endsWith(":")){ const n=t.slice(0,-1); cur={id:n,zone:"",pos:[0,0,0],health:100,rel:[]}; s.entities[n]=cur; s.order.push(n); }
+    } else if(cur){ let key,val; if(t.includes(":")){[key,val]=t.split(/:(.*)/s);}else{const p=t.split(/\s+/);key=p[0];val=p.slice(1).join(" ");}
+      key=key.trim(); val=(val||"").trim();
+      if(key==="zone")cur.zone=val; else if(key==="position"){const p=val.split(/\s+/).map(Number);cur.pos=[p[0]||0,p[1]||0,p[2]||0];}
+      else if(key==="health")cur.health=parseInt(val)||0; else val.split(/\s+/).filter(Boolean).forEach(tg=>cur.rel.push([key,tg]));
+    }
+  }
+  return s;
+}
+function serializeWrk(s){
+  const L=[`world "${s.name}"`,""]; for(const z of s.zones)L.push(`zone ${z}`); if(s.zones.length)L.push("");
+  for(const id of s.order){ const e=s.entities[id]; L.push(`entity ${id}:`);
+    if(e.zone)L.push(`  zone ${e.zone}`);
+    if(e.pos[0]||e.pos[1]||e.pos[2])L.push(`  position ${e.pos.map(x=>Number.isInteger(x)?x:x).join(" ")}`);
+    L.push(`  health ${e.health}`); for(const [r,tg] of e.rel)L.push(`  ${r} ${tg}`); L.push(""); }
+  return L.join("\n").replace(/\n+$/,"\n");
+}
+function buildGraph(s){ const a={},r={}; for(const id of s.order){a[id]=new Set();r[id]=new Set();}
+  for(const id of s.order) for(const [rel,tg] of s.entities[id].rel){ if(!a[tg]){a[tg]=new Set();r[tg]=new Set();}
+    const [src,dst]=REVERSED.has(rel)?[tg,id]:[id,tg]; a[src].add(dst); r[dst].add(src); } return {a,r}; }
+function reach(g,start){const seen=new Set(),st=[...(g[start]||[])];while(st.length){const n=st.pop();if(!seen.has(n)){seen.add(n);st.push(...(g[n]||[]));}}return seen;}
+function blast(id){return reach(adj,id).size;}
+function nodes(){return Object.keys(adj);}
+function sccsAll(){const seen=new Set(),out=[];for(const n of nodes().sort()){if(seen.has(n))continue;const fwd=reach(adj,n);const c=[...new Set([n,...[...fwd].filter(m=>reach(adj,m).has(n))])];c.forEach(x=>seen.add(x));if(c.length>1)out.push(c);}return out;}
+
+// ===== edits: mutate spec → re-serialize (round-trip) → rebuild =====
+function syncText(){ document.getElementById("src").value=serializeWrk(spec); }
+function addRel(src,rel,dst){ if(!spec.entities[src]||src===dst)return;
+  if(spec.entities[src].rel.some(r=>r[0]===rel&&r[1]===dst))return;
+  spec.entities[src].rel.push([rel,dst]); if(!spec.entities[dst]&&!spec.order.includes(dst)){/* relation-only target ok */}
+  syncText(); rebuild(); }
+function removeRel(src,rel,dst){ const e=spec.entities[src]; if(!e)return; e.rel=e.rel.filter(r=>!(r[0]===rel&&r[1]===dst)); syncText(); rebuild(); }
+function renameEntity(oldId,newId){ if(!newId||spec.entities[newId]||!spec.entities[oldId])return;
+  spec.entities[newId]=spec.entities[oldId]; spec.entities[newId].id=newId; delete spec.entities[oldId];
+  spec.order=spec.order.map(x=>x===oldId?newId:x);
+  for(const id of spec.order) spec.entities[id].rel=spec.entities[id].rel.map(([r,t])=>[r,t===oldId?newId:t]);
+  selected=newId; syncText(); rebuild(); }
+function setProp(id,key,val){ const e=spec.entities[id]; if(!e)return; if(key==="health")e.health=parseInt(val)||0; else if(key==="zone"){e.zone=val; if(val&&!spec.zones.includes(val))spec.zones.push(val);} syncText(); rebuild(); }
+function addRelFromControls(){ addRel(document.getElementById("esrc").value, document.getElementById("etype").value, document.getElementById("edst").value); }
+
+// ===== world health (mirror world_design.world_health_report) =====
+function couplingLabel(p){return p>=0.5?"high":p>=0.25?"medium":"low";}
+function healthData(){
+  const n=nodes().length||1; const peak=Math.max(0,...nodes().map(blast))/n;
+  const loops=sccsAll(); const largest=loops.reduce((m,c)=>Math.max(m,c.length),0);
+  const ranked=nodes().sort((a,b)=>blast(b)-blast(a)).slice(0,5);
+  const sccset=new Set(); loops.forEach(c=>c.forEach(x=>sccset.add(x)));
+  let orphan=false; for(const id of nodes()) if(adj[id].size===0 && radj[id].size===0) orphan=true;
+  return {n,peak,loops,largest,ranked,sccset,orphan,
+    regime: peak>=0.5?"expanding (dangerous coupling)":peak>=0.25?"bounded":"stable",
+    coupling: couplingLabel(peak),
+    headroom: peak>=0.5?"low":peak>=0.25?"medium":"high"};
+}
+function renderHealth(){
+  const h=healthData(); let s=`REGIME\n------\n${h.regime}\n\nCOUPLING\n--------\n${h.coupling}\n\nCRITICAL NODES\n--------------\n`;
+  for(const x of h.ranked){ const p=blast(x)/h.n, f=Math.max(0,Math.min(10,Math.round(p*10)));
+    s+=`${x.padEnd(13)}${"█".repeat(f)}${"░".repeat(10-f)} ${Math.round(p*100)}%\n`; }
+  const cascade=h.peak>=0.5, loop=h.loops.length>0;
+  s+=`\nFAILURE MODES\n-------------\n[${cascade?"!":" "}] choke point / cascade\n[${cascade?"!":" "}] single point of failure\n[${loop?"!":" "}] feedback loop\n[${h.orphan?"!":" "}] isolated region\n`;
+  s+=`\nCAUSAL COMPRESSION HEADROOM\n--------------------------\n${h.headroom}`;
+  document.getElementById("health").textContent=s;
+  const cmap={high:"#2ea043",medium:"#d29922",low:"#e3742f"};
+  document.getElementById("repl").innerHTML=
+    `Coupling: <b style="color:${cmap[{high:"low",medium:"medium",low:"high"}[h.headroom]]||"#8b95a6"}">${h.coupling.toUpperCase()}</b>\n`+
+    `Expected causal compression: <b>${h.headroom.toUpperCase()}</b>\n\n`+
+    `Reason: ${h.headroom==="low"?"actual divergence likely approaches potential reachability (edits reach far → little to prune).":"local edits → actual ≪ potential → prunable."}`;
+}
+
+// ===== graph render + drag-to-connect =====
+function layout(){ const pos={}; const zones=[...new Set([...spec.zones, ...nodes().map(id=>spec.entities[id]?spec.entities[id].zone||"_":"_")])].filter(z=>nodes().some(id=>(spec.entities[id]?spec.entities[id].zone||"_":"_")===z));
+  if(!zones.length)zones.push("_");
+  const byZ={}; for(const id of nodes()){ const z=spec.entities[id]?(spec.entities[id].zone||"_"):"_"; (byZ[z]=byZ[z]||[]).push(id); }
+  const zl=zones.filter(z=>byZ[z]); zl.forEach((z,zi)=>{ const x=zl.length>1?60+zi*((700-120)/(zl.length-1)):350;
+    byZ[z].forEach((id,i)=>{ pos[id]=[x, 50+i*((600-90)/Math.max(1,byZ[z].length))]; }); });
+  return pos;
+}
+function renderGraph(){
+  const svg=document.getElementById("g"), pos=layout();
+  const potential=selected?reach(adj,selected):new Set();
+  const actual=cumulativeDiverged();
+  const sccset=new Set(); sccsAll().forEach(c=>c.forEach(x=>sccset.add(x)));
+  let s="";
+  for(const src in adj) for(const dst of adj[src]){ if(!pos[src]||!pos[dst])continue;
+    const hot=selected&&potential.has(src)&&potential.has(dst);
+    s+=`<line x1="${pos[src][0]}" y1="${pos[src][1]}" x2="${pos[dst][0]}" y2="${pos[dst][1]}" stroke="${hot?'#2ea043':'#30363d'}" stroke-width="${hot?1.8:1}"/>`;
+    const mx=(pos[src][0]+pos[dst][0])/2,my=(pos[src][1]+pos[dst][1])/2;
+    s+=`<circle cx="${mx}" cy="${my}" r="2.5" fill="${hot?'#2ea043':'#484f58'}"/>`;
+  }
+  for(const id in pos){ const [x,y]=pos[id]; let fill="#1f6feb";
+    if(actual.has(id))fill="#da3633"; else if(selected&&potential.has(id))fill="#2ea043";
+    const stroke=id===selected?"#fff":(dragSrc===id?"#bc8cff":(sccset.has(id)?"#e3742f":"none"));
+    s+=`<circle cx="${x}" cy="${y}" r="9" fill="${fill}" stroke="${stroke}" stroke-width="2.5" data-id="${id}"/>`;
+    s+=`<text x="${x+12}" y="${y+4}" fill="#c9d1d9" font-size="11" data-id="${id}">${id}</text>`;
+  }
+  svg.innerHTML=s;
+  for(const el of svg.querySelectorAll("[data-id]")){
+    el.onclick=(e)=>{ if(dragSrc)return; selected=el.dataset.id; renderInspect(); renderGraph(); };
+    el.onmousedown=(e)=>{ dragSrc=el.dataset.id; document.getElementById("conn").textContent="connecting from "+dragSrc+" — drop on a node ("+relType+")"; renderGraph(); e.preventDefault(); };
+    el.onmouseup=(e)=>{ if(dragSrc&&dragSrc!==el.dataset.id){ addRel(dragSrc,relType,el.dataset.id); } dragSrc=null; document.getElementById("conn").textContent=""; };
+  }
+}
+document.addEventListener("mouseup",()=>{ if(dragSrc){dragSrc=null;document.getElementById("conn").textContent="";renderGraph();} });
+
+// ===== inspect + edit panel =====
+function renderInspect(){
+  if(!selected){document.getElementById("editpanel").textContent="click a node";return;}
+  const id=selected, e=spec.entities[id], potential=reach(adj,id), deps=reach(radj,id);
+  const scc=sccsAll().find(c=>c.includes(id));
+  let s=`<b>${id}</b>\n`;
+  s+=`relations: ${e?e.rel.map(r=>r[0]+"→"+r[1]).join(", ")||"none":"(relation target)"}\n`;
+  s+=`<span class=green>potential</span>: ${potential.size} {${[...potential].sort().join(", ")||"∅"}}\n`;
+  s+=`dependencies: {${[...deps].sort().join(", ")||"∅"}}\n`;
+  s+=`<span class=red>actual</span>(timeline): ${cumulativeDiverged().has(id)?"diverged":"—"}\n`;
+  s+=`gap (potential−actual): ${potential.size-[...potential].filter(x=>cumulativeDiverged().has(x)).length}\n`;
+  s+=`feedback loop: ${scc?'<span class=orange>'+scc.sort().join(" → ")+'</span>':"none"}\n`;
+  if(e){ s+=`\nzone: <input id="ez" value="${e.zone}" size="8"> health: <input id="eh" value="${e.health}" size="4">`+
+    ` <button onclick="setProp('${id}','zone',document.getElementById('ez').value);setProp('${id}','health',document.getElementById('eh').value)">apply</button>\n`;
+    s+=`rename: <input id="ern" value="${id}" size="10"><button onclick="renameEntity('${id}',document.getElementById('ern').value)">rename</button>\n`;
+    s+=`remove relation: `+ (e.rel.length? e.rel.map(r=>`<button onclick="removeRel('${id}','${r[0]}','${r[1]}')">✕ ${r[0]}→${r[1]}</button>`).join(" "):"none");
+    s+=`\n<button onclick="schedule('${id}')">schedule destroy in timeline</button>`;
+  }
+  document.getElementById("editpanel").innerHTML=s;
+}
+
+// ===== timeline (mirror simulate_timeline; uses the event pipeline reach()) =====
+function cumulativeDiverged(){ const d=new Set(); for(let i=0;i<tlIndex;i++){ const tgt=timeline[i]; reach(adj,tgt).forEach(x=>d.add(x)); d.add(tgt); } return d; }
+function schedule(id){ id=id||selected; if(!id||!spec.entities[id])return; timeline.push(id); renderTimeline(); }
+function clearTL(){ timeline=[]; tlIndex=0; renderTimeline(); }
+function renderTimeline(){ const tl=document.getElementById("tl"); tl.max=timeline.length; tl.value=tlIndex; scrub(tlIndex); }
+function scrub(v){ tlIndex=+v; const d=cumulativeDiverged();
+  const ev = tlIndex===0?"initial": "destroy "+timeline[tlIndex-1];
+  document.getElementById("tlpanel").textContent=`t${tlIndex} — ${ev}\ndiverged (${d.size}): {${[...d].sort().join(", ")||"∅"}}\nsequence: ${timeline.join(" → ")||"(empty)"}`;
+  renderGraph(); renderInspect();
+}
+
+// ===== rebuild pipeline =====
+function fillSelects(){ for(const sel of ["esrc","edst"]){ const el=document.getElementById(sel); el.innerHTML=nodes().sort().map(n=>`<option>${n}</option>`).join(""); }
+  const et=document.getElementById("etype"); if(!et.options.length){ et.innerHTML=RELTYPES.map(r=>`<option>${r}</option>`).join(""); et.onchange=()=>relType=et.value; relType=et.value; } }
+function rebuild(){ const g=buildGraph(spec); adj=g.a; radj=g.r;
+  timeline=timeline.filter(id=>spec.entities[id]); if(tlIndex>timeline.length)tlIndex=timeline.length;
+  fillSelects(); renderGraph(); renderHealth(); renderInspect(); renderTimeline(); }
+function rebuildFromText(){ try{ spec=parseWrk(document.getElementById("src").value); }catch(err){ document.getElementById("health").textContent="parse error: "+err.message; return; } selected=null; rebuild(); }
+
+// default world.wrk
+document.getElementById("src").value=
+`world "Fortress"
+zone courtyard
+zone reactor
+zone market
+entity generator:
+  zone reactor
+  health 100
+  emits power
+entity gate:
+  zone courtyard
+  health 150
+  blocks courtyard
+  depends_on generator
+entity turret:
+  zone courtyard
+  health 100
+  protects gate
+  powered_by generator
+entity garrison:
+  zone market
+  health 120
+  defends gate
+  consumes supply
+entity supply:
+  zone market
+  health 40
+  sustains garrison`;
+rebuildFromText();
+</script></body></html>

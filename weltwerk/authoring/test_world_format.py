@@ -18,7 +18,7 @@ Run:  PYTHONHASHSEED=0 python3 test_world_format.py
 from __future__ import annotations
 
 from world_format import (DEMO_WORLD, build_causal_graph, build_runtime, build_spatial_graph,
-                          compile_world, export_json, parse_world)
+                          compile_world, export_json, parse_world, serialize_world)
 from world_lint import sccs
 
 SAMPLE = """
@@ -90,8 +90,23 @@ def test_determinism():
     return check("determinism", a == b, f"same text ⇒ identical compiled world: {a == b}")
 
 
+def test_roundtrip_serialization():
+    # the designer's invariant: edit → serialize → reload gives the SAME spec (text is the authority)
+    s1 = parse_world(DEMO_WORLD)
+    s2 = parse_world(serialize_world(s1))
+    same = (s1.name == s2.name and s1.zones == s2.zones and set(s1.entities) == set(s2.entities)
+            and all(s1.entities[k].zone == s2.entities[k].zone
+                    and s1.entities[k].health == s2.entities[k].health
+                    and s1.entities[k].relations == s2.entities[k].relations
+                    and tuple(s1.entities[k].pos) == tuple(s2.entities[k].pos) for k in s1.entities))
+    idempotent = serialize_world(s1) == serialize_world(s2)
+    return check("roundtrip_serialization", same and idempotent,
+                 f"parse(serialize(spec)) == spec={same}; serialization idempotent={idempotent}")
+
+
 def main():
     results = [
+        test_roundtrip_serialization(),
         test_parse_spec(),
         test_causal_direction(),
         test_spatial_adjacency(),

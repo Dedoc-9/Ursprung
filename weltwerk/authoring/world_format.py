@@ -135,6 +135,32 @@ def parse_world(text: str) -> WorldSpec:
     return spec
 
 
+def _fmt_pos(p) -> str:
+    return " ".join(str(int(x)) if float(x).is_integer() else repr(x) for x in p)
+
+
+def serialize_world(spec: WorldSpec) -> str:
+    """Deterministic .wrk text from a WorldSpec. Round-trip safe: parse(serialize(spec)) == spec.
+    This is what makes the visual designer a projection — every edit re-serializes here, and the TEXT
+    stays the source of truth."""
+    L = [f'world "{spec.name}"', ""]
+    for z in spec.zones:
+        L.append(f"zone {z}")
+    if spec.zones:
+        L.append("")
+    for e in spec.entities.values():
+        L.append(f"entity {e.name}:")
+        if e.zone:
+            L.append(f"  zone {e.zone}")
+        if tuple(e.pos) != (0.0, 0.0, 0.0):
+            L.append(f"  position {_fmt_pos(e.pos)}")
+        L.append(f"  health {e.health}")
+        for rel, tgt in e.relations:
+            L.append(f"  {rel} {tgt}")
+        L.append("")
+    return "\n".join(L).rstrip() + "\n"
+
+
 def simulate_destroy(cg: CausalGraph, target: str) -> dict:
     """Event propagation (Phase 2): destroying `target` diverges every entity reachable FROM it in the
     can-affect graph (its downstream dependents). This is the discrete-model ACTUAL divergence of the
