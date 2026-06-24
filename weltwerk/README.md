@@ -84,12 +84,28 @@ exists to catch). Every `Observation` carries its evidence class and any ghost f
 |---|---|---|---|
 | `fork.py` (extended) | a Fork now carries `trace_a`/`trace_b` (the trajectories) + `observe()`/`report()` | IMPLEMENTED | awaiting run |
 | `observers.py` | `Observation` (evidence-typed) · `Observer` base · `OrbitObserver` — a **cheap live proxy** for "where is the world going" (the verified CI-bearing `orbit_estimator` is the slow-cadence upgrade) | IMPLEMENTED | awaiting run |
-| `test_observers.py` | validity-not-outcome: observer determinism · identity→zero · `NO_TRAJECTORY` ghost · `evidence==ESTIMATE` · classifier distinguishes | IMPLEMENTED | awaiting run |
+| `test_observers.py` | validity-not-outcome: observer determinism · identity→zero · `NO_TRAJECTORY` ghost · `evidence==ESTIMATE` · classifier distinguishes | IMPLEMENTED | verified 5/5 (`72a9a9e`) |
+
+**The canonical platform interface** is `Observer.observe(fork) → Observation` — an observer consumes a
+*fork* (a declared intervention + two replayable futures) and returns a typed estimate of the
+difference. That is what produces *causal evidence* rather than a dashboard. `per_leg(trace)` stays the
+*internal* mechanism (keeping the streamtube boundary around the pairing); a fork-aware observer such
+as fairness overrides `observe()` to read `fork.intervention` / `fork.line_a` / `fork.line_b`.
+
+**The universal calibration contract** (`test_conformance.py`): every registered observer must be
+*null-calibrated* (`do(nothing) ⇒ zero difference` — a theorem for any pure deterministic observer,
+which is why determinism is the prerequisite) **and** *non-degenerate* (moves on at least one real
+cause). Honest limit: this is **necessary, not sufficient** — `green-check ≠ correctness`. It certifies
+an observer cannot silently become a truth source; it does **not** certify it measures what it claims.
+
+| File | What it is | Maturity | Evidence |
+|---|---|---|---|
+| `test_conformance.py` | the universal observer contract: null-calibration + non-degeneracy, over the `OBSERVERS` registry | IMPLEMENTED | awaiting run |
 
 Run the observer slice:
 
 ```powershell
-cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk"; $env:PYTHONHASHSEED="0"; python test_observers.py; python observers.py
+cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk"; $env:PYTHONHASHSEED="0"; python test_observers.py; python test_conformance.py; python observers.py
 ```
 
 Run (PowerShell, folder-directed; `PYTHONHASHSEED=0` for the determinism guarantee):

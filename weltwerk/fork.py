@@ -175,10 +175,10 @@ class Fork:
     observations: dict = field(default_factory=dict)  # name -> Observation (ESTIMATES; allocation, not truth)
 
     def observe(self, observer) -> "object":
-        """Attach an observer. The observer is a function of ONE trajectory; the Fork hands it both
-        legs to diff. Result is an Observation carrying its own evidence class — never folded into the
-        EXACT WorldDiff. (See observers.py.)"""
-        obs = observer.diff(self.trace_a, self.trace_b)
+        """Attach an observer via the canonical platform interface: the observer consumes THIS fork
+        (declared intervention + two replayable futures) and returns an Observation carrying its own
+        evidence class — never folded into the EXACT WorldDiff. (See observers.py.)"""
+        obs = observer.observe(self)
         self.observations[obs.name] = obs
         return obs
 

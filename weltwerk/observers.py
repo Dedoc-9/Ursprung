@@ -67,10 +67,22 @@ class Observation:
 
 
 class Observer:
-    """Base lens. Subclasses implement per_leg(trace) -> observable dict; diff() pairs the legs.
-    An observer NEVER mutates a world and NEVER sees the committed timeline — only trajectories."""
+    """Base lens. CANONICAL PLATFORM INTERFACE: observe(fork) -> Observation — an observer consumes a
+    FORK (a declared intervention + two replayable futures) and returns a typed estimate of the
+    difference. That is what makes it produce *causal evidence* rather than a dashboard reading.
+
+    INTERNAL mechanism: subclasses implement per_leg(trace) -> observable dict, and the default
+    observe()/diff() pair the legs across the boundary. An observer that needs more than the trajectory
+    pair (e.g. counterfactual fairness, which is intrinsically paired and needs the declared
+    intervention) OVERRIDES observe(fork) and reads fork.intervention / fork.line_a / fork.line_b.
+
+    An observer NEVER mutates a world and NEVER writes the committed timeline. It allocates attention."""
     name = "observer"
     evidence_class = ESTIMATE   # observers estimate; only fork.WorldDiff is EXACT_UNDER_MODEL
+
+    def observe(self, fork) -> Observation:
+        """Canonical entry. Default consumes the trajectory pair; override for fork-aware observers."""
+        return self.diff(fork.trace_a, fork.trace_b)
 
     def per_leg(self, trace: tuple) -> dict:
         raise NotImplementedError
@@ -130,6 +142,30 @@ class OrbitObserver(Observer):
         return ("cheap live proxy over coarse features; ESTIMATE, not a verdict. "
                 "Verified CI-bearing orbit runs on a background cadence. "
                 "NO_TRAJECTORY ≠ CONVERGED: an unmoved leg has no geometry to read.")
+
+
+# --- the platform registry + the universal calibration invariant --------------------------------
+# Every registered observer must pass conformance (see test_conformance.py). To add an observer to
+# the platform, register it here; it then inherits the null-hypothesis calibration test for free.
+OBSERVERS = (OrbitObserver,)
+
+
+def null_delta_is_zero(observer: Observer, world, horizon: int = 25) -> bool:
+    """The universal NULL HYPOTHESIS: do(nothing) must produce a zero difference. For any pure,
+    deterministic observer this is a theorem (identity ⇒ trace_a == trace_b ⇒ every numeric delta 0),
+    so a failure means the observer is either non-deterministic or peeking at state outside the fork.
+    NECESSARY, NOT SUFFICIENT — an always-zero observer also passes (see is_nontrivial)."""
+    from fork import fork, identity
+    obs = fork(world, identity(), horizon).observe(observer)
+    return all(v == 0 for k, v in obs.delta.items() if isinstance(v, (int, float)))
+
+
+def is_nontrivial(observer: Observer, world, iv, horizon: int = 25) -> bool:
+    """Non-degeneracy: the observer moves on at least one real cause. Pairs with the null test so
+    that 'calibrated' cannot be satisfied by an observer that always returns zero."""
+    from fork import fork
+    obs = fork(world, iv, horizon).observe(observer)
+    return any(v != 0 for k, v in obs.delta.items() if isinstance(v, (int, float)))
 
 
 if __name__ == "__main__":
