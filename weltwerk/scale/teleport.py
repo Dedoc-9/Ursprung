@@ -93,6 +93,7 @@ class Reconstruction:
     actual_count: tuple      # chunks that genuinely differ from line A per tick
     cost: int                # entity-steps simulated
     pruned: bool
+    touched: frozenset = frozenset()   # union of all chunks ever simulated (conservative ⇒ the POTENTIAL set)
 
 
 def reconstruct(snap: dict, topo: Topology, rules: Rules, seed: int, edit: Edit,
@@ -106,6 +107,7 @@ def reconstruct(snap: dict, topo: Topology, rules: Rules, seed: int, edit: Edit,
     b_state = {c: snap_b[c] for c in tracked}
     cone_count = [len(tracked)]
     actual_count = [sum(1 for c in tracked if snap_b[c] != traj_a[0][c])]
+    all_touched = set(tracked)
     cost = 0
 
     for t in range(horizon):
@@ -123,6 +125,7 @@ def reconstruct(snap: dict, topo: Topology, rules: Rules, seed: int, edit: Edit,
             new_b[d] = next_chunk(get, d, topo, rules_b, seed, t)
         b_state = new_b
         tracked = frontier
+        all_touched |= frontier
         cone_count.append(len(tracked))
         actual_count.append(sum(1 for d in b_state if b_state[d] != traj_a[t + 1][d]))
 
@@ -130,7 +133,8 @@ def reconstruct(snap: dict, topo: Topology, rules: Rules, seed: int, edit: Edit,
     for d in b_state:
         line_b[d] = b_state[d]
     return Reconstruction(line_b=line_b, cone_count=tuple(cone_count),
-                          actual_count=tuple(actual_count), cost=cost, pruned=prune)
+                          actual_count=tuple(actual_count), cost=cost, pruned=prune,
+                          touched=frozenset(all_touched))
 
 
 def brute_force_edit_future(snap: dict, topo: Topology, rules: Rules, seed: int, edit: Edit, horizon: int) -> dict:

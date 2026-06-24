@@ -180,6 +180,40 @@ at toy scale; "OS for worlds" is aspiration, not a delivered system.)
 - **Phase E — MMO / FPS workloads.** Status: UNBUILT. Only after fork, observer, allocator, and network
   correctness are each proven. At that point a game is a content pack, not the experiment.
 
+## Networking carryover (candidate direction — one proven primitive, the rest declared)
+
+The natural bridge to multiplayer is **causal replication**: replace *distance* ("send everyone within
+500 m") with *causal relevance* ("send everyone whose future differs if this event exists"). The repo
+supports exactly one piece of this rigorously:
+
+- **The Causal Budget Theorem** (`causal_budget.py`, machine-checked `test_causal_budget.py`):
+  transmitting the causal cut — the actual divergence, or the a-priori conservative envelope —
+  reconstructs every client *byte-identical* to the authoritative future; cutting a chunk is safe **iff**
+  it did not change (`cut(x,y) ⟹ Δ(y)=0`); and the criterion is *tight* (cutting a changed chunk breaks
+  replication). Budget: `|changed| ≤ |potential| ≤ |broadcast|`. **Maturity: IMPLEMENTED. Evidence:
+  verified.** This is the network analog of the simulation equivalence proof: a cheaper *transmission*
+  may not change the answer.
+
+Everything else multiplayer is **DECLARED / candidate**, not built: causal interest management, bandwidth
+-aware rollback (reconcile only the causal cut), desync debugging (locate first divergence on a causal
+wireframe), and a pre-launch network test harness (fork normal-vs-laggy, measure correction/bandwidth).
+
+**Framing discipline (imported critique, applied):**
+- The "state → causal sheaf" language is a **design metaphor**: the chunk graph + restriction maps form
+  a *presheaf-like* discrete structure, but **no sheaf gluing condition is proven**. Say "resembles a
+  finite discrete sheaf over a causal graph", not "is a causal sheaf architecture".
+- A **fractal-cut rule** (`dim_H(∂U) > 2 ⟹ ρ → 0`) is **rejected**: a geometrically complex boundary
+  does not imply low causal influence (wildfire fronts, market cascades, raid-boss state are complex
+  *and* highly coupled). The operational criterion is `Δ(out_q | Δp) < ε` — cut when changing `p` no
+  longer measurably changes downstream `q`; its lossless case `ε = 0` *is* the actual-divergence cut.
+- **Wilder / wild-embedding** import is modest: a complicated boundary can wrap a *finite* effective
+  support. That is precisely `peakCone = 60 ⊃ peakActual = 5` — the wild boundary is the conservative
+  envelope; the object of interest is the finite change support.
+
+**Where causal replication does NOT help (named):** it does not beat physics (100 000 players fighting
+in one spot ⇒ causal radius = everything); it does not remove latency (100 ms is still 100 ms); it does
+not make distributed authority, trust, or security easy. `replication ≠ networking`.
+
 ## Boundaries — what is NOT shown (consolidated, standing)
 
 - **Line A is still `O(N·H)`.** Knowing actual reality is paid in full every step; only the

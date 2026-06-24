@@ -211,6 +211,27 @@ one of its inputs actually diverged. **The observer stops being descriptive and 
 cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\scale"; $env:PYTHONHASHSEED="0"; python test_teleport.py; python teleport_bench.py
 ```
 
+#### Causal Budget Theorem (`scale/causal_budget.py`) — replicate by causality, not distance
+
+The one network-shaped primitive the proofs actually support (it is *not* networking). For a single
+authoritative event: which chunk-deltas must be sent so every client ends *byte-identical* to the
+authoritative future? **Theorem:** transmitting the causal cut (actual divergence, or the a-priori
+conservative envelope) reconstructs the client exactly; cutting a chunk is safe **iff** it did not
+change (`cut(x,y) ⟹ Δ(y)=0`); the criterion is *tight* (cutting a changed chunk breaks replication);
+budget `|changed| ≤ |potential| ≤ |broadcast|`. Lossless (`ε=0`); the lossy `Δ(out|Δp)<ε` extension is
+declared. Out of scope: latency, packet loss, distributed authority, security, prediction —
+`replication ≠ networking`. See [`SCOPE.md`](SCOPE.md) for the framing critique (sheaf = metaphor;
+fractal-cut rejected; Wilder import = wild boundary ⊃ finite support).
+
+| File | What it is | Maturity | Evidence |
+|---|---|---|---|
+| `scale/causal_budget.py` | Causal Budget Theorem: transmit-by-causality, the budget object | IMPLEMENTED | awaiting run |
+| `scale/test_causal_budget.py` | cut lossless (actual + conservative) · potential⊇changed · cut⇒Δ=0 · unsafe-cut-breaks (tight) · budget ordering · determinism | IMPLEMENTED | awaiting run |
+
+```powershell
+cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\scale"; $env:PYTHONHASHSEED="0"; python test_causal_budget.py; python causal_budget.py
+```
+
 ## Genealogy — this composes verified pieces, it does not reinvent them
 
 - **commit/speculative/recovery discipline** ← `experiments/live_world_kernel/live_world_kernel.py`
