@@ -53,6 +53,36 @@ of the world), which this chain model does not include. So this phase establishe
 of the envelope and the sparse-world win; it does **not** yet exhibit the dense-collapse regime. That regime
 — hub/feedback-dense topologies, and the real-game topologies in between — is the next measurement.
 
+## Topology sweep — where headroom actually collapses (and under which metric)
+
+The chain model can't reach the dense regime, so the bench also sweeps fixed topologies (N=400) and reports
+**both** average headroom (cost of a *typical* event) and worst-case headroom (cost of the single
+most-coupled event). The result refines the naive expectation:
+
+| Topology | avg headroom | worst headroom | reading |
+|---|---|---|---|
+| chain | ~0.50 | ~0.00 | half downstream on average; the head reaches all |
+| tree (binary) | ~0.97 | ~0.00 | most nodes shallow; the root reaches all |
+| modular clusters | ~0.99 | ~0.98 | bounded by cluster size — **both** stay high |
+| **hub-and-spoke** | **~0.99** | **~0.00** | only the hub event is costly |
+| scc (one cycle) | ~0.00 | ~0.00 | mutual reachability ⇒ **collapse** |
+| clique (complete) | ~0.00 | ~0.00 | everyone reaches everyone ⇒ **collapse** |
+
+The sharp finding: **hub-and-spoke does NOT collapse *average* headroom.** A hub has one expensive event
+(destroy the hub) among N−1 cheap ones, so the *typical* event stays cheap while the *worst* event costs the
+world. This is the "metric is missing something" outcome made concrete — average headroom is blind to a
+single high-reach node. The **average** event collapses only under **mutual reachability** (SCC / clique),
+where most nodes reach most of the world. So the operating envelope has two axes, not one:
+
+```
+worst-case headroom collapses when ANY node reaches the world  (chain head, tree root, hub, scc, clique)
+average    headroom collapses only when MOST nodes reach the world  (scc, clique)
+```
+
+A causal runtime that replicates *per event* lives or dies on the **average** (and tail) of this
+distribution, not on the worst case alone — which is why "one node reaches everything" is not by itself a
+collapse. (`test_causal_scale_bench`: `topo_hub_distinction`, `topo_scc_collapses`, `topo_worst_le_avg`.)
+
 ## NOT CLAIMED
 
 - No latency, bandwidth, throughput, networking, MMO, or player-count claims. Structural op-counts only.
@@ -63,6 +93,12 @@ of the envelope and the sparse-world win; it does **not** yet exhibit the dense-
 ## Where this leaves the roadmap
 
 The thesis is now an **engineering operating envelope**, not just an architecture: causal replication wins
-in the sparse regime, and the bench tells you *which regime a given world is in*. Next measurements, in
-order: (1) hub/dense-coupling topologies to find the collapse point; (2) live-edit (continuous `world_diff`
-+ re-derive); (3) the runtime "why" layer, which becomes valuable once worlds are too large to inspect by eye.
+in the sparse regime, degrades with coupling (not size), and collapses on the *average* event only under
+mutual reachability (SCC / clique) — a hub collapses only the worst case. The bench tells you which regime a
+given world is in. Next measurements, in order: (1) ~~dense-topology collapse point~~ **done (topology
+sweep above)**; (2) live-edit (continuous `world_diff` + re-derive); (3) the runtime "why" layer, which
+becomes valuable once worlds are too large to inspect by eye.
+
+**The distinctions this phase pins down (easy to collapse together later):**
+`world size ≠ coupling` · `entity count ≠ reachability` · `scale ≠ density` · and
+`one node reaches everything ≠ the average event is expensive`.

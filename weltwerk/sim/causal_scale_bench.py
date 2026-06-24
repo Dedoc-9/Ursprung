@@ -118,6 +118,64 @@ def ai_scaling(seed: int = 0):
     return [ai_work(b, seed=seed) for b in (10, 50, 200, 500)]
 
 
+# --- topology sweep: WHICH shapes collapse headroom — and under which metric? --------------------
+# The falsification the chain model couldn't reach. Reports BOTH average headroom (cost of a typical
+# event) and worst-case headroom (cost of the single most-coupled event). The distinction is the result:
+# a hub has one expensive event among many cheap ones (avg stays high, worst →0); only MUTUAL
+# reachability (SCC / clique) makes the AVERAGE event expensive too.
+def _text_from_edges(n, edges):
+    bysrc = {}
+    for (i, j) in edges:
+        bysrc.setdefault(i, []).append(j)
+    lines = ['world "Topo"']
+    for i in range(n):
+        lines.append(f"entity e{i}:")
+        outs = bysrc.get(i, [])
+        if outs:
+            for j in outs:
+                lines.append(f"  feeds e{j}")
+        else:
+            lines.append("  health 10")
+    return "\n".join(lines)
+
+
+def topo_edges(kind, n):
+    if kind == "chain":      # sparse line: e_i → e_{i+1}
+        return [(i, i + 1) for i in range(n - 1)]
+    if kind == "tree":       # binary tree: most nodes are shallow ⇒ small footprints
+        e = []
+        for i in range(n):
+            for c in (2 * i + 1, 2 * i + 2):
+                if c < n:
+                    e.append((i, c))
+        return e
+    if kind == "modular":    # clusters of size CS, each an internal chain; no cross-cluster edges
+        CS, e = 10, []
+        for i in range(n - 1):
+            if (i + 1) % CS != 0:
+                e.append((i, i + 1))
+        return e
+    if kind == "hub":        # one node reaches everything; everything else reaches nothing
+        return [(0, j) for j in range(1, n)]
+    if kind == "scc":        # one big cycle ⇒ every node reaches every other (mutual reachability)
+        return [(i, (i + 1) % n) for i in range(n)]
+    if kind == "clique":     # complete digraph: every node reaches all others in one hop
+        return [(i, j) for i in range(n) for j in range(n) if i != j]
+    raise ValueError(kind)
+
+
+def measure_topology(kind, n=400):
+    cg = build_causal_graph(parse_world(_text_from_edges(n, topo_edges(kind, n))))
+    foots = [1 + len(cg.reach_ge1(f"e{i}")) for i in range(n)]   # exact: footprint of every node
+    avg, peak = sum(foots) / n, max(foots)
+    return {"kind": kind, "n": n, "avg_footprint": round(avg, 1), "peak_footprint": peak,
+            "avg_headroom": round(1 - avg / n, 3), "worst_headroom": round(1 - peak / n, 3)}
+
+
+def topology_sweep(n=400):
+    return [measure_topology(k, n) for k in ("chain", "tree", "modular", "hub", "scc", "clique")]
+
+
 def main():
     print("causal_scale_bench.py — Phase 10: the operating envelope (deterministic op-counts, NOT latency)\n")
     print("  CAUSAL ENVELOPE — cost of one event vs world size × coupling")
@@ -147,6 +205,16 @@ def main():
     ratio = sc[-1]["work_units"] / max(1, sc[0]["work_units"]); botratio = sc[-1]["bots"] / sc[0]["bots"]
     print(f"\n  bots ×{botratio:.0f} ⇒ work ×{ratio:.1f} (≈linear: bots are independent; per-bot cost is bounded by"
           f"\n  grid geometry, NOT by world entity count).")
+    print("\n  TOPOLOGY SWEEP (N=400) — which shapes collapse headroom, under which metric?")
+    print("  " + "-" * 74)
+    print(f"  {'topology':>9} {'avg headroom':>13} {'worst headroom':>15}   note")
+    notes = {"chain":"~half downstream", "tree":"most nodes shallow", "modular":"bounded by cluster size",
+             "hub":"only the hub event is costly", "scc":"mutual reach ⇒ collapse", "clique":"all reach all ⇒ collapse"}
+    for r in topology_sweep(400):
+        print(f"  {r['kind']:>9} {r['avg_headroom']:>13} {r['worst_headroom']:>15}   {notes[r['kind']]}")
+    print("\n  KEY: hub-and-spoke keeps AVERAGE headroom HIGH (one costly event among many cheap) while")
+    print("  WORST-CASE headroom → 0. The AVERAGE event collapses only under MUTUAL reachability (scc/clique).")
+    print("  ⇒ 'one node reaches everything' ≠ 'the average event is expensive'. Size ≠ coupling ≠ density.")
     print("\n  NOT claimed: latency, bandwidth, throughput, networking, MMO. These are STRUCTURAL op-counts only.")
 
 

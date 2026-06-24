@@ -22,7 +22,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "authoring"))
 from causal_scale_bench import (ai_scaling, ai_work, causal_envelope, gen_world_text, headroom_curve,
-                                 measure_world)
+                                 measure_topology, measure_world, topology_sweep)
 from world_format import build_causal_graph, parse_world
 
 
@@ -68,6 +68,24 @@ def test_ai_work_linear():
     return check("ai_work_linear", ok, f"work(100)/work(50)={round(ratio,2)} (≈2 ⇒ linear in bots)")
 
 
+def test_topo_hub_distinction():
+    h = measure_topology("hub", 400)
+    ok = h["avg_headroom"] > 0.9 and h["worst_headroom"] < 0.1
+    return check("topo_hub_distinction", ok,
+                 f"hub avg={h['avg_headroom']} (HIGH) worst={h['worst_headroom']} (LOW) — avg blind to one hub")
+
+
+def test_topo_scc_collapses():
+    s = measure_topology("scc", 400)
+    ok = s["avg_headroom"] < 0.1 and s["worst_headroom"] < 0.1
+    return check("topo_scc_collapses", ok, f"scc avg={s['avg_headroom']} worst={s['worst_headroom']} (both collapse)")
+
+
+def test_topo_worst_le_avg():
+    ok = all(r["worst_headroom"] <= r["avg_headroom"] + 1e-9 for r in topology_sweep(200))
+    return check("topo_worst_le_avg", ok, "worst_headroom ≤ avg_headroom for every topology")
+
+
 def test_determinism():
     e1, e2 = causal_envelope(), causal_envelope()
     s1, s2 = ai_scaling(), ai_scaling()
@@ -82,6 +100,9 @@ def main():
         test_headroom_monotonic(),
         test_envelope_direction(),
         test_ai_work_linear(),
+        test_topo_hub_distinction(),
+        test_topo_scc_collapses(),
+        test_topo_worst_le_avg(),
         test_determinism(),
     ]
     print("test_causal_scale_bench — Phase 10: operating envelope (validity-not-outcome)\n")
