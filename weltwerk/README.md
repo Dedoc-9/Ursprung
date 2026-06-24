@@ -234,6 +234,28 @@ fractal-cut rejected; Wilder import = wild boundary ⊃ finite support).
 cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\scale"; $env:PYTHONHASHSEED="0"; python test_causal_budget.py; python causal_budget.py; python test_reachability_algebra.py; python reachability_algebra.py
 ```
 
+#### Agent transport (`scale/agent_transport.py`) — the sparsity falsifier
+
+The economic results all rode on divergence staying *sparse*, shown only for *attenuating* couplings.
+This probe tests the worst case named in `SCOPE.md`: agents **migrate between chunks**, carrying full
+state (directed, non-attenuating coupling) — the regime where proximity and causality diverge (real
+gameplay). **Measured result: still sparse** — divergence is a bounded traveling pulse (~4 chunks) that
+re-converges behind the front (sparsity 0.05 at H=80, *better* than diffusion's 0.08). **The reframing
+that matters:** sparsity is a property of **dissipative dynamics**, not of the coupling channel — so the
+open falsifier is no longer "transport" but **amplifying / positive-feedback dynamics**, which would go
+dense regardless of how coupling is shaped. (`equivalence_pruned` byte-identical under transport, so the
+count is exact, not an artifact.)
+
+| File | What it is | Maturity | Evidence |
+|---|---|---|---|
+| `scale/agent_transport.py` | migrating identities; directed non-attenuating coupling; conservative+pruned reconstruction | IMPLEMENTED | verified (test 5/5) |
+| `scale/test_agent_transport.py` | crux equivalence under transport · actual⊆cone · non-vacuous-by-migration · determinism | IMPLEMENTED | verified 5/5 |
+| `scale/agent_transport_bench.py` | the verdict: sparsity vs horizon (measured 0.36→0.05 = sparse) | IMPLEMENTED | measured: SPARSE (dissipative) |
+
+```powershell
+cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\scale"; $env:PYTHONHASHSEED="0"; python test_agent_transport.py; python agent_transport_bench.py
+```
+
 ## Genealogy — this composes verified pieces, it does not reinvent them
 
 - **commit/speculative/recovery discipline** ← `experiments/live_world_kernel/live_world_kernel.py`

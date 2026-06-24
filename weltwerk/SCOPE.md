@@ -101,8 +101,9 @@ mechanism* whose transfer remains to be tested. `proof-of-correctness ≠ proof-
 | Observer / evidence separation | Strong |
 | `Potential ⊇ Actual` | Strong *within declared models* |
 | Divergence-aware allocation (correctness) | Strong *within declared models* |
-| Sparsity persists under agent transport | Unknown |
-| Sparsity persists under player economies | Unknown |
+| Sparsity persists under *dissipative* agent transport | Measured: **yes** (peak actual flat ~4 vs cone→81; sparsity 0.05) |
+| Sparsity persists under *amplifying* dynamics (positive feedback) | Unknown — **the primary remaining economic falsifier** |
+| Sparsity persists under player economies | Unknown (likely governed by dissipative-vs-amplifying, not topology) |
 | MMO-scale scheduler | Direction only |
 | World OS / causal substrate | Vision |
 
@@ -116,13 +117,20 @@ recorded so the document tracks what could still break, not only what survived.
 
 - **Divergence saturation** — if Actual approaches Potential rapidly, the pruned allocator converges to
   the conservative one and the cost advantage disappears.
-- **Agent transport** — if agents migrate between chunks, divergence may propagate through *identity
-  movement* rather than resource diffusion. Sparsity is unmeasured in this regime. *(This is the most
-  important open falsifier — it is what real gameplay does.)*
+- **Agent transport** — MEASURED (`agent_transport.py`, 5/5 + bench). Identities migrate between chunks
+  (directed, non-attenuating coupling). Result: divergence stayed **sparse** — a bounded traveling
+  pulse (~4 chunks) that re-converges behind the front (sparsity 0.05 at H=80, *better* than diffusion's
+  0.08). **Reframing:** sparsity is a property of *dissipative dynamics*, not of the coupling channel —
+  transport changed the geometry of spread but the ecology still damped the perturbation. Transport is
+  no longer the open falsifier; it folded into the one below.
 - **Long-range coordination** — markets, guilds, global auctions, chat, shared objectives may create
   dense dependency graphs whose Actual divergence is *also* dense.
-- **Positive feedback** — the measured models are dissipative. Amplifying dynamics may keep small edits
-  significant, or grow them, defeating attenuation.
+- **Positive feedback / amplifying dynamics** — **THE primary remaining economic falsifier.** Every
+  model measured so far is dissipative (diffusion attenuates; the ecology renormalises), which is *why*
+  divergence stayed sparse in all of them, transport included. A system where small edits *grow* rather
+  than damp would keep divergence dense regardless of coupling type, collapsing the pruned allocator's
+  advantage. This subsumes the transport and (likely) the player-economy concerns: the question is not
+  *how* divergence spreads but *whether the dynamics amplify or dissipate it.*
 - **Observation overhead** — the pruned allocator does extra bookkeeping (per-chunk `== A`) to decide
   whether divergence exists. Wall-clock behaviour is unmeasured; op-count favours it, wall-clock may not.
 - **Network dominance** — even if simulation allocation stays sparse, networking and latency
