@@ -85,13 +85,29 @@ The project contains two results that must not be conflated. One could fail whil
 remaining *byte-identical* to a full honest simulation. Established by equivalence tests; treated as
 **verified**. Does **not** depend on divergence being sparse.
 
-**Economics result.** The reconstructed future *can be cheaper* to compute than a full re-simulation.
-Established **only** for the measured models — chunk-local coupling, diffusive coupling,
-teleport-augmented diffusion — and it **depends on the observed sparsity of divergence**. A future model
-may eliminate the economic advantage while leaving correctness fully intact.
+**Economics result.** The reconstructed future *can be cheaper* to compute than a full re-simulation —
+**iff actual divergence stays bounded well below the potential cone** (`Actual ≪ Potential`). The
+amplification gate measured the determinant: it is the **sign of the largest Lyapunov exponent**, not
+"dissipation" specifically.
 
-> The repository currently proves that divergence-aware allocation can be **correct**. It does not yet
-> prove that divergence remains **sparse** in the classes of worlds we ultimately care about.
+| Regime | λ (largest Lyapunov) | Divergence | Allocation economics |
+|---|---|---|---|
+| Contracting (dissipative) | λ < 0 | decays | **strong win** (sparse, transient) |
+| Neutral / invariant-confined | λ = 0 | bounded | **strong win** (sparse, persistent) |
+| Chaotic / amplifying | λ > 0 | expands → fills cone | **win collapses** (dense) |
+
+The broader principle (the orbital analogy's real lesson): **the allocator does not care *why*
+`Actual ≪ Potential` — only that it holds.** That bound can come from dissipation, conservation laws,
+symmetries, topology, invariants, or finite resources. Earlier the claim was "sparse iff dissipative";
+the corrected, broader claim is **"sparse iff actual divergence remains bounded,"** which dissipation
+*and* invariants (e.g. angular momentum fixing an orbital plane — neutrally stable, λ=0, not dissipative)
+both achieve. Only when actual *expands toward* potential (λ>0) does the allocator lose leverage.
+
+> The repository proves divergence-aware allocation is **correct** (unconditionally) and **cheap iff
+> divergence stays bounded** (λ≤0). The determinant is measured; what remains open per real world is the
+> *empirical* one — which regime its systems actually sit in. The λ=0 (conservative/integrable) route is
+> argued but not yet directly measured (the logistic CML spans only λ<0 and λ>0; the Chirikov standard
+> map is the deferred testbed — built when a decision depends on it, not before).
 
 ## Transfer barriers
 
@@ -124,9 +140,10 @@ mechanism* whose transfer remains to be tested. `proof-of-correctness ≠ proof-
 | `Potential ⊇ Actual` | Strong *within declared models* |
 | Divergence-aware allocation (correctness) | Strong *within declared models* |
 | Sparsity persists under *dissipative* agent transport | Measured: **yes** (peak actual flat ~4 vs cone→81; sparsity 0.05) |
-| Sparsity persists under *amplifying* dynamics (positive feedback) | Measured: **NO** — dense in the chaotic regime (sparsity_vs_cone 0.04 dissipative → 0.98 chaotic, cone saturated) |
-| Economic win is bounded to *dissipative / sub-critical* dynamics | Measured: **yes** — the determinant is the dynamical regime (Lyapunov sign), not coupling type |
-| Sparsity persists under player economies | Unknown — but reduces to: are those dynamics sub-critical or chaotic? |
+| Sparsity persists under *amplifying* dynamics (λ>0) | Measured: **NO** — dense in the chaotic regime (sparsity_vs_cone 0.04 → 0.98, cone saturated) |
+| Economic win determinant = sign of largest Lyapunov exponent | Measured: **yes** (λ<0 and λ>0 ends); the bound, not the coupling type, is what matters |
+| Sparsity via invariants/conservation (λ=0, not dissipation) | Argued (orbital analogy); **not yet directly measured** — standard-map probe deferred |
+| Sparsity persists under player economies | Unknown — reduces to: is `Actual ≪ Potential` (λ≤0) or not? |
 | MMO-scale scheduler | Direction only |
 | World OS / causal substrate | Vision |
 
@@ -157,7 +174,13 @@ recorded so the document tracks what could still break, not only what survived.
   transport/economy concerns: the determinant is the **dynamical regime** — `perturbation → decay` vs
   `perturbation → growth`, i.e. the sign of the Lyapunov exponent — *not* the coupling channel. Every
   earlier sparse result (diffusion, ecology, dissipative transport) was sub-critical; this is the one
-  super-critical test, and it goes dense.
+  super-critical test, and it goes dense. **Refinement (orbital analogy):** the determinant is the *sign
+  of the largest Lyapunov exponent*, not dissipation per se. λ<0 (contracting) and λ=0 (neutral /
+  invariant-confined — a conserved quantity like angular momentum fixing an orbital plane) BOTH keep
+  `Actual` bounded → sparse → win; only λ>0 expands toward the cone → dense → loss. So sparsity has
+  multiple sources (dissipation, conservation, symmetry, topology, invariants, finite resources); the
+  allocator is indifferent to *which* — it needs only that the bound holds. The λ=0 route is argued, not
+  yet measured (deferred standard-map probe).
 - **Observation overhead** — the pruned allocator does extra bookkeeping (per-chunk `== A`) to decide
   whether divergence exists. Wall-clock behaviour is unmeasured; op-count favours it, wall-clock may not.
 - **Network dominance** — even if simulation allocation stays sparse, networking and latency
