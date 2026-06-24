@@ -166,7 +166,8 @@ let generatorMesh=null, genId="generator";
 
 const keys={};
 const player = {pos:new THREE.Vector3(0,1.7,20), vx:0,vz:0, vy:0, yaw:Math.PI, pitch:-0.05,
-                onGround:true, crouch:false, hp:100, alive:true, bob:0};
+                onGround:true, crouch:false, hp:100, alive:true, bob:0, spawnProtect:0};
+const PLAYER_SPAWNS=[[0,20],[20,18],[-20,18],[18,8],[-18,10]];
 const weapons = {
   rifle:   {name:"RIFLE",   dmg:24, rof:0.12, spread:0.012, pellets:1, mag:30, ammo:30, reserve:120, reload:1.1},
   shotgun: {name:"SHOTGUN", dmg:11, rof:0.72, spread:0.07,  pellets:8, mag:6,  ammo:6,  reserve:36,  reload:1.6},
@@ -381,10 +382,27 @@ function reload(){ const w=weapons[weap]; if(reloading>0||w.ammo===w.mag||w.rese
 function finishReload(){ const w=weapons[weap]; const need=w.mag-w.ammo, take=Math.min(need,w.reserve);
   w.ammo+=take; w.reserve-=take; updateHUD(); }
 
-function damagePlayer(d){ if(!player.alive) return; player.hp-=d; flash();
+function damagePlayer(d){ if(!player.alive||player.spawnProtect>0) return; player.hp-=d; flash();
   if(player.hp<=0){ player.hp=0; player.alive=false; showMsg("YOU DIED — respawning…"); setTimeout(respawnPlayer,2200); }
   updateHUD(); }
-function respawnPlayer(){ player.hp=100; player.alive=true; player.pos.set(0,EYE_STAND,20); player.vx=player.vz=0; showMsg(""); updateHUD(); }
+function safeSpawn(){
+  // pick the player spawn farthest from alive bots and NOT in any powered turret's line of fire
+  let best=PLAYER_SPAWNS[0], bestScore=-1e9;
+  for(const [x,z] of PLAYER_SPAWNS){
+    let dmin=1e9; for(const b of bots) if(b.alive) dmin=Math.min(dmin,Math.hypot(b.x-x,b.z-z));
+    let inLOS=false; for(const t of turrets) if(world.powered(t.id) && Math.hypot(t.x-x,t.z-z)<20 && losGrid(grid,toCell(x,z),toCell(t.x,t.z))) inLOS=true;
+    const score=(dmin===1e9?30:dmin)-(inLOS?100:0);
+    if(score>bestScore){ bestScore=score; best=[x,z]; }
+  }
+  return best;
+}
+function respawnPlayer(){
+  const [x,z]=safeSpawn();
+  player.hp=100; player.alive=true; player.pos.set(x,EYE_STAND,z); player.vx=player.vz=0;
+  player.spawnProtect=2.5;                       // brief invulnerability to break spawn-camping
+  for(const b of bots){ b.alert=null; if(b.state===AI.ATTACK||b.state===AI.CHASE){ b.state=AI.SEARCH; b.searchTicks=0; } }
+  showMsg("respawned — spawn protected"); updateHUD();
+}
 
 // ---- effects ----
 function flash(){ const f=document.getElementById("flash"); f.style.opacity=0.5; setTimeout(()=>f.style.opacity=0,90); }
@@ -512,6 +530,7 @@ function initInput(){
 
 function loop(){
   const dt=Math.min(0.05,clock.getDelta());
+  if(player.spawnProtect>0) player.spawnProtect-=dt;
   if(reloading>0){ reloading-=dt; if(reloading<=0){ reloading=0; finishReload(); } }
   movePlayer(dt);
   for(const b of bots) tickBot(b,dt);
