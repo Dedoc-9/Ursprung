@@ -73,7 +73,18 @@ def _indent(line: str) -> int:
     return len(line) - len(line.lstrip(" "))
 
 
+def _kv(s: str):
+    """Split an attribute line into (key, rest), accepting both 'key: vals' and 'key vals'."""
+    if ":" in s:
+        k, v = s.split(":", 1)
+        return k.strip(), v.strip()
+    parts = s.split(None, 1)
+    return parts[0].strip(), (parts[1].strip() if len(parts) > 1 else "")
+
+
 def parse_world(text: str) -> WorldSpec:
+    """Lenient text-first parser. Accepts the .wrk form (`zone X`, `entity NAME:`, `key value`) and the
+    earlier form (`zones: a b`, `NAME:`, `key: value`) — both produce the same WorldSpec."""
     spec = WorldSpec()
     cur = None
     for raw in text.splitlines():
@@ -84,25 +95,33 @@ def parse_world(text: str) -> WorldSpec:
         s = line.strip()
         if ind == 0:
             cur = None
-            if s.startswith("world "):
-                spec.name = s[6:].strip().strip('"')
-            elif s.startswith("zones:"):
-                spec.zones = s[len("zones:"):].split()
+            toks = s.split()
+            if toks[0] == "world":
+                spec.name = s[5:].strip().strip('"') or "world"
+            elif toks[0] == "zones:":
+                spec.zones += s[len("zones:"):].split()
+            elif toks[0] == "zone":                       # .wrk: one zone per line
+                for z in toks[1:]:
+                    if z not in spec.zones:
+                        spec.zones.append(z)
             elif s == "entities:":
                 pass
+            elif toks[0] == "entity":                     # .wrk: `entity NAME:` or `entity NAME`
+                name = toks[1].rstrip(":")
+                cur = Entity(name=name); spec.entities[name] = cur
+            elif s.endswith(":"):                          # earlier: `NAME:`
+                name = s[:-1].strip()
+                cur = Entity(name=name); spec.entities[name] = cur
             else:
                 raise ValueError(f"unexpected top-level line: {raw!r}")
-        elif ind <= 2 and s.endswith(":"):              # entity declaration
+        elif s.endswith(":") and len(s.split()) == 1:      # indented `  name:` — earlier-format entity decl
             name = s[:-1].strip()
             cur = Entity(name=name)
             spec.entities[name] = cur
-        else:                                            # attribute / relation of current entity
+        else:                                              # attribute / relation of current entity
             if cur is None:
                 raise ValueError(f"attribute outside an entity: {raw!r}")
-            if ":" not in s:
-                raise ValueError(f"cannot parse attribute line: {raw!r}")
-            key, val = s.split(":", 1)
-            key, val = key.strip(), val.strip()
+            key, val = _kv(s)
             if key == "zone":
                 cur.zone = val
             elif key == "position":
@@ -110,10 +129,18 @@ def parse_world(text: str) -> WorldSpec:
                 cur.pos = tuple((p + [0, 0, 0])[:3])
             elif key == "health":
                 cur.health = int(val)
-            else:                                        # a relation: key target [target2 ...]
+            else:                                          # a relation: key target [target2 ...]
                 for tgt in val.split():
                     cur.relations.append((key, tgt))
     return spec
+
+
+def simulate_destroy(cg: CausalGraph, target: str) -> dict:
+    """Event propagation (Phase 2): destroying `target` diverges every entity reachable FROM it in the
+    can-affect graph (its downstream dependents). This is the discrete-model ACTUAL divergence of the
+    event — graph propagation; a continuous model would need dynamics. `event ≠ measured-dynamics`."""
+    diverged = cg.reach_ge1(target) if target in cg.nodes else set()
+    return {"destroyed": target, "diverged": sorted(diverged), "blast_radius": len(diverged)}
 
 
 def build_causal_graph(spec: WorldSpec) -> CausalGraph:

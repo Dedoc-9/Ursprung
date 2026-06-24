@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: AGPL-3.0-only
+  Weltwerk — author → view → play loop (Phase 2). One text file (.wrk) drives a playable causal world.
+    world.wrk text  →  WorldSpec  →  CausalGraph  →  lint  →  WIREFRAME (authoritative)  →  FPS projection
+                                                                      ↑__________ events feed back ________|
+  The WIREFRAME is the source of truth; the FPS is an observer/action-source. Every action (shoot,
+  simulate-destroy) goes through: event → causal graph update → runtime update → view update.
+  Mirrors the verified Python authority (authoring/world_format.py: parse, build_causal_graph,
+  simulate_destroy). No UE rendering, no networking, no MMO-scale claim.
+  Controls: click 3D view to capture mouse · WASD · mouse look · SPACE jump (onto objects) · click=shoot.
+-->
+<html lang="en"><head><meta charset="utf-8"><title>Weltwerk — author → view → play</title>
+<style>
+ html,body{margin:0;height:100%;background:#0d1117;color:#d0d6e0;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;overflow:hidden}
+ #wrap{display:flex;height:100vh}
+ #left{width:430px;min-width:430px;height:100%;overflow:auto;border-right:1px solid #21262d;padding:10px 12px;box-sizing:border-box}
+ #right{flex:1;position:relative}
+ #cv{display:block;width:100%;height:100%}
+ h2{font-size:14px;margin:0 0 6px;color:#fff} .k{color:#8b95a6}
+ textarea{width:100%;height:150px;background:#0b0f14;color:#cdd3df;border:1px solid #30363d;border-radius:6px;font:11px ui-monospace,monospace;box-sizing:border-box}
+ button{background:#161b22;color:#d0d6e0;border:1px solid #30363d;border-radius:6px;padding:5px 9px;cursor:pointer;font:inherit;margin:4px 4px 0 0}
+ .blue{color:#1f6feb}.green{color:#2ea043}.red{color:#da3633}.yellow{color:#d29922}.orange{color:#e3742f}
+ .legend{margin:8px 0;font-size:11px}.legend span{margin-right:10px}
+ #wire{width:100%;height:230px;background:#0b0f14;border:1px solid #21262d;border-radius:6px;margin-top:6px}
+ #inspect{margin-top:8px;padding:8px 10px;background:#11161d;border:1px solid #21262d;border-radius:6px;min-height:40px;white-space:pre-wrap}
+ #events{margin-top:8px} #log{margin-top:8px;max-height:120px;overflow:auto;font-size:11px;color:#9aa4b2}
+ #cross{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border:1px solid #fff;border-radius:50%;opacity:.7;pointer-events:none}
+ text{cursor:pointer}
+</style></head><body>
+<div id="wrap">
+ <div id="left">
+  <h2>Weltwerk · World Author</h2>
+  <div class="k">edit the world, then Rebuild. The wireframe is authoritative; the 3D view is a projection.</div>
+  <textarea id="src"></textarea>
+  <div><button onclick="rebuild()">Rebuild world</button><span class="k" id="status"></span></div>
+  <div class="legend">
+   <span class="blue">●</span>entity <span class="green">●</span>potential(sel)
+   <span class="red">●</span>diverged <span class="orange">●</span>feedback/SCC <span class="yellow">●</span>allocated
+  </div>
+  <svg id="wire" viewBox="0 0 420 230"></svg>
+  <div id="inspect">click an entity (wireframe node or 3D box) to inspect its causal structure</div>
+  <div id="events"><h2 style="font-size:12px;margin:10px 0 2px">Simulate event</h2></div>
+  <div id="log"></div>
+ </div>
+ <div id="right"><canvas id="cv"></canvas><div id="cross"></div></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ===== single source of truth: parse .wrk → spec → causal graph → runtime (mirrors world_format.py) =====
+const REVERSED = new Set(["depends_on","powered_by","fed_by","sustained_by","needs"]);
+const ATTR = new Set(["zone","position","health"]);
+let spec, adj, radj, runtime, selected=null, lastEvent={diverged:new Set(),allocated:new Set()};
+
+function parseWrk(text){
+  const s={name:"world",zones:[],entities:{}}; let cur=null;
+  for(let raw of text.split("\n")){
+    const line=raw.split("#")[0]; if(!line.trim())continue;
+    const ind=line.length-line.trimStart().length; const t=line.trim();
+    if(ind===0){ cur=null; const tok=t.split(/\s+/);
+      if(tok[0]==="world"){ s.name=t.slice(5).trim().replace(/"/g,"")||"world"; }
+      else if(tok[0]==="zone"){ tok.slice(1).forEach(z=>{if(!s.zones.includes(z))s.zones.push(z);}); }
+      else if(tok[0]==="zones:"){ s.zones.push(...t.slice(6).split(/\s+/).filter(Boolean)); }
+      else if(t==="entities:"){}
+      else if(tok[0]==="entity"){ const n=tok[1].replace(/:$/,""); cur={id:n,zone:"",pos:[0,0,0],health:100,rel:[]}; s.entities[n]=cur; }
+      else if(t.endsWith(":")){ const n=t.slice(0,-1); cur={id:n,zone:"",pos:[0,0,0],health:100,rel:[]}; s.entities[n]=cur; }
+    } else if(cur){
+      let key,val; if(t.includes(":")){ [key,val]=t.split(/:(.*)/s); } else { const p=t.split(/\s+/); key=p[0]; val=p.slice(1).join(" "); }
+      key=key.trim(); val=(val||"").trim();
+      if(key==="zone")cur.zone=val;
+      else if(key==="position"){ const p=val.split(/\s+/).map(Number); cur.pos=[p[0]||0,p[1]||0,p[2]||0]; }
+      else if(key==="health")cur.health=parseInt(val)||100;
+      else val.split(/\s+/).filter(Boolean).forEach(tg=>cur.rel.push([key,tg]));
+    }
+  }
+  return s;
+}
+function buildGraph(s){
+  const a={},r={}; const nodes=Object.keys(s.entities);
+  for(const n of nodes){a[n]=new Set();r[n]=new Set();}
+  for(const e of Object.values(s.entities)) for(const [rel,tg] of e.rel){
+    if(!a[tg]){a[tg]=new Set();r[tg]=new Set();}   // auto-register relation targets
+    const [src,dst]=REVERSED.has(rel)?[tg,e.id]:[e.id,tg];
+    a[src].add(dst); r[dst].add(src);
+  }
+  return {a,r};
+}
+function reach(g,start){ const seen=new Set(),st=[...(g[start]||[])]; while(st.length){const n=st.pop(); if(!seen.has(n)){seen.add(n);st.push(...(g[n]||[]));}} return seen; }
+function sccOf(id){ const fwd=reach(adj,id); return [...new Set([id,...[...fwd].filter(m=>reach(adj,m).has(id))])]; }
+function allSCCs(){ const seen=new Set(),out=[]; for(const n of Object.keys(adj).sort()){ if(seen.has(n))continue; const c=sccOf(n); c.forEach(x=>seen.add(x)); if(c.length>1)out.push(c);} return out; }
+function inAnySCC(id){ return reach(adj,id).has(id); }
+
+// ===== event pipeline: event → causal update → runtime update → view update =====
+function destroyEvent(id){
+  if(!runtime[id]||!runtime[id].alive){ log(`${id} already gone`); return; }
+  const diverged = reach(adj,id);                 // dependents that lose support (discrete-model actual)
+  runtime[id].alive=false; runtime[id].health=0;
+  for(const d of diverged){ if(runtime[d]){ runtime[d].diverged=true; } }
+  lastEvent={diverged, allocated:new Set([id,...diverged])};
+  log(`destroy <span class=red>${id}</span> → diverged ${diverged.size}: {${[...diverged].sort().join(", ")||"∅"}}`);
+  renderWire(); syncMeshes(); if(selected) inspect(selected);
+}
+
+// ===== wireframe (authoritative 2D causal view) =====
+const W=420,Hh=230;
+function nodePos(){ // place nodes in columns by zone
+  const zones=spec.zones.length?spec.zones:["_"]; const pos={};
+  const byZone={}; for(const e of Object.values(spec.entities)){ const z=e.zone||"_"; (byZone[z]=byZone[z]||[]).push(e.id); }
+  // include relation-only targets
+  for(const id of Object.keys(adj)) if(!spec.entities[id]){ (byZone["_"]=byZone["_"]||[]).push(id); }
+  const zlist=[...new Set([...zones,...Object.keys(byZone)])].filter(z=>byZone[z]);
+  zlist.forEach((z,zi)=>{ const xs=20+zi*((W-40)/Math.max(1,zlist.length-1||1)); byZone[z].forEach((id,i)=>{ pos[id]=[zlist.length>1?xs:W/2, 28+i*((Hh-50)/Math.max(1,byZone[z].length)) ]; }); });
+  return pos;
+}
+function renderWire(){
+  const svg=document.getElementById("wire"); const pos=nodePos();
+  const potential = selected? reach(adj,selected) : new Set();
+  const sccNodes=new Set(); allSCCs().forEach(c=>c.forEach(x=>sccNodes.add(x)));
+  let s="";
+  for(const src in adj) for(const dst of adj[src]){ if(!pos[src]||!pos[dst])continue;
+    const hot=selected&&potential.has(src)&&potential.has(dst);
+    s+=`<line x1="${pos[src][0]}" y1="${pos[src][1]}" x2="${pos[dst][0]}" y2="${pos[dst][1]}" stroke="${hot?'#2ea043':'#30363d'}" stroke-width="${hot?1.6:0.8}"/>`;
+  }
+  for(const id in pos){ const [x,y]=pos[id];
+    let fill="#1f6feb"; const r=runtime[id];
+    if(r&&!r.alive)fill="#5a5f66"; else if(r&&r.diverged)fill="#da3633";
+    else if(selected&&potential.has(id))fill="#2ea043";
+    const stroke = id===selected?"#fff":(sccNodes.has(id)?"#e3742f":"none");
+    s+=`<circle cx="${x}" cy="${y}" r="7" fill="${fill}" stroke="${stroke}" stroke-width="2" data-id="${id}"/>`;
+    s+=`<text x="${x+10}" y="${y+3}" fill="#c9d1d9" font-size="9" data-id="${id}">${id}</text>`;
+  }
+  svg.innerHTML=s;
+  for(const el of svg.querySelectorAll("[data-id]")) el.onclick=()=>{selected=el.dataset.id;renderWire();inspect(selected);};
+}
+
+// ===== inspect (Phase 2 req #2) =====
+function depChain(id){ // a shortest dependency path upward (who must exist for id)
+  const path=[id]; let cur=id, guard=0;
+  while(guard++<20){ const ins=[...(radj[cur]||[])]; if(!ins.length)break; cur=ins.sort()[0]; if(path.includes(cur))break; path.push(cur); }
+  return path;
+}
+function inspect(id){
+  const e=spec.entities[id]; const potential=reach(adj,id); const dependents=potential;
+  const dependencies=reach(radj,id); const scc=inAnySCC(id)?sccOf(id):null;
+  const actual=new Set([...lastEvent.diverged].filter(x=>x===id||lastEvent.diverged.has(x)));
+  document.getElementById("inspect").innerHTML =
+    `<b>${id}</b>  <span class=k>(${e?e.zone||"—":"relation-node"})</span>\n`+
+    `relations: ${e?e.rel.map(r=>r[0]+"→"+r[1]).join(", ")||"none":"—"}\n`+
+    `dependents (potential blast): <span class=green>${potential.size}</span> {${[...potential].sort().join(", ")||"∅"}}\n`+
+    `dependencies (needs): {${[...dependencies].sort().join(", ")||"∅"}}\n`+
+    `blast radius: ${potential.size+1}/${Object.keys(adj).length}\n`+
+    `actual diverged: <span class=red>${[...lastEvent.diverged].includes(id)||runtime[id]&&runtime[id].diverged?'this is diverged':(lastEvent.diverged.size?[...lastEvent.diverged].sort().join(", "):'none yet')}</span>\n`+
+    `feedback loop: ${scc?`<span class=orange>${scc.sort().join(" → ")}</span>`:"none"}\n`+
+    `dependency chain: ${depChain(id).join(" ← ")}`;
+}
+
+// ===== events panel =====
+function buildEventButtons(){
+  const div=document.getElementById("events");
+  div.innerHTML='<h2 style="font-size:12px;margin:10px 0 2px">Simulate event</h2>';
+  for(const id of Object.keys(spec.entities)){ const b=document.createElement("button"); b.textContent="destroy "+id; b.onclick=()=>destroyEvent(id); div.appendChild(b); }
+}
+
+// ===== rebuild from text =====
+function rebuild(){
+  try{ spec=parseWrk(document.getElementById("src").value); }catch(err){ document.getElementById("status").textContent=" parse error: "+err.message; return; }
+  const g=buildGraph(spec); adj=g.a; radj=g.r;
+  runtime={}; for(const id of Object.keys(adj)) runtime[id]={alive:true,health:(spec.entities[id]?spec.entities[id].health:100),diverged:false};
+  lastEvent={diverged:new Set(),allocated:new Set()}; selected=null;
+  const scc=allSCCs();
+  document.getElementById("status").innerHTML=` · ${Object.keys(spec.entities).length} entities · ${scc.length?'<span class=orange>'+scc.length+' feedback loop(s)</span>':'no feedback'}`;
+  renderWire(); buildEventButtons(); makeMeshes();
+  document.getElementById("inspect").textContent="world rebuilt. Click a node, or shoot a box in the 3D view.";
+}
+
+// ===== 3D FPS projection (observer/action-source; NOT authoritative) =====
+let scene,camera,renderer,raycaster,meshes={};
+const player={x:0,z:18,y:1.6,vy:0,yaw:Math.PI,pitch:0,onGround:true};
+const keys={};
+function initFPS(){
+  scene=new THREE.Scene(); scene.background=new THREE.Color(0x0b0f14); scene.fog=new THREE.Fog(0x0b0f14,24,90);
+  camera=new THREE.PerspectiveCamera(75,1,0.1,300);
+  renderer=new THREE.WebGLRenderer({canvas:document.getElementById("cv"),antialias:true});
+  resize(); scene.add(new THREE.AmbientLight(0x8a929c,0.75));
+  const dl=new THREE.DirectionalLight(0xffffff,0.7); dl.position.set(12,22,8); scene.add(dl);
+  const gnd=new THREE.Mesh(new THREE.PlaneGeometry(160,160),new THREE.MeshLambertMaterial({color:0x161b22})); gnd.rotation.x=-Math.PI/2; scene.add(gnd);
+  scene.add(new THREE.GridHelper(160,80,0x21262d,0x161b22));
+  raycaster=new THREE.Raycaster();
+}
+const ZONECOL={courtyard:0x6e7681,reactor:0xcf5b3a,market:0xc9a227};
+function makeMeshes(){ for(const k in meshes)scene.remove(meshes[k]); meshes={};
+  for(const e of Object.values(spec.entities)){ const hp=Math.max(1,Math.cbrt(e.health/100)*2.2);
+    const m=new THREE.Mesh(new THREE.BoxGeometry(1.6,hp,1.6),new THREE.MeshLambertMaterial({color:ZONECOL[e.zone]||0x8b949e}));
+    m.position.set(e.pos[0],hp/2,e.pos[2]); m.userData.id=e.id; m.userData.h=hp; meshes[e.id]=m; scene.add(m); } }
+function syncMeshes(){ for(const id in meshes){ const m=meshes[id],r=runtime[id]; if(!r)continue; m.visible=r.alive;
+  m.material.color.setHex(r.diverged?0xda3633:(ZONECOL[spec.entities[id].zone]||0x8b949e)); } }
+function fpFoot(id){ return 0.8; }
+function collides(x,z){ for(const id in meshes){ const r=runtime[id]; if(!r||!r.alive)continue; const e=spec.entities[id];
+  if(Math.abs(x-e.pos[0])<0.8+0.45 && Math.abs(z-e.pos[2])<0.8+0.45){ // also allow standing on top: only block if below top
+    if(player.y < e.pos[1]+meshes[id].userData.h-0.1) return true; } } return false; }
+function supportHeight(x,z){ let top=1.6; for(const id in meshes){ const r=runtime[id]; if(!r||!r.alive)continue; const e=spec.entities[id];
+  if(Math.abs(x-e.pos[0])<0.8+0.45 && Math.abs(z-e.pos[2])<0.8+0.45){ top=Math.max(top, meshes[id].userData.h+1.6); } } return top; }
+function resize(){ const r=document.getElementById("right").getBoundingClientRect(); renderer.setSize(r.width,r.height); camera.aspect=r.width/r.height; camera.updateProjectionMatrix(); }
+window.addEventListener("resize",resize);
+document.getElementById("cv").addEventListener("click",()=>{ if(document.pointerLockElement!==renderer.domElement)renderer.domElement.requestPointerLock(); else shoot(); });
+document.addEventListener("mousemove",e=>{ if(document.pointerLockElement===renderer.domElement){ player.yaw-=e.movementX*0.0024; player.pitch=Math.max(-1.4,Math.min(1.4,player.pitch-e.movementY*0.0024)); }});
+document.addEventListener("keydown",e=>{keys[e.code]=true; if(e.code==="Space"&&player.onGround){player.vy=6;player.onGround=false;}});
+document.addEventListener("keyup",e=>{keys[e.code]=false;});
+function shoot(){ raycaster.setFromCamera({x:0,y:0},camera); const hits=raycaster.intersectObjects(Object.values(meshes).filter(m=>m.visible));
+  if(hits.length){ const id=hits[0].object.userData.id; selected=id; destroyEvent(id); } }   // action → event pipeline
+let last=performance.now();
+function frame(now){ const dt=Math.min(0.05,(now-last)/1000); last=now;
+  const sp=7*dt,fx=Math.sin(player.yaw),fz=Math.cos(player.yaw); let dx=0,dz=0;
+  if(keys["KeyW"]){dx-=fx*sp;dz-=fz*sp;} if(keys["KeyS"]){dx+=fx*sp;dz+=fz*sp;}
+  if(keys["KeyA"]){dx-=fz*sp;dz+=fx*sp;} if(keys["KeyD"]){dx+=fz*sp;dz-=fx*sp;}
+  if(!collides(player.x+dx,player.z))player.x+=dx; if(!collides(player.x,player.z+dz))player.z+=dz;
+  player.vy-=16*dt; player.y+=player.vy*dt; const sup=supportHeight(player.x,player.z);
+  if(player.y<=sup){player.y=sup;player.vy=0;player.onGround=true;}
+  camera.position.set(player.x,player.y,player.z); camera.rotation.set(player.pitch,player.yaw,0,"YXZ");
+  renderer.render(scene,camera); requestAnimationFrame(frame);
+}
+function log(s){const el=document.getElementById("log");el.innerHTML=`<div>${s}</div>`+el.innerHTML;}
+
+// default world.wrk
+document.getElementById("src").value=
+`world "Fortress"
+zone courtyard
+zone reactor
+zone market
+entity generator:
+  zone reactor
+  position 14 0 -6
+  health 100
+  emits power
+entity gate:
+  zone courtyard
+  position 0 0 2
+  health 150
+  blocks courtyard
+  depends_on generator
+entity turret:
+  zone courtyard
+  position -3 0 -8
+  health 100
+  protects gate
+  powered_by generator
+entity garrison:
+  zone market
+  position 10 0 -6
+  health 120
+  defends gate
+  consumes supply
+entity supply:
+  zone market
+  position 12 0 -3
+  health 40
+  sustains garrison`;
+
+initFPS(); rebuild(); requestAnimationFrame(frame);
+</script></body></html>

@@ -1,0 +1,49 @@
+# world.wrk — a developer edits THIS file and gets a playable causal world.
+# Format: `world "Name"`, `zone X`, `entity NAME:` then indented `key value` lines.
+# Relations are causal edges. depends_on / powered_by REVERSE direction (target affects entity).
+# The wireframe + lint + FPS are all PROJECTIONS of this text. The text is the authority.
+
+world "Fortress"
+
+zone courtyard
+zone reactor
+zone market
+
+entity generator:
+  zone reactor
+  position 14 0 -6
+  health 100
+  emits power
+
+entity gate:
+  zone courtyard
+  position 0 0 2
+  health 150
+  blocks courtyard
+  depends_on generator
+
+entity turret:
+  zone courtyard
+  position -3 0 -8
+  health 100
+  protects gate
+  powered_by generator
+
+entity market_node:
+  zone market
+  position 8 0 -2
+  health 80
+  feeds garrison
+
+entity garrison:
+  zone market
+  position 10 0 -6
+  health 120
+  defends gate
+  consumes supply
+
+entity supply:
+  zone market
+  position 12 0 -3
+  health 40
+  sustains garrison
