@@ -34,7 +34,7 @@ SEPARATORS this file keeps:
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 
 from world import REGIME, Agent, Ruleset, World
 
@@ -161,15 +161,41 @@ class WorldDiff:
         return "\n".join(lines)
 
 
-# --- the fork object: hold both futures; commit writes a cause, discard evaporates ---------------
+# --- the fork object: a TRAJECTORY PAIR (the streamtube boundary around causation) ---------------
 @dataclass
 class Fork:
     committed: World            # the authoritative Weltlinie (reference, not a copy)
     intervention: Intervention
     horizon: int
-    line_a: World               # unchanged future (preview)
-    line_b: World               # intervened future (preview)
-    diff: WorldDiff
+    line_a: World               # unchanged future, final state (preview)
+    line_b: World               # intervened future, final state (preview)
+    diff: WorldDiff             # EXACT-under-model state delta
+    trace_a: tuple = ()         # per-tick feature vectors of the unchanged leg (the trajectory)
+    trace_b: tuple = ()         # per-tick feature vectors of the intervened leg
+    observations: dict = field(default_factory=dict)  # name -> Observation (ESTIMATES; allocation, not truth)
+
+    def observe(self, observer) -> "object":
+        """Attach an observer. The observer is a function of ONE trajectory; the Fork hands it both
+        legs to diff. Result is an Observation carrying its own evidence class — never folded into the
+        EXACT WorldDiff. (See observers.py.)"""
+        obs = observer.diff(self.trace_a, self.trace_b)
+        self.observations[obs.name] = obs
+        return obs
+
+    def observe_all(self, observers) -> dict:
+        for ob in observers:
+            self.observe(ob)
+        return self.observations
+
+    def report(self) -> str:
+        """Render EXACT (WorldDiff) and ESTIMATE (observer) registers SEPARATELY — an estimate must
+        never borrow the authority of an exact-under-model delta."""
+        out = [self.diff.render()]
+        if self.observations:
+            out.append("  ── observer estimates (allocation, not verdict; can be wrong inside the model) ──")
+            for name in sorted(self.observations):
+                out.append(self.observations[name].render())
+        return "\n".join(out)
 
     def commit(self) -> World:
         """The ONLY write to truth. Applies the intervention to the committed PRESENT and logs an
@@ -187,14 +213,25 @@ class Fork:
         return self.committed
 
 
+def _run_traced(w: World, n: int) -> tuple[World, tuple]:
+    """Run n ticks while recording the feature vector at every tick — so a Fork is a TRAJECTORY,
+    not just an endpoint. The trace is what trajectory-geometry observers (orbit, generativity) read."""
+    trace = [w.features()]
+    for _ in range(n):
+        w.step()
+        trace.append(w.features())
+    return w, tuple(trace)
+
+
 def fork(committed: World, iv: Intervention, horizon: int = 20) -> Fork:
     """Branch reality. Run the unchanged future (A) and the intervened future (B) on the SAME dice,
-    from the same present, and diff them. Neither preview touches the committed world."""
-    line_a = committed.clone().run(horizon)
-    line_b = apply_intervention(committed.clone(), iv).run(horizon)
+    from the same present, capturing each leg's full trajectory, and diff them. Neither preview
+    touches the committed world."""
+    line_a, trace_a = _run_traced(committed.clone(), horizon)
+    line_b, trace_b = _run_traced(apply_intervention(committed.clone(), iv), horizon)
     diff = WorldDiff.compute(line_a, line_b, horizon, iv.label())
     return Fork(committed=committed, intervention=iv, horizon=horizon,
-                line_a=line_a, line_b=line_b, diff=diff)
+                line_a=line_a, line_b=line_b, diff=diff, trace_a=trace_a, trace_b=trace_b)
 
 
 if __name__ == "__main__":

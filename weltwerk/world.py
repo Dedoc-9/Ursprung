@@ -141,6 +141,16 @@ class World:
             pop[a.species] = pop.get(a.species, 0) + 1
         return pop
 
+    def features(self) -> tuple[int, ...]:
+        """A canonical, fixed-width integer feature vector for trajectory geometry.
+        Ordering is fixed by REGIME (not dict luck) so a trajectory is comparable across legs.
+        This is a MODEL PROJECTION — it discards position, identity, age, and history; an observer
+        reading it sees only this coarse-grained shadow of the state (declared, lossy on purpose)."""
+        pop = self.population()
+        species = tuple(pop[s] for s in REGIME["species"])
+        locs = tuple(self.resources.get(L, 0) for L in REGIME["locations"])
+        return (len(self.alive_agents()),) + species + locs
+
     # -- the one rule of motion ---------------------------------------------------------------
     def step(self) -> None:
         """Advance one synchronous tick. Pure in (state, rng); deterministic under sorted iteration."""

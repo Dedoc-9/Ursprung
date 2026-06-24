@@ -65,7 +65,32 @@ Arbitrary-Boundary Law made visible.
 |---|---|---|---|
 | `world.py` | the **Weltlinie** — a minimal deterministic, bitwise-replayable authoritative world (agents, resources, rules) whose trajectory is a pure function of (seed, ruleset, steps) | IMPLEMENTED | awaiting run |
 | `fork.py` | **`do()`** — "git diff for worlds": branch a shadow on the same dice, run unchanged vs intervened futures, compute a `WorldDiff`, `commit()` writes the *edit* (not the simulated horizon) / `discard()` evaporates the shadow | IMPLEMENTED | awaiting run |
-| `test_weltwerk.py` | **validity-not-outcome** self-test: determinism/replay · shadow isolation · diff soundness · commit/discard semantics. Asserts the *apparatus is valid* — never that an edit was "good" | IMPLEMENTED | awaiting run |
+| `test_weltwerk.py` | **validity-not-outcome** self-test: determinism/replay · shadow isolation · diff soundness · commit/discard semantics. Asserts the *apparatus is valid* — never that an edit was "good" | IMPLEMENTED | verified 4/4 (`66f3ecd`) |
+
+### Phase 2 (begun) — observers as lenses on a Fork
+
+The load-bearing realization: **a `Fork` is a *trajectory pair*, not an endpoint pair** — the declared
+streamtube boundary around causation. Observers are lenses on it. An observer is a function of *one*
+trajectory (`observe(leg)`); the **diff is the pairing** across the boundary (`diff(A, B)`). This
+collapses orbit / generativity / cost / fairness into one shape: each becomes an `Observation` on a fork.
+
+The non-negotiable discipline, enforced in code: **`WorldDiff` is `EXACT_UNDER_MODEL`; observer
+readings are `ESTIMATE`.** An estimate can be wrong *inside* the model; it must never render as an
+equal-looking number beside an exact delta (that is green-check blindness — the failure this repo
+exists to catch). Every `Observation` carries its evidence class and any ghost flags
+(`NO_TRAJECTORY ≠ CONVERGED`), and `Fork.report()` prints the two registers separately.
+
+| File | What it is | Maturity | Evidence |
+|---|---|---|---|
+| `fork.py` (extended) | a Fork now carries `trace_a`/`trace_b` (the trajectories) + `observe()`/`report()` | IMPLEMENTED | awaiting run |
+| `observers.py` | `Observation` (evidence-typed) · `Observer` base · `OrbitObserver` — a **cheap live proxy** for "where is the world going" (the verified CI-bearing `orbit_estimator` is the slow-cadence upgrade) | IMPLEMENTED | awaiting run |
+| `test_observers.py` | validity-not-outcome: observer determinism · identity→zero · `NO_TRAJECTORY` ghost · `evidence==ESTIMATE` · classifier distinguishes | IMPLEMENTED | awaiting run |
+
+Run the observer slice:
+
+```powershell
+cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk"; $env:PYTHONHASHSEED="0"; python test_observers.py; python observers.py
+```
 
 Run (PowerShell, folder-directed; `PYTHONHASHSEED=0` for the determinism guarantee):
 
