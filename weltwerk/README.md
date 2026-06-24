@@ -11,6 +11,16 @@
 `Welt` (world) + `Werk` (engineered work). The thing being engineered is not a game; it is the
 **editable causal world** a game would later run on.
 
+> **Hardened scope + the central law live in [`SCOPE.md`](SCOPE.md).** One principle the probes
+> converged on — *Potential ⊇ Actual* (theorem), divergence-aware reconstruction (mechanism),
+> allocation-as-scheduler (ambition) — kept distinct, with every claim graded by maturity × evidence,
+> the phase roadmap with gates and falsifiers, and a Known Failure Modes section.
+>
+> **The one sentence that bounds the project:** *the repository currently proves that divergence-aware
+> allocation can be **correct**; it does not yet prove that divergence remains **sparse** in the classes
+> of worlds we ultimately care about.* Confusing a proven reconstruction mechanism with a proven scaling
+> strategy is the project's biggest future risk.
+
 ## Why this exists (and why it is not "AI makes worlds")
 
 The repository spent its history separating *change* from *meaningful expansion*, and *measurement*
