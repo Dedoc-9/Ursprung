@@ -69,7 +69,7 @@
 <script>
 // ===== mirror of world_format.py / world_design.py (Python remains the authority) =====
 const REVERSED=new Set(["depends_on","powered_by","fed_by","sustained_by","needs"]);
-const RELTYPES=["protects","powers","powered_by","depends_on","blocks","feeds","supplies","defends","consumes","sustains","emits","owns","attacks","allied_with","trades_with"];
+const RELTYPES=["protects","powers","powered_by","depends_on","blocks","feeds","transforms","contains","supplies","defends","consumes","sustains","emits","owns","attacks","allied_with","trades_with"];
 let spec, adj, radj, selected=null, relType="protects", timeline=[], tlIndex=0, dragSrc=null;
 
 function parseWrk(text){

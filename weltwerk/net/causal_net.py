@@ -142,7 +142,8 @@ entity base:
   health 100
 """
 
-# SPARSE: mostly isolated terrain + one short causal chain (event reaches little).
+# SPARSE: mostly isolated terrain + one short causal chain. The chain (generator→power→turret) is a
+# small fraction of the world, so a causal event leaves most of it untouched ⇒ compression available.
 SPARSE_WORLD = """
 world "Sparse"
 entity tree:
@@ -151,6 +152,12 @@ entity rock:
   health 50
 entity house:
   health 100
+entity water:
+  health 10
+entity campfire:
+  health 20
+entity path:
+  health 5
 entity generator:
   emits power
 entity power:
