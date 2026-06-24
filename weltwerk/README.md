@@ -295,6 +295,21 @@ YES/NO.*
 cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\view"; $env:PYTHONHASHSEED="0"; python test_regime_view.py; python regime_view.py
 ```
 
+**Space-time causal field** (`view/causal_field.py`) — the capstone view, where the theory draws its own
+picture. A space-time diagram (x = chunk, y = time downward), every cell coloured BLUE committed / GREEN
+potential cone / YELLOW allocated frontier / RED actual divergence, over three real systems: **diffusion**
+(thin red trace in a green triangle), **teleport** (the green cone forks to a far region), **chaos** (red
+floods the triangle). The gap between green and red *is* the economic win, made visible in one glance.
+
+| File | What it is | Maturity | Evidence |
+|---|---|---|---|
+| `view/causal_field.py` | space-time diagram over diffusion/teleport/chaos → HTML (canvas + switcher) | IMPLEMENTED | awaiting run |
+| `view/test_causal_field.py` | validity: red ⊆ potential ∀t (no superluminal divergence) · frames well-formed · cone monotone · determinism | IMPLEMENTED | awaiting run |
+
+```powershell
+cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\view"; $env:PYTHONHASHSEED="0"; python test_causal_field.py; python causal_field.py
+```
+
 ## Genealogy — this composes verified pieces, it does not reinvent them
 
 - **commit/speculative/recovery discipline** ← `experiments/live_world_kernel/live_world_kernel.py`
