@@ -7,6 +7,27 @@ agent, or a world generator are equally valid clients. Ursprung consumes the sea
 (Chronicle/Dentatus) workbench read-only as its verification substrate; the workbench supplies the deterministic
 kernel and the integrity discipline, and Ursprung is the renderer projected off the committed trajectory.
 
+Underneath the renderer, the provenance runtime and its [`experiments/live_world_kernel/`](experiments/live_world_kernel/)
+instruments form a dynamic **Epistemic Runtime Environment (ERE)** — a layer that governs *claim integrity* rather
+than hardware resources, and is therefore explicitly **not** an operating system: it allocates *truth*, not CPU or
+memory. Every claim carries two orthogonal fields — **maturity** (does the thing exist: `IMPLEMENTED` / `SCOPED` /
+`UNDERCOMMITTED`) and **evidence** (what it rests on: `MEASURED_BY_INTERVENTION` / `MEASURED` / `DECLARED` / `N/A`) —
+under one load-bearing invariant: *evidence may not exceed what maturity licenses.* That no-inflation rule is
+enforced at three layers — in software (`claim_ledger`), as policy (`rsi_engine`'s promotion gate), and compiled to
+logic gates (`no_inflation_latch`, where an over-claim is a forbidden state the wiring cannot store). Offshoot
+framings of the same discipline: **auditable-epistemology infrastructure**, a **Verified Improvement Dynamics
+analyzer** (the RSI decomposition — capability, branching, generativity, orbit), and **gate-level no-inflation
+enforcement**. No claim anywhere — including this repository's own — is exempt from the rule.
+
+That analyzer's central result is a *coherent* negative. Recast "recursive self-improvement" as a measurable
+condition and the toy domain returns **Type B — frontier exhaustion**: the expansion multiplier is not a scalar but
+a function of state, `m_novel(Sₜ)`. It reads **supercritical** when sampled across random states (the deceptive
+"green light") yet **subcritical along any actual improvement trajectory** (`m_novel(s_high) ≈ 0.53 < 1`), so the
+system consumes its own frontier and its orbit converges into a basin. The suite reports **both** views side by side
+and refuses to average the disagreement away — because the disagreement *is* the finding: a space-pooled metric
+would falsely report success while the running trajectory chokes itself into a dead end. The object was never `m`;
+it was `m_novel(Sₜ)` along the committed trajectory.
+
 ```
 authoritative world state → deterministic snapshot → visual interpretation → GPU execution → presented frame
 ```
