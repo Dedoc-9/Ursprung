@@ -19,6 +19,16 @@ DECLARED MODELING BOUNDARY (no free lunch): m_novel needs a notion of STATE IDEN
 count as "the same". Here a state is `(active-coordinate set, sigma rounded to 1 decimal)`. This is an
 Arbitrary-Boundary choice; coarser identity ⇒ more overlap ⇒ smaller m_novel. It is declared, and could be varied.
 
+DECLARED CI METHOD (which interval this is, and why): m_novel is a COVERAGE functional, |union|/n. A with-replacement
+bootstrap that RECOMPUTES the union per resample collapses on duplicated roots (a repeated root adds parents but no
+new distinct states), biasing the interval low so the point falls outside it — this is the bug `ci_brackets_point`
+caught. So m_novel's CI here is the LINEARIZATION (influence-function / Hájek-projection) interval: bootstrap the
+per-parent MARGINAL-novelty contributions (which sum to |union|), a standard asymptotically-valid variance estimate
+that stays point-centred. The cost: marginal ATTRIBUTION is order-dependent (the mean is not), so this is a
+linearization interval, NOT an exact union bootstrap; an exact treatment would need subsampling WITHOUT replacement
+(m-out-of-n), which avoids duplicate-collapse but carries its own coverage-ratio finite-sample bias. No method is
+free; this one is named.
+
 Output is an ESTIMATE under a stated verification regime (external ∧ replicated ∧ calibrated offspring), with CIs,
 never "this domain has/lacks RSI". `m_offspring ≥ m_novel`; `estimate ≠ property`; `declared ≠ verified`.
 
