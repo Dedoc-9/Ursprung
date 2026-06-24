@@ -7,6 +7,28 @@ draws the boundaries. It is deliberately deflationary: the exciting framings ("c
 for worlds", "observer = scheduler") are recorded as *direction*, with the part that is actually built
 and verified marked off from the part that is declared.
 
+## Positioning (Vision-grade): augment a renderer, don't replace one
+
+Weltwerk is **not** a renderer and must not drift into rebuilding UE5-class rendering (geometry,
+lighting, streaming, materials) — that is solved, and reproducing it loses. The unsolved primitive is
+**causal relevance**: engines know *where* things are (proximity, visibility, sector streaming); they do
+not know *what depends on what* at world scale. "Whose future changes?" ≠ "who is nearby?" — and that
+gap is what every probe here measures.
+
+The bet (Vision, not a delivered system): **causality becomes the shared resource-management primitive**
+— the same measured divergence field decides what is simulated, replicated, rendered, and predicted.
+The intended stack is a layer, not a replacement:
+
+```
+renderer (UE5-class)  →  AI / gameplay  →  causal allocation layer (Weltwerk)  →  authoritative world
+```
+
+What is actually proven sits in the layers below; "drives all expensive systems at UE5 scale" is
+aspiration **gated on the amplification question** (next section / Known Failure Modes). The danger to
+guard against: beautiful math + debugger + toy ecology that never touches *does causal sparsity survive
+realistic gameplay?* — which is why the roadmap keeps returning to amplification, transport, and
+long-range coupling.
+
 ## The central law — theorem, mechanism, ambition (kept distinct)
 
 The arc converged on one principle. To keep it from inflating, it is split into a theorem (proven), a
