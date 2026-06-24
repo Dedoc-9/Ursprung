@@ -281,6 +281,24 @@ fact, no global winner). The full ledger — every instrument marked `BUILT` / `
 verification strength — is `docs/EPISTEMIC_ACCOUNTING.md`, and the four boundary *contracts* (not yet code) are
 `SELF_MODIFICATION` / `AUTHORITY_ARBITRAGE` / `ADJUDICATION_THROUGHPUT` / `FAILURE_MODE_MATRIX`.
 
+The stack then turns reflexively — on its own claims and on the hardest one, recursive self-improvement.
+`discrimination_matrix` ranks experiments by uncertainty collapsed; `claim_ledger` reconciles statements about the
+kernel as *claims with commitment levels*, enforcing `evidence ≤ maturity` (the no-inflation rule made executable);
+`no_inflation_latch` compiles that same rule to NAND gates (an over-claim is a forbidden state, proven exhaustively).
+On RSI it is a **decomposition, not an engine**: `self_improvement_witness` (a verified step exists) →
+`recursion_witness` (`d²/dt²` — no acceleration) → `limit_discriminator` / `inflation_vs_search` / `transfer_*`
+(the binding limiter is the *evaluator*, not search; transfer is not robust across regimes) → the branching theorem
+(`verified_improvement_theorem`: a verified-edit branching mean `m ≤ 1` ⇒ almost-sure extinction; classical, conditional)
+→ `rsi_engine` (promote only externally-verified + replicated + calibrated edits) → `verified_branching_estimator`
+and `generativity_estimator` (estimate `m_offspring` vs `m_novel` with bootstrap CIs; informative only if the CI
+excludes 1). Thesis: **RSI requires generativity of the verified-improvement space, not merely self-modification** —
+which relocates it from the optimizer to the *(system, domain, verification-regime)* triple. The runaway's signature
+is `m̂ > 1 ≥ m_verified` (proxy mean above 1, verified mean below). New separators this arc recorded:
+`experiment-ran ≠ hypothesis-confirmed`, `measurement-valid ≠ prediction-true`, `optimization-pressure ≠ search-budget`;
+governing asymmetry **expectation may follow evidence; evidence may not follow expectation**. A self-test here checks
+*validity + classifier soundness* — that the bench measured correctly and no verdict contradicts its own numbers —
+never that a hoped outcome occurred; a verification gate that enforces the experimenter's prior is itself inflation.
+
 **Red-team / pentest phase 1 (authorized structural reconnaissance).** This stack is a *phase-1* tool — it
 **maps**, it does not exploit. Pointed at a codebase you own or are authorized to assess, it surfaces the class
 of finding CVE/port/SAST pattern-matchers miss — **architectural / boundary** weakness — and, uniquely, attaches

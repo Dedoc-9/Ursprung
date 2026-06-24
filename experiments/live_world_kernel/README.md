@@ -8,6 +8,11 @@ idea from [`docs/EMBEDDED_AUTHORING.md`](../../docs/EMBEDDED_AUTHORING.md). It a
 
 If yes, the editor is a UI problem. If no, the larger engine vision collapses before it needs a renderer.
 
+> This README documents the *kernel*. The folder has since grown into the full auditable-epistemology stack built
+> on it — convergence/provenance witnesses, the reflexive `claim_ledger`/`no_inflation_latch`, and an
+> **RSI-decomposition layer** (verified-improvement engine, branching theorem, generativity estimator).
+> **[`INDEX.md`](INDEX.md)** is the authoritative, current inventory of every instrument and its status.
+
 **Status.** The commit / speculative layer was VERIFIED **9/9** on 2026-06-22 (`PYTHONHASHSEED=0`, Python 3,
 Windows). The kernel has since been **hardened** to make the *three states of a fact* explicit — committed /
 irreversible / durable — adding **+7 checks (16 total)**; re-run to confirm 16/16. `declared ≠ verified`: the

@@ -35,10 +35,12 @@ future failure cost, not present visual complexity.**
 > **`conditional_on_neutral_ruler`**, never a law; the whole measured boundary is consolidated in
 > [`docs/BOUNDARY_MAP.md`](docs/BOUNDARY_MAP.md). Alongside the benchmark, a family of small **observe-only
 > instruments** (`experiments/live_world_kernel/`) now probes the runtime side — an embedded-authoring kernel
-> (16/16) and six verified diagnostics that *earn* boundaries rather than assert them, the latest
-> (`fidelity_gap`) auditing real third-party code and separating a recoverable model defect from a genuine
-> runtime frontier. The durable artifact is the apparatus that could tell the difference. **No claim here exceeds
-> what a runnable bench shows.**
+> (16/16), a convergence/provenance stack that *earns* boundaries rather than asserting them (the `fidelity_gap`
+> extraction pair audits real third-party code, separating a recoverable model defect from a genuine runtime
+> frontier), and a **verified-self-improvement decomposition** that reduces "can it recursively self-improve?" to
+> two measurable branching means — `m_offspring` (reproduction) and `m_novel` (frontier expansion) — estimated
+> under an external verification regime. Every instrument self-tests; the durable artifact is the apparatus, not a
+> verdict. **No claim here exceeds what a runnable bench shows.**
 
 ## What is proven, what you get, and where it goes next
 
@@ -899,6 +901,21 @@ and the runtime, not a claim to have invented the pieces.
   > external verification?"* **Consistent-with (domain-specific, not universal):** the toy domain's evidence is
   > consistent with `m_verified < 1`, which explains the single-promotion plateau without weak search, compute, or
   > tuning — a property of that toy, not a general claim.
+- **RSI as a decomposition, not an engine — and a *relocation*.** The branching theorem turned "recursive
+  self-improvement" into a measurable ladder, and the instruments carried it through: a *self-improvement step*
+  (real, `self_improvement_witness`), *recursion* `d²/dt²` (not observed — plateau, `recursion_witness`),
+  *reproduction* `m_offspring`, and *frontier expansion* `m_novel` (net-new reachable verified states per verified
+  parent; invariant `m_novel ≤ m_offspring`, and the gap *is* the overlap). The thesis: **RSI requires
+  generativity of the verified-improvement space, not merely successful self-modification.** That *relocates* RSI
+  from a property of the optimizer to a structural property of the **(system, domain, verification-regime)
+  triple** — the same optimizer reads supercritical under a lax regime and subcritical under a strict one
+  (`m̂ > 1 ≥ m_verified` is the runaway). In the toy domain the measured `m_novel(s)` *declines through 1* with
+  capability (≈ 4.64 → 1.93 → 0.53): generativity is highest when the system is *worst* and depletes as it
+  improves. The output is always an estimate under a stated regime, never "this domain has/lacks RSI," and even
+  the relocated question keeps the asymptotic ceiling — only ever "frontier still expanding after N." The verified
+  arc — `rsi_engine` (promote only what's externally verified + replicated + calibrated), the branching theorem
+  and its proof-check, and `verified_branching_estimator` / `generativity_estimator` — is the apparatus, and its
+  honest result is a *sharper question*, not a verdict on RSI.
 - **`observation ≠ intervention` as a measured boundary.** A system that detects when a question is *not
   identifiable from observation alone* and refuses to resolve it — exposing the boundary instead of hiding it
   behind a high score. Most pipelines silently cross it; this one marks it and names the price of crossing.
@@ -984,6 +1001,20 @@ layer), not a turnkey product — read the use cases through that frame.
   irreversibility frontier; `runtime_witness` coverage is currently over-counted — see
   [`docs/EPISTEMIC_ACCOUNTING.md`](docs/EPISTEMIC_ACCOUNTING.md)). *Find and close your own structural attack
   surface before an adversary maps it from a leak.*
+- **Auditing self-improving AI / auto-tuning / agent pipelines (estimate, not verdict).** Any loop that edits its
+  own configuration, prompts, weights, or search policy and claims to be getting better — AutoML, self-refining
+  agents, eval-driven/RLHF tuning, "self-improving" model pipelines — can be audited with the verified-improvement
+  stack: gate every self-edit on **external + replicated + calibrated** gain (`rsi_engine`), then estimate the two
+  branching means `m_offspring` (verified edits produced per verified edit) and `m_novel` (net-new verified
+  capability reached) under a *declared* verification regime (`verified_branching_estimator`,
+  `generativity_estimator`). The differentiator is the **runaway detector `m̂ > 1 ≥ m_verified`** — a pipeline
+  whose internal/proxy score is climbing while *external* capability is not is fooling its own evaluator, and that
+  gap is reported as a number rather than hidden behind a rising dashboard. Output is `m ± CI` with a
+  "CI-excludes-1?" informativeness test (it says *cannot distinguish under current sampling* when the interval
+  straddles 1), never "this system has RSI." Use it to tell whether an automated self-improvement loop is
+  genuinely compounding, plateauing, or quietly overfitting the very metric that authorizes its own promotions —
+  and, via `m_novel(s)`, whether its frontier of new verified opportunities is *expanding or depleting* as the
+  system improves.
 
 **For investors / strategic readers (honest framing):**
 
@@ -1128,8 +1159,10 @@ a real external anchor remain the frontier. [`experiments/`](experiments/) — t
 and `reality_kernel/` — the four-primitive consolidation, its Rust CORE port `core_rs/` verified on real
 silicon, and the `lineage_scale/` closure test; `bench_gpu/` — the GPU measurement *contract*;
 `bench_gpu_real/` — the **GPU benchmark verified on hardware**, M1–M6c spatial + M6d/T1–T4 temporal on an Ally X;
-and `live_world_kernel/` — the **embedded-authoring kernel (16/16) + six observe-only diagnostics** culminating
-in `fidelity_gap` auditing real third-party code), each a seeded, self-checking bench outside the core.
+and `live_world_kernel/` — the **embedded-authoring kernel (16/16) + a verified-epistemology stack**:
+convergence/provenance witnesses (`fidelity_gap`, `reality_status`…`witness_panel`) and an **RSI-decomposition
+layer** (the verified-improvement engine, the branching theorem + its proof-check, and the generativity
+estimator)), each a seeded, self-checking bench outside the core.
 [`AGENTS.md`](AGENTS.md) — the contract every change obeys.
 
 ## License
