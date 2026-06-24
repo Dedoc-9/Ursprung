@@ -54,6 +54,20 @@ def test_equivalence_pruned():
     return check("equivalence_pruned", ok, f"pruned (allocator) B == brute (teleport): {ok}")
 
 
+def test_equivalence_pruned_global():
+    # REGRESSION: a global rule edit has no t=0 state seed; the pruned path must not prune to empty.
+    snap, rules = _world()
+    topo = Topology(N_CH, TELE)
+    edit = Edit("set_rule", rule_field="predation_enabled", rule_value=False)
+    r = reconstruct(snap, topo, rules, SEED, edit, H, prune=True)
+    brute = brute_force_edit_future(snap, topo, rules, SEED, edit, H)
+    line_a = full_sim_traced(snap, topo, rules, SEED, H)[0][H]
+    diverged = snapshot_hash(brute) != snapshot_hash(line_a)     # the edit MUST do something
+    correct = snapshot_hash(r.line_b) == snapshot_hash(brute)    # pruned must reconstruct it
+    return check("equivalence_pruned_global", diverged and correct,
+                 f"global edit diverges from A={diverged}; pruned B == brute={correct}")
+
+
 def test_pruned_within_conservative():
     snap, rules = _world()
     topo = Topology(N_CH, TELE)
@@ -110,6 +124,7 @@ def main():
     results = [
         test_equivalence_conservative(),
         test_equivalence_pruned(),
+        test_equivalence_pruned_global(),
         test_pruned_within_conservative(),
         test_teleport_explodes_cone(),
         test_teleport_transmits(),

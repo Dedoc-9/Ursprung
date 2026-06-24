@@ -102,6 +102,11 @@ def reconstruct(snap: dict, topo: Topology, rules: Rules, seed: int, edit: Edit,
     analysis). prune=True → frontier follows MEASURED divergence (change propagation, the allocator)."""
     traj_a, _ = full_sim_traced(snap, topo, rules, seed, horizon)
     snap_b, rules_b, dirty0 = apply_edit(snap, rules, edit)
+    # A RULE change diverges the dynamics globally from t≥1 with NO t=0 state seed, so pruning by state
+    # divergence alone would drop everything at t=0 and simulate nothing. When the rules changed, the
+    # source is global: the pruned path must fall back to conservative (correct — a global edit has no
+    # locality and therefore no pruning win). State-only (local) edits prune as normal.
+    rule_changed = rules_b != rules
 
     tracked = set(dirty0)
     b_state = {c: snap_b[c] for c in tracked}
@@ -111,10 +116,10 @@ def reconstruct(snap: dict, topo: Topology, rules: Rules, seed: int, edit: Edit,
     cost = 0
 
     for t in range(horizon):
-        if prune:
+        if prune and not rule_changed:
             base = {c for c in tracked if b_state[c] != traj_a[t][c]}   # only ACTUALLY-diverged propagate
         else:
-            base = set(tracked)                                         # conservative: all reachable propagate
+            base = set(tracked)                                         # conservative (or rule-changed: global)
         frontier = set(base)
         for c in base:
             frontier.update(topo.neighbors(c))

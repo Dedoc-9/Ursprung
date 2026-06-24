@@ -97,6 +97,7 @@ def reconstruct(snap: dict, rules: Rules, seed: int, edit: Edit, horizon: int, p
     n = len(snap)
     traj_a, _ = full_sim_traced(snap, rules, seed, horizon)
     snap_b, rules_b, dirty0 = apply_edit(snap, rules, edit)
+    rule_changed = rules_b != rules   # a global rule change has no t=0 state seed → don't prune to empty
 
     tracked = set(dirty0)
     b_state = {c: snap_b[c] for c in tracked}
