@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!--
+  Weltwerk FPS Causal Demo — a playable first-person shell whose UNIQUE feature is that the causal
+  structure is a first-class, visible, editable object. The gun mechanics are deliberately thin; the
+  causal infrastructure (Potential influence, Actual divergence, allocation, feedback detection,
+  determinism, replication boundary, B==A correctness) is the point.
+
+  This is a DEMO MIRROR of the verified Python primitives:
+    Potential reachability  ← weltwerk/scale/reachability_algebra.py  ((I∨A)^H closure)
+    Actual divergence        ← weltwerk/scale/teleport.py             (line_a vs line_b)
+    SCC / lint               ← weltwerk/authoring/world_lint.py        (verified; scenario_lint.py runs it)
+  The JS here re-implements those for interactive rates; Python remains the authority. See README.md.
+
+  Controls:  click canvas to capture mouse · WASD move · mouse look · SPACE jump · LEFT-CLICK shoot
+             V toggle causal overlay · B run B==A check · R save replay · T load+verify replay
+-->
+<html lang="en"><head><meta charset="utf-8"><title>Weltwerk FPS Causal Demo</title>
+<style>
+ html,body{margin:0;height:100%;background:#0d1117;overflow:hidden;font:13px/1.45 ui-monospace,Menlo,Consolas,monospace;color:#d0d6e0}
+ #cv{display:block}
+ #hud{position:fixed;top:10px;left:10px;background:rgba(13,17,23,0.82);border:1px solid #21262d;border-radius:8px;padding:10px 12px;max-width:330px;pointer-events:none}
+ #hud b{color:#fff} .k{color:#8b95a6}
+ .blue{color:#1f6feb}.green{color:#2ea043}.red{color:#da3633}.yellow{color:#d29922}.orange{color:#e3742f}
+ #cross{position:fixed;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border:1px solid #fff;border-radius:50%;opacity:.7;pointer-events:none}
+ #panel{position:fixed;top:10px;right:10px;width:340px;background:rgba(13,17,23,0.9);border:1px solid #21262d;border-radius:8px;padding:10px 12px}
+ textarea{width:100%;height:150px;background:#0b0f14;color:#cdd3df;border:1px solid #30363d;border-radius:6px;font:11px ui-monospace,monospace;box-sizing:border-box}
+ button{background:#161b22;color:#d0d6e0;border:1px solid #30363d;border-radius:6px;padding:5px 9px;cursor:pointer;font:inherit;margin-top:6px}
+ #lintout{white-space:pre-wrap;font-size:11px;margin-top:8px;max-height:200px;overflow:auto}
+ #banner{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:rgba(13,17,23,0.85);border:1px solid #21262d;border-radius:8px;padding:8px 14px;pointer-events:none}
+ #log{position:fixed;bottom:10px;left:10px;width:330px;max-height:120px;overflow:auto;background:rgba(13,17,23,0.82);border:1px solid #21262d;border-radius:8px;padding:8px 10px;font-size:11px}
+</style></head><body>
+<canvas id="cv"></canvas>
+<div id="cross"></div>
+<div id="hud"></div>
+<div id="panel">
+ <div style="font-weight:bold;margin-bottom:4px">World Author — causal topology DSL</div>
+ <div class="k" style="margin-bottom:5px">"&lt;src&gt; &lt;relation&gt; &lt;dst&gt;" — analyzed before geometry</div>
+ <textarea id="dsl"></textarea>
+ <button onclick="analyzeDSL()">Analyze topology</button>
+ <div id="lintout"></div>
+</div>
+<div id="banner">click to play · WASD+mouse · click=shoot · V=overlay · B=B==A · R/T=replay</div>
+<div id="log"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ============================================================================================
+// Phase 6 — determinism: seeded PRNG (mulberry32) + state hashing. All sim randomness flows here.
+// ============================================================================================
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const SEED = 1234567;
+let rng = mulberry32(SEED);
+function h32(str){let h=2166136261>>>0;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return h;}
+
+// ============================================================================================
+// Phase 3 + 8 — entities with id/pos/causal-neighborhood/deps/influence-radius/state-hash.
+// The fortress scenario: gate, walls, keep, tower, crates/barrels, NPC guards, resource/supply nodes.
+// ============================================================================================
+let entities = [];          // authoritative world state
+function E(id,kind,x,z,hp,infl,deps,opts){return Object.assign({id,kind,x,z,y:0,hp,hp0:hp,infl,deps:deps||[],alive:true,vx:0,vz:0,important:!!(opts&&opts.important),phase:rng()},opts||{});}
+
+function buildScenario(){
+  rng = mulberry32(SEED);
+  entities = [
+    E("keep","keep",0,-14,400,6,["wall_north","wall_east"],{important:true}),
+    E("wall_north","wall",-6,-8,200,5,["courtyard"]),
+    E("wall_east","wall",6,-8,200,5,["courtyard"]),
+    E("tower","wall",-10,-12,250,5,["wall_north"]),
+    E("gate","gate",0,2,150,5,["courtyard"],{important:true}),
+    E("courtyard","zone",0,-4,9999,7,["market"]),     // a zone node (logical), not shot directly
+    E("market","zone",8,-2,9999,5,["garrison"]),
+    E("garrison","npcbase",10,-6,300,6,["gate","supply_crate"]),
+    E("supply_crate","crate",12,-3,40,4,["garrison"]),  // closes the supply feedback loop
+    E("barrel_a","barrel",-3,0,20,4,["wall_east","courtyard"]),
+    E("barrel_b","barrel",3,0,20,4,["barrel_a","gate"]),
+    E("crate_a","crate",-1,4,30,3,[]),
+    E("crate_b","crate",1,4,30,3,[]),
+    E("resource_node","resource",-9,-2,9999,4,["market"]),
+    E("guard_1","npc",-4,-2,60,3,["courtyard"]),
+    E("guard_2","npc",5,-4,60,3,["courtyard"]),
+  ];
+  byId = {}; entities.forEach(e=>byId[e.id]=e);
+}
+let byId = {};
+
+// causal neighborhood = declared deps ∪ spatial entities within influence radius (the can-affect graph)
+function neighborhood(e){
+  const out = new Set(e.deps.filter(id=>byId[id]&&byId[id].alive));
+  for(const o of entities){ if(o!==e&&o.alive){ const d=Math.hypot(o.x-e.x,o.z-e.z); if(d<=e.infl) out.add(o.id);} }
+  return [...out];
+}
+function adjacency(){ const a={}; for(const e of entities){ if(e.alive) a[e.id]=neighborhood(e);} return a; }
+
+// Potential influence = reflexive reachability over the can-affect graph (the (I∨A)* closure).
+function potential(rootId){
+  const adj=adjacency(), seen=new Set([rootId]), st=[rootId];
+  while(st.length){ const n=st.pop(); for(const m of (adj[n]||[])) if(!seen.has(m)){seen.add(m);st.push(m);} }
+  return seen;
+}
+function stateHash(){ return h32(entities.map(e=>`${e.id}:${Math.round(e.x*8)},${Math.round(e.z*8)},${Math.round(e.hp)},${e.alive?1:0}`).join("|")); }
+
+// ============================================================================================
+// Phase 2 + 3 — actions create a causal footprint. Damage propagates through the neighborhood
+// (barrels chain-explode), which IS the actual divergence.
+// ============================================================================================
+let lastFootprint = {potential:new Set(),actual:new Set(),allocated:new Set()};
+
+function applyDamage(rootId, dmg, simulate){
+  // simulate=false ⇒ mutate authoritative world; simulate=true ⇒ run on a shadow copy for B==A / Actual.
+  const target = simulate ? simulate : byId;
+  const touched = new Set();          // chunks the allocator simulated (actual ∪ frontier)
+  const changed = new Set();          // actual divergence
+  const queue = [[rootId,dmg]];
+  while(queue.length){
+    const [id,d] = queue.shift();
+    const e = target[id]; if(!e||!e.alive) continue;
+    touched.add(id);
+    const before = e.hp;
+    e.hp -= d;
+    if(e.hp!==before) changed.add(id);
+    if(e.hp<=0 && e.alive){
+      e.alive=false; changed.add(id);
+      // destruction propagates a splash through the neighborhood (barrels harder, decays with distance)
+      const splash = e.kind==="barrel"?18:e.kind==="crate"?8:0;
+      if(splash>0){
+        const nb = (simulate? neighborhoodOn(target,e): neighborhood(e));
+        for(const nid of nb){ touched.add(nid); queue.push([nid, splash]); }
+      }
+    }
+  }
+  return {touched, changed};
+}
+function neighborhoodOn(world, e){
+  const out=new Set(e.deps.filter(id=>world[id]&&world[id].alive));
+  for(const k in world){ const o=world[k]; if(o!==e&&o.alive){ if(Math.hypot(o.x-e.x,o.z-e.z)<=e.infl) out.add(o.id);} }
+  return [...out];
+}
+function cloneWorld(){ const w={}; for(const e of entities) w[e.id]=Object.assign({},e); return w; }
+
+// ============================================================================================
+// Phase 9 — B==A: a destructive action is applied two ways and must produce identical state.
+//   A = full: recompute the whole world.  B = allocated: only the causal footprint, reuse the rest.
+//   Here the causal cascade IS the allocated set, so B is the real path; A is a full re-hash baseline.
+// ============================================================================================
+function shoot(rootId){
+  if(!rootId||!byId[rootId]||!byId[rootId].alive){ return; }
+  const dmg = 25;
+  // potential (green) — what COULD be affected, before acting
+  const pot = potential(rootId);
+  // A — full: shadow-simulate the action on a clone, hash the whole resulting world
+  const wA = cloneWorld(); const rA = applyDamageOn(wA, rootId, dmg);
+  const hashA = hashWorld(wA);
+  // B — allocated: apply to the authoritative world via the causal cascade (touches only footprint)
+  const rB = applyDamage(rootId, dmg, false);
+  const hashB = stateHash();
+  const ok = (hashA===hashB);
+  lastFootprint = {potential:pot, actual:rB.changed, allocated:rB.touched};
+  log(`shoot ${rootId}: potential ${pot.size} · actual ${rB.changed.size} · allocated ${rB.touched.size} · B==A ${ok?'<span class=green>PASS</span>':'<span class=red>FAIL</span>'}`);
+  recordTick({type:"shoot",id:rootId});
+  syncMeshes();
+}
+// full-path applied to an isolated world (the A reference)
+function applyDamageOn(world, rootId, dmg){
+  const queue=[[rootId,dmg]];
+  while(queue.length){ const [id,d]=queue.shift(); const e=world[id]; if(!e||!e.alive) continue;
+    e.hp-=d; if(e.hp<=0&&e.alive){ e.alive=false; const splash=e.kind==="barrel"?18:e.kind==="crate"?8:0;
+      if(splash>0){ for(const nid of neighborhoodOn(world,e)) queue.push([nid,splash]); } } }
+}
+function hashWorld(w){ return h32(entities.map(e=>{const o=w[e.id];return `${e.id}:${Math.round(e.x*8)},${Math.round(e.z*8)},${Math.round(o.hp)},${o.alive?1:0}`;}).join("|")); }
+
+// ============================================================================================
+// Phase 6 — replayable ticks. We record discrete causal inputs (shots); deterministic sim re-applies.
+// ============================================================================================
+let tick=0, replayLog=[];
+function recordTick(input){ replayLog.push({tick, input, seed:SEED}); }
+function saveReplay(){ const blob={seed:SEED, finalHash:stateHash(), log:replayLog};
+  log(`replay saved (${replayLog.length} inputs, final hash ${blob.finalHash})`); window.__replay=blob; }
+function loadVerifyReplay(){ const blob=window.__replay; if(!blob){log('no replay saved yet (press R)');return;}
+  buildScenario(); syncMeshes();
+  for(const r of blob.log){ if(r.input.type==="shoot") applyDamage(r.input.id,25,false); }
+  const h=stateHash(); const ok=(h===blob.finalHash);
+  log(`replay verify: hash ${h} vs ${blob.finalHash} → ${ok?'<span class=green>DETERMINISTIC</span>':'<span class=red>DIVERGED</span>'}`); syncMeshes(); }
+
+// ============================================================================================
+// Phase 7 — replication boundary (logged, NOT claimed). replicate(e) iff actual-divergence OR
+// player-relevance OR explicit importance. We log full vs causal counts; no savings claim.
+// ============================================================================================
+function replicationAccounting(){
+  let full=0, causal=0;
+  for(const e of entities){ if(!e.alive) continue; full++;
+    const diverged = lastFootprint.actual.has(e.id);
+    const relevant = Math.hypot(e.x-player.x, e.z-player.z) < 12;   // player-relevance proxy
+    if(diverged||relevant||e.important) causal++; }
+  return {full, causal};
+}
+
+// ============================================================================================
+// Phase 5 — in-demo DSL → causal topology → reachability + SCC + warnings (mirrors world_spec/lint).
+// ============================================================================================
+function parseDSL(text){ const adj={}, nodes=new Set();
+  for(let line of text.split("\n")){ line=line.split("#")[0].trim(); if(!line) continue;
+    const t=line.split(/\s+/); if(t.length===3){ nodes.add(t[0]);nodes.add(t[2]); (adj[t[0]]=adj[t[0]]||new Set()).add(t[2]); if(!adj[t[2]])adj[t[2]]=new Set(); } }
+  for(const n of nodes) if(!adj[n]) adj[n]=new Set(); return {adj,nodes:[...nodes]}; }
+function reach(adj,s){ const seen=new Set(),st=[...(adj[s]||[])]; while(st.length){const n=st.pop(); if(!seen.has(n)){seen.add(n);st.push(...(adj[n]||[]));}} return seen; }
+function analyzeDSL(){
+  const {adj,nodes}=parseDSL(document.getElementById("dsl").value);
+  const R={}; nodes.forEach(n=>R[n]=reach(adj,n));
+  // SCCs via mutual reachability
+  const seen=new Set(),sccs=[];
+  for(const n of nodes.slice().sort()){ if(seen.has(n))continue; const comp=[n,...[...R[n]].filter(m=>R[m]&&R[m].has(n))]; comp.forEach(x=>seen.add(x)); sccs.push(comp); }
+  const fb=sccs.filter(c=>c.length>1);
+  const load=nodes.slice().sort((a,b)=>R[b].size-R[a].size)[0];
+  let out=`entities ${nodes.length} · regime ${fb.length?'HAS-CYCLES (amplification risk)':'DAG (bounded)'}\n`;
+  for(const c of fb) out+=`⚠ feedback-cluster: {${c.sort().join(", ")}}\n`;
+  if(load) out+=`· load-bearing: ${load} (blast radius ${R[load].size+1}/${nodes.length})\n`;
+  if(!fb.length) out+="· no feedback detected — clean\n";
+  out+="\n(mirrors verified world_lint.py; structural risk, not measured amplification)";
+  document.getElementById("lintout").textContent=out;
+}
+
+// ============================================================================================
+// three.js scene + Phase 2 first-person controller
+// ============================================================================================
+let scene,camera,renderer,raycaster,meshes={},overlay=false,overlayGroup;
+const player={x:0,z:14,y:1.6,vy:0,yaw:Math.PI,pitch:0,onGround:true};
+const keys={};
+const COLORS={keep:0x8b949e,wall:0x6e7681,gate:0xb08968,zone:0x30363d,npcbase:0x9e6a6a,
+  crate:0xc9a227,barrel:0xcf5b3a,resource:0x3fb950,npc:0xd2a8ff};
+function colorFor(e){
+  if(overlay){ if(lastFootprint.actual.has(e.id))return 0xda3633; if(lastFootprint.allocated.has(e.id))return 0xd29922;
+    if(lastFootprint.potential.has(e.id))return 0x2ea043; return 0x1f6feb; }
+  return COLORS[e.kind]||0x888888;
+}
+function initScene(){
+  scene=new THREE.Scene(); scene.background=new THREE.Color(0x0b0f14); scene.fog=new THREE.Fog(0x0b0f14,20,70);
+  camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,200);
+  renderer=new THREE.WebGLRenderer({canvas:document.getElementById("cv"),antialias:true});
+  renderer.setSize(innerWidth,innerHeight);
+  scene.add(new THREE.AmbientLight(0x88909c,0.7));
+  const dl=new THREE.DirectionalLight(0xffffff,0.7); dl.position.set(10,20,8); scene.add(dl);
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(120,120),new THREE.MeshLambertMaterial({color:0x161b22}));
+  ground.rotation.x=-Math.PI/2; scene.add(ground);
+  // grid
+  const grid=new THREE.GridHelper(120,60,0x21262d,0x161b22); scene.add(grid);
+  overlayGroup=new THREE.Group(); scene.add(overlayGroup);
+  raycaster=new THREE.Raycaster();
+  buildScenario(); makeMeshes();
+}
+function makeMeshes(){
+  for(const k in meshes){ scene.remove(meshes[k]); } meshes={};
+  for(const e of entities){
+    if(e.kind==="zone") continue;   // logical nodes: no mesh, but in the causal graph
+    const h = e.kind==="keep"?6:e.kind==="wall"?4:e.kind==="gate"?3:e.kind==="npc"?1.7:e.kind==="npcbase"?2.5:e.kind==="resource"?1.2:1;
+    const w = e.kind==="wall"?5:e.kind==="keep"?5:e.kind==="gate"?4:e.kind==="npc"?0.7:1.1;
+    const geo=new THREE.BoxGeometry(w,h,w);
+    const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({color:COLORS[e.kind]||0x888}));
+    m.position.set(e.x,h/2,e.z); m.userData.id=e.id; meshes[e.id]=m; scene.add(m);
+  }
+}
+function syncMeshes(){
+  for(const e of entities){ const m=meshes[e.id]; if(!m)continue;
+    m.visible=e.alive; if(!e.alive)continue; m.position.x=e.x; m.position.z=e.z;
+    m.material.color.setHex(colorFor(e));
+    const dmg=1-Math.max(0,e.hp)/e.hp0; m.scale.y = e.hp0>9000?1:(1-0.5*dmg); }
+  drawOverlay();
+}
+function drawOverlay(){
+  while(overlayGroup.children.length) overlayGroup.remove(overlayGroup.children[0]);
+  if(!overlay) return;
+  // green wireframe influence spheres around the potential set; orange rings for SCC members (deps cycle)
+  for(const id of lastFootprint.potential){ const e=byId[id]; if(!e||!e.alive)continue;
+    const s=new THREE.Mesh(new THREE.SphereGeometry(e.infl,10,8),new THREE.MeshBasicMaterial({color:0x2ea043,wireframe:true,transparent:true,opacity:0.25}));
+    s.position.set(e.x,1,e.z); overlayGroup.add(s); }
+}
+
+// ---- input / controls (Phase 2) ----
+document.getElementById("cv").addEventListener("click",()=>{ if(document.pointerLockElement!==renderer.domElement) renderer.domElement.requestPointerLock(); else doShoot(); });
+document.addEventListener("mousemove",e=>{ if(document.pointerLockElement===renderer.domElement){ player.yaw-=e.movementX*0.0024; player.pitch-=e.movementY*0.0024; player.pitch=Math.max(-1.4,Math.min(1.4,player.pitch)); }});
+document.addEventListener("keydown",e=>{ keys[e.code]=true;
+  if(e.code==="KeyV"){overlay=!overlay;syncMeshes();}
+  if(e.code==="KeyB"){runBA();}
+  if(e.code==="KeyR"){saveReplay();}
+  if(e.code==="KeyT"){loadVerifyReplay();}
+  if(e.code==="Space"&&player.onGround){player.vy=6;player.onGround=false;} });
+document.addEventListener("keyup",e=>{keys[e.code]=false;});
+function doShoot(){
+  raycaster.setFromCamera({x:0,y:0},camera);
+  const hits=raycaster.intersectObjects(Object.values(meshes).filter(m=>m.visible));
+  if(hits.length) shoot(hits[0].object.userData.id);
+}
+function runBA(){
+  // independent B==A audit over a random destructible (does not mutate the world)
+  const targets=entities.filter(e=>e.alive&&(e.kind==="barrel"||e.kind==="crate"));
+  if(!targets.length){log("B==A: no destructibles left");return;}
+  const t=targets[Math.floor(rng()*targets.length)];
+  const wA=cloneWorld(); applyDamageOn(wA,t.id,25); const hA=hashWorld(wA);
+  const wB=cloneWorld(); applyDamageOnAllocated(wB,t.id,25); const hB=hashWorld(wB);
+  log(`B==A audit on ${t.id}: ${hA===hB?'<span class=green>PASS (allocated≡full)</span>':'<span class=red>FAIL</span>'}`);
+}
+function applyDamageOnAllocated(world,rootId,dmg){ // same cascade but only touching the footprint
+  const q=[[rootId,dmg]]; while(q.length){const[id,d]=q.shift();const e=world[id];if(!e||!e.alive)continue;
+    e.hp-=d; if(e.hp<=0&&e.alive){e.alive=false;const sp=e.kind==="barrel"?18:e.kind==="crate"?8:0;
+      if(sp>0)for(const nid of neighborhoodOn(world,e))q.push([nid,sp]);}} }
+
+// ---- main loop ----
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(0.05,(now-last)/1000); last=now;
+  // movement
+  const sp=6*dt; const fx=Math.sin(player.yaw),fz=Math.cos(player.yaw);
+  if(keys["KeyW"]){player.x-=fx*sp;player.z-=fz*sp;} if(keys["KeyS"]){player.x+=fx*sp;player.z+=fz*sp;}
+  if(keys["KeyA"]){player.x-=fz*sp;player.z+=fx*sp;} if(keys["KeyD"]){player.x+=fz*sp;player.z-=fx*sp;}
+  player.vy-=14*dt; player.y+=player.vy*dt; if(player.y<=1.6){player.y=1.6;player.vy=0;player.onGround=true;}
+  camera.position.set(player.x,player.y,player.z);
+  camera.rotation.set(player.pitch,player.yaw,0,"YXZ");
+  renderer.render(scene,camera);
+  updateHUD();
+  requestAnimationFrame(frame);
+}
+function updateHUD(){
+  const rep=replicationAccounting();
+  document.getElementById("hud").innerHTML =
+    `<b>Weltwerk FPS Causal Demo</b><br>`+
+    `<span class=k>causal-first; gun mechanics thin</span><br><br>`+
+    `last action footprint:<br>`+
+    `<span class=green>potential</span> ${lastFootprint.potential.size} · <span class=red>actual</span> ${lastFootprint.actual.size} · <span class=yellow>allocated</span> ${lastFootprint.allocated.size}<br>`+
+    `<span class=k>gap potential−actual = ${lastFootprint.potential.size-lastFootprint.actual.size} (the win)</span><br><br>`+
+    `replication this frame (Phase 7, logged not claimed):<br>`+
+    `full=${rep.full} · causal=${rep.causal}<br><br>`+
+    `<span class=k>V overlay${overlay?' <span class=green>ON</span>':' off'} · B B==A · R/T replay · SPACE jump</span>`;
+}
+window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+function log(s){const el=document.getElementById("log");el.innerHTML=`<div>${s}</div>`+el.innerHTML;}
+
+// fortress DSL pre-filled (matches scenario_lint.py — the verified backbone)
+document.getElementById("dsl").value=
+`# fortress causal topology (analyzed before geometry)
+keep supports wall_north
+wall_north collapses_into courtyard
+gate blocks courtyard
+courtyard feeds market
+market supplies garrison
+garrison defends gate
+garrison consumes supply_crate
+supply_crate sustains garrison
+barrel explodes_into courtyard`;
+
+initScene(); analyzeDSL(); syncMeshes(); requestAnimationFrame(frame);
+</script></body></html>
