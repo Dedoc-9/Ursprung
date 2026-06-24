@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: AGPL-3.0-only
+  Weltwerk World Prototype (Phase 7) — the smallest world you can walk inside.
+
+    world.wrk text → WorldSpec → CausalGraph → factions/runtime → causal events → projection (this FPS view)
+
+  The .wrk TEXT is the authority. This page is a PROJECTION + an action source. Every action goes:
+        event → causal graph lookup → affected set → runtime update → re-render.
+  Mirrors the verified Python authority weltwerk/sim/world_sim.py (parse, factions, events, reports).
+  Delete this file and the world still exists (it lives in world.wrk + the Python sim). No mesh is authority.
+
+  Controls: click view to capture mouse · WASD move · mouse look · SPACE jump (onto blocks)
+            1-5 choose event · LEFT-CLICK fire event at crosshair · E inspect · ESC release mouse
+  NOT claimed: MMO scale, UE5, networking performance, AI. This is a causal world substrate.
+-->
+<html lang="en"><head><meta charset="utf-8"><title>Weltwerk World Prototype</title>
+<style>
+ html,body{margin:0;height:100%;background:#0d1117;color:#d0d6e0;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;overflow:hidden}
+ #view{position:fixed;inset:0}
+ canvas{display:block}
+ .panel{position:fixed;background:rgba(13,17,23,.92);border:1px solid #21262d;border-radius:8px;padding:9px 11px;box-sizing:border-box}
+ #left{left:10px;top:10px;width:332px;max-height:calc(100vh - 20px);overflow:auto}
+ #right{right:10px;top:10px;width:300px;max-height:calc(100vh - 20px);overflow:auto}
+ #hint{left:50%;bottom:10px;transform:translateX(-50%);text-align:center;color:#9aa4b2}
+ h2{font-size:13px;margin:0 0 5px;color:#fff}
+ h3{font-size:11px;margin:10px 0 4px;color:#cdd3df;text-transform:uppercase;letter-spacing:.5px}
+ .k{color:#8b95a6}
+ textarea{width:100%;height:188px;background:#0b0f14;color:#cdd3df;border:1px solid #30363d;border-radius:6px;font:11px/1.4 ui-monospace,monospace;box-sizing:border-box;padding:6px}
+ button{background:#161b22;color:#d0d6e0;border:1px solid #30363d;border-radius:6px;padding:5px 9px;cursor:pointer;font:inherit;margin:4px 4px 0 0}
+ button.sel{border-color:#1f6feb;color:#fff;background:#13243f}
+ .blue{color:#1f6feb}.green{color:#2ea043}.red{color:#da3633}.gold{color:#d29922}.orange{color:#e3742f}.gray{color:#8b95a6}
+ table{width:100%;border-collapse:collapse;margin-top:3px}
+ td{padding:1px 4px;vertical-align:top} td.r{text-align:right;color:#cdd3df}
+ .bar{display:inline-block;height:8px;background:#1f6feb;border-radius:2px;vertical-align:middle}
+ .box{margin-top:6px;padding:7px 8px;background:#11161d;border:1px solid #21262d;border-radius:6px;white-space:pre-wrap}
+ .tag{display:inline-block;padding:1px 6px;border-radius:4px;border:1px solid #30363d;margin:2px 3px 0 0}
+ #cross{position:fixed;left:50%;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;border:1px solid #fff;border-radius:50%;opacity:.65;pointer-events:none}
+ .ev{font-size:11px}
+ .note{color:#6e7681;font-size:10px;margin-top:4px}
+</style></head><body>
+<div id="view"></div>
+<div id="cross"></div>
+
+<div id="left" class="panel">
+ <h2>Weltwerk · World Prototype</h2>
+ <div class="k">Edit the world. Hot-reload rebuilds it from TEXT (the authority). The 3D world is a projection.</div>
+ <textarea id="src" spellcheck="false"></textarea>
+ <div><button onclick="hotReload()">⟳ Hot reload from text</button><span class="k" id="status"></span></div>
+ <h3>Factions (structural power)</h3>
+ <div id="factions"></div>
+ <div class="note">power = alive entities controlled (causal reach in the alive graph). A model boundary, not game-balance.</div>
+ <h3>Event to fire <span class="k">(1-5)</span></h3>
+ <div id="events"></div>
+ <div class="note">LEFT-CLICK a block to fire · E to inspect · dark = destroyed (fire <b>repair</b> on it to revive if its sources are alive) · gold = damaged · contested = reachable by both factions.</div>
+</div>
+
+<div id="right" class="panel">
+ <h3>Inspector <span class="k">(E at crosshair)</span></h3>
+ <div id="inspect" class="box">— look at a block and press E —</div>
+ <h3>Last event — Potential ⊇ Actual</h3>
+ <div id="report" class="box">— no event yet —</div>
+ <h3>Replication instrumentation</h3>
+ <div id="net" class="box">— fire an event —</div>
+ <div class="note">MEASURED STRUCTURE — NOT NETWORK PERFORMANCE. No sockets, no latency, no MMO claim.</div>
+</div>
+
+<div id="hint" class="panel">click to capture mouse · WASD + mouse look · SPACE jump · 1-5 pick event · click=fire · E=inspect · ESC release</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+// ---------------------------------------------------------------------------------------------
+// AUTHORITY MIRROR of weltwerk/sim/world_sim.py — parse .wrk, build causal graph, factions, events.
+// The TEXT is the source of truth; this whole block is engine-independent (no THREE here).
+// ---------------------------------------------------------------------------------------------
+const REVERSED = new Set(["depends_on","powered_by","fed_by","sustained_by","needs"]);
+const CONTROL_RELS = new Set(["controls","owns","commands","holds","governs","claims"]);
+const RECORD_BYTES = 16, EVENT_BYTES = 8;
+const SEP = "->";  // edge-key separator: labels[src+SEP+dst] = relation
+
+function parseWorld(text){
+  const spec = {name:"world", order:[], entities:{}};
+  let cur = null;
+  for(const raw of text.split("\n")){
+    const line = raw.split("#")[0].replace(/\s+$/,"");
+    if(!line.trim()) continue;
+    const ind = line.length - line.replace(/^ +/,"").length;
+    const s = line.trim(), toks = s.split(/\s+/);
+    if(ind === 0){
+      cur = null;
+      if(toks[0] === "world"){ spec.name = s.slice(5).trim().replace(/^"|"$/g,"") || "world"; }
+      else if(toks[0] === "zone" || toks[0] === "zones:"){ /* zones are display-only here */ }
+      else if(toks[0] === "entity"){ const n = toks[1].replace(/:$/,""); cur = newEnt(n); spec.entities[n]=cur; spec.order.push(n); }
+      else if(s.endsWith(":")){ const n = s.slice(0,-1).trim(); cur = newEnt(n); spec.entities[n]=cur; spec.order.push(n); }
+    } else {
+      if(!cur) continue;
+      const [key, ...rest] = s.split(/\s+/);
+      const k = key.replace(/:$/,""), val = rest.join(" ").replace(/^:/,"").trim();
+      if(k === "zone"){ cur.zone = val; }
+      else if(k === "position"){ const p = val.split(/\s+/).map(Number); cur.pos = [p[0]||0,p[1]||0,p[2]||0]; }
+      else if(k === "health"){ cur.health = parseInt(val,10)||0; }
+      else { for(const tgt of val.split(/\s+/)) if(tgt) cur.relations.push([k, tgt]); }
+    }
+  }
+  return spec;
+}
+function newEnt(n){ return {name:n, zone:"", pos:[0,0,0], health:100, relations:[]}; }
+
+function buildGraph(spec){
+  const nodes = new Set(), edges = {}, labels = {};
+  const add = n => { if(!nodes.has(n)){ nodes.add(n); edges[n] = new Set(); } };
+  for(const n of spec.order) add(n);
+  for(const n of spec.order){
+    for(const [rel,tgt] of spec.entities[n].relations){
+      add(tgt);
+      if(REVERSED.has(rel)){ edges[tgt].add(n); labels[tgt+SEP+n]=rel; }   // target affects entity
+      else { edges[n].add(tgt); labels[n+SEP+tgt]=rel; }                    // entity affects target
+    }
+  }
+  return {nodes, edges, labels};
+}
+function reachGe1(g, start){
+  const seen = new Set(); const st = [...(g.edges[start]||[])];
+  while(st.length){ const x = st.pop(); if(!seen.has(x)){ seen.add(x); for(const d of (g.edges[x]||[])) st.push(d); } }
+  return seen;
+}
+function sccMembers(g){
+  const reach = s => { const seen=new Set(); const st=[...(g.edges[s]||[])]; while(st.length){const x=st.pop(); if(!seen.has(x)){seen.add(x); for(const d of (g.edges[x]||[])) st.push(d);}} return seen; };
+  const cache = {}; const R = n => (cache[n] || (cache[n]=reach(n)));
+  const mem = new Set();
+  for(const n of g.nodes){ for(const m of R(n)){ if(m!==n && R(m).has(n)){ mem.add(n); mem.add(m); } } }
+  return mem;
+}
+
+class WorldSim{
+  constructor(text){
+    this.spec = parseWorld(text);
+    this.g = buildGraph(this.spec);
+    this.runtime = {};
+    for(const n of this.g.nodes){
+      const h = this.spec.entities[n] ? this.spec.entities[n].health : 100;
+      this.runtime[n] = {alive:true, status:"ok", health:h, max:h};
+    }
+    this.captured = {};
+    this.events = [];
+    this.scc = sccMembers(this.g);
+    this.factions = [];
+    for(const key in this.g.labels){ if(CONTROL_RELS.has(this.g.labels[key])) this.factions.push(key.split(SEP)[0]); }
+    this.factions = [...new Set(this.factions)].sort();
+  }
+  pos(n){ return this.spec.entities[n] ? this.spec.entities[n].pos : [0,0,0]; }
+  aliveReach(start){
+    if(!this.runtime[start] || !this.runtime[start].alive) return new Set();
+    const seen = new Set(); const st = [start];
+    while(st.length){ const x = st.pop(); for(const d of (this.g.edges[x]||[])){ if(!seen.has(d) && this.runtime[d].alive){ seen.add(d); st.push(d); } } }
+    return seen;
+  }
+  controller(e){
+    if(this.factions.includes(e)) return e;
+    if(!this.runtime[e].alive) return "neutral";
+    if(this.captured[e] && this.runtime[this.captured[e]] && this.runtime[this.captured[e]].alive) return this.captured[e];
+    const reaching = this.factions.filter(f => this.aliveReach(f).has(e));
+    if(reaching.length === 1) return reaching[0];
+    if(reaching.length > 1) return "contested";
+    return "neutral";
+  }
+  factionPower(f){
+    let c = 0;
+    for(const e of this.g.nodes) if(!this.factions.includes(e) && this.runtime[e].alive && this.controller(e)===f) c++;
+    return c;
+  }
+  stateVec(){
+    const v = {};
+    for(const e of this.g.nodes){ const r = this.runtime[e]; v[e] = r.alive+"|"+r.status+"|"+r.health+"|"+this.controller(e); }
+    return v;
+  }
+  kill(target){
+    const r = this.runtime[target]; r.alive=false; r.status="destroyed"; r.health=0;
+    for(const d of reachGe1(this.g, target)){ if(this.runtime[d].alive && this.runtime[d].status==="ok") this.runtime[d].status="disabled"; }
+  }
+  upstreamAlive(e){
+    for(const s of this.g.nodes){ if(s!==e && reachGe1(this.g,s).has(e) && !this.runtime[s].alive) return false; }
+    return true;
+  }
+  applyEvent(kind, target, amount, faction){
+    amount = amount||0;
+    const before = this.stateVec();
+    const potential = new Set([target, ...reachGe1(this.g, target)]);
+    const r = this.runtime[target];
+    if(kind==="destroy"){ this.kill(target); }
+    else if(kind==="damage"){ if(r.alive){ r.health=Math.max(0,r.health-Math.max(0,amount)); if(r.health===0) this.kill(target); else if(r.status==="ok") r.status="damaged"; } }
+    else if(kind==="repair"){
+      if(r.alive){ r.health=Math.min(r.max,r.health+Math.max(0,amount)); if(this.upstreamAlive(target)) r.status="ok"; }
+      else if(this.upstreamAlive(target)){ r.alive=true; r.health=r.max; r.status="ok"; }   // revive if its sources are alive
+    }
+    else if(kind==="capture" || kind==="transfer"){ this.captured[target]=faction; }
+    const after = this.stateVec();
+    const affected = [...this.g.nodes].filter(e => before[e]!==after[e]).sort();
+    const lbl = kind+" "+target+(amount?(" "+amount):"")+(faction?(" -> "+faction):"");
+    this.events.push(lbl);
+    const all = [...this.g.nodes];
+    return {event:lbl, potential:[...potential].sort(), affected,
+            unchanged: all.filter(e=>!affected.includes(e)).sort(),
+            nPot:potential.size, nAct:affected.length, nUnch: all.length-affected.length};
+  }
+  inspect(e){
+    const dependsOn = [...this.g.nodes].filter(s => (this.g.edges[s]||new Set()).has(e)).sort();
+    return {entity:e, role: this.factions.includes(e)?"faction":(reachGe1(this.g,e).size?"hub":"leaf"),
+            dependsOn, affects:[...reachGe1(this.g,e)].sort(), blast:reachGe1(this.g,e).size,
+            controller:this.controller(e), state:this.runtime[e].status, alive:this.runtime[e].alive, health:this.runtime[e].health};
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
+// PROJECTION (THREE.js). Pure read of the sim — never writes runtime except via sim.applyEvent.
+// ---------------------------------------------------------------------------------------------
+const DEFAULT_WORLD = `world "Frontier_Prototype"
+zone north
+zone south
+zone contested
+
+entity faction_red:
+  position -12 1 -10
+  controls reactor
+  claims resource_node
+entity faction_blue:
+  position 12 1 10
+  controls market
+  claims resource_node
+
+entity reactor:
+  position -8 1 -6
+  health 100
+  powers defense_grid
+entity defense_grid:
+  position -4 1 -2
+  health 80
+  protects north_territory
+entity north_territory:
+  position -7 1 4
+  health 50
+
+entity market:
+  position 8 1 6
+  health 100
+  supplies garrison
+entity garrison:
+  position 4 1 2
+  health 80
+  defends south_territory
+entity south_territory:
+  position 7 1 -4
+  health 50
+
+entity resource_node:
+  position 0 1 0
+  health 60
+`;
+
+const EVENT_KINDS = ["destroy","damage","capture","transfer","repair"];
+let sim, chosenEvent = "destroy";
+let scene, camera, renderer, raycaster, meshes = {}, ground;
+const keys = {};
+const player = {pos:new THREE.Vector3(0,2.6,18), vy:0, yaw:Math.PI, pitch:-0.15, onGround:false};
+const FAC_PALETTE = ["#da3633","#1f6feb","#2ea043","#d29922"];
+let facColor = {};
+
+function colorFor(e){
+  if(!sim.runtime[e.id] || !e.alive) return "#3a3f46";          // destroyed: dark, still visible (clickable)
+  if(e.status==="disabled") return "#5a5f66";                    // alive but powered-down (downstream of a death)
+  if(e.status==="damaged") return "#caa233";                     // alive, hurt — repairable
+  if(sim.factions.includes(e.id)) return facColor[e.id] || "#8b949e";
+  const c = sim.controller(e.id);
+  if(c==="contested") return "#e3742f";
+  if(c==="neutral") return "#8b949e";
+  return facColor[c] || "#8b949e";
+}
+
+function buildScene(){
+  meshes = {};
+  while(scene.children.length) scene.remove(scene.children[0]);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.62));
+  const dir = new THREE.DirectionalLight(0xffffff, 0.7); dir.position.set(8,18,6); scene.add(dir);
+  ground = new THREE.Mesh(new THREE.PlaneGeometry(120,120), new THREE.MeshLambertMaterial({color:0x161b22}));
+  ground.rotation.x = -Math.PI/2; scene.add(ground);
+  const grid = new THREE.GridHelper(120, 60, 0x30363d, 0x21262d); scene.add(grid);
+  facColor = {}; sim.factions.forEach((f,i)=> facColor[f] = FAC_PALETTE[i%FAC_PALETTE.length]);
+  for(const n of sim.spec.order){
+    const p = sim.pos(n);
+    const isFac = sim.factions.includes(n);
+    const sz = isFac ? 2.2 : 1.8;
+    const geo = new THREE.BoxGeometry(sz, sz, sz);
+    const mat = new THREE.MeshLambertMaterial({color: 0x888888});
+    const m = new THREE.Mesh(geo, mat);
+    // sit the block ON the ground (authored x,z used; y grounded so nothing floats)
+    m.position.set(p[0], sz/2, p[2]); m.userData = {id:n, half:sz/2};
+    scene.add(m); meshes[n] = m;
+  }
+  refreshColors();
+}
+function refreshColors(){
+  for(const n in meshes){
+    const r = sim.runtime[n], m = meshes[n];
+    m.visible = true;                                  // destroyed blocks stay visible (dark) so you can repair them
+    m.material.color.set(colorFor({id:n, alive:r.alive, status:r.status}));
+    m.scale.set(1, r.alive ? 1 : 0.5, 1);              // dead = squashed rubble (visual cue)
+    m.position.y = m.userData.half * (r.alive ? 1 : 0.5);
+  }
+}
+
+// ---- pointer lock + controls ----
+function initControls(){
+  const dom = renderer.domElement;
+  dom.addEventListener("click", ()=>{ if(document.pointerLockElement!==dom){ dom.requestPointerLock(); } else { fireAtCrosshair(); } });
+  document.addEventListener("mousemove", e=>{ if(document.pointerLockElement===dom){ player.yaw -= e.movementX*0.0024; player.pitch -= e.movementY*0.0024; player.pitch = Math.max(-1.4, Math.min(1.4, player.pitch)); } });
+  document.addEventListener("keydown", e=>{
+    keys[e.code] = true;
+    if(document.pointerLockElement!==dom) return;
+    if(e.code==="KeyE"){ inspectAtCrosshair(); }
+    const n = ({Digit1:0,Digit2:1,Digit3:2,Digit4:3,Digit5:4})[e.code];
+    if(n!==undefined){ chosenEvent = EVENT_KINDS[n]; renderEventButtons(); }
+  });
+  document.addEventListener("keyup", e=>{ keys[e.code]=false; });
+}
+function camDir(){ return new THREE.Vector3(Math.sin(player.yaw)*Math.cos(player.pitch), Math.sin(player.pitch), Math.cos(player.yaw)*Math.cos(player.pitch)); }
+
+const EYE = 1.6, RAD = 0.4;   // eye height above feet; player horizontal radius
+// blocked at candidate eye-pos c, UNLESS the player's feet are at/above the block top (standing on it)
+function blockedAt(c){
+  const feet = c.y - EYE;
+  for(const n in meshes){ const m = meshes[n]; if(!m.visible) continue;
+    const half = m.userData.half * (sim.runtime[n].alive ? 1 : 0.5);
+    const top = m.position.y + half;
+    if(feet >= top - 0.05) continue;                                  // above the block ⇒ may walk on it
+    if(Math.abs(c.x-m.position.x) < half+RAD && Math.abs(c.z-m.position.z) < half+RAD) return true;
+  }
+  return false;
+}
+// highest surface (feet-space) directly under the player; only blocks the feet are at/above can support
+function supportFloor(){
+  const feet = player.pos.y - EYE;
+  let s = 0;
+  for(const n in meshes){ const m = meshes[n]; if(!m.visible) continue;
+    const half = m.userData.half * (sim.runtime[n].alive ? 1 : 0.5);
+    const top = m.position.y + half;
+    if(Math.abs(player.pos.x-m.position.x) < half+RAD && Math.abs(player.pos.z-m.position.z) < half+RAD && feet >= top - 0.45)
+      s = Math.max(s, top);
+  }
+  return s;
+}
+function step(dt){
+  const speed = 13*dt;
+  const fwd = new THREE.Vector3(Math.sin(player.yaw), 0, Math.cos(player.yaw));
+  const rt  = new THREE.Vector3(Math.sin(player.yaw - Math.PI/2), 0, Math.cos(player.yaw - Math.PI/2)); // screen-right
+  const move = new THREE.Vector3();
+  if(keys["KeyW"]) move.add(fwd); if(keys["KeyS"]) move.sub(fwd);
+  if(keys["KeyD"]) move.add(rt);  if(keys["KeyA"]) move.sub(rt);
+  if(move.lengthSq() > 0){ move.normalize().multiplyScalar(speed);
+    let c = player.pos.clone(); c.x += move.x; if(!blockedAt(c)) player.pos.x = c.x;
+    c = player.pos.clone();     c.z += move.z; if(!blockedAt(c)) player.pos.z = c.z;
+  }
+  player.vy -= 26*dt; player.pos.y += player.vy*dt;
+  const eyeFloor = supportFloor() + EYE;                              // ground (0) or a block top, + eye height
+  if(player.pos.y <= eyeFloor){ player.pos.y = eyeFloor; player.vy = 0; player.onGround = true; }
+  else player.onGround = false;
+  if(keys["Space"] && player.onGround){ player.vy = 11; player.onGround = false; }   // clears block tops (~2.3 high)
+  camera.position.copy(player.pos);
+  camera.lookAt(player.pos.clone().add(camDir()));
+}
+
+function pick(){
+  raycaster.setFromCamera({x:0,y:0}, camera);
+  const hits = raycaster.intersectObjects(Object.values(meshes).filter(m=>m.visible));
+  return hits.length ? hits[0].object.userData.id : null;
+}
+function fireAtCrosshair(){
+  const id = pick(); if(!id) return;
+  let faction = "", amount = 0;
+  if(chosenEvent==="damage") amount = 40;
+  if(chosenEvent==="repair") amount = 40;
+  if(chosenEvent==="capture"||chosenEvent==="transfer"){ faction = sim.factions[0] || ""; if(!faction) return; }
+  const rep = sim.applyEvent(chosenEvent, id, amount, faction);
+  refreshColors(); renderFactions(); renderReport(rep); renderNet(rep);
+}
+function inspectAtCrosshair(){ const id = pick(); if(id) renderInspect(sim.inspect(id)); }
+
+// ---- HTML panels ----
+function renderFactions(){
+  const el = document.getElementById("factions");
+  if(!sim.factions.length){ el.innerHTML = '<span class="k">no factions (no controls/owns/claims relations)</span>'; return; }
+  const max = Math.max(1, ...sim.factions.map(f=>sim.factionPower(f)));
+  el.innerHTML = '<table>' + sim.factions.map((f,i)=>{
+    const p = sim.factionPower(f), w = Math.round(p/max*120);
+    const col = FAC_PALETTE[i%FAC_PALETTE.length];
+    return `<tr><td style="color:${col}">${f}</td><td class="r">${p}</td><td><span class="bar" style="width:${w}px;background:${col}"></span></td></tr>`;
+  }).join("") + '</table>';
+  const rn = sim.controller("resource_node");
+  if(sim.runtime["resource_node"]) el.innerHTML += `<div class="k" style="margin-top:4px">resource_node: <b class="${rn==='contested'?'orange':'gray'}">${rn}</b></div>`;
+}
+function renderEventButtons(){
+  document.getElementById("events").innerHTML = EVENT_KINDS.map((k,i)=>
+    `<button class="${k===chosenEvent?'sel':''}" onclick="chosenEvent='${k}';renderEventButtons()">${i+1} ${k}</button>`).join("");
+}
+function renderInspect(o){
+  document.getElementById("inspect").innerHTML =
+    `<b>ENTITY</b> ${o.entity}\nCAUSAL ROLE  ${o.role}\nCONTROLLER   ${o.controller}\nSTATE        ${o.state} (hp ${o.health}${o.alive?'':' · DEAD'})\nDEPENDS ON   ${o.dependsOn.join(", ")||"—"}\nAFFECTS      ${o.affects.join(", ")||"—"}\nBLAST RADIUS ${o.blast} of ${sim.g.nodes.size}`;
+}
+function renderReport(r){
+  const tag = (arr,cls)=> arr.length? arr.map(x=>`<span class="tag ${cls}">${x}</span>`).join("") : '<span class="k">none</span>';
+  document.getElementById("report").innerHTML =
+    `<div class="ev"><b>${r.event}</b></div>`+
+    `<div style="margin-top:4px"><span class="k">POTENTIAL (could affect, ${r.nPot})</span><br>${tag(r.potential,"gray")}</div>`+
+    `<div style="margin-top:4px"><span class="red">ACTUAL (did affect, ${r.nAct})</span><br>${tag(r.affected,"red")}</div>`+
+    `<div style="margin-top:4px"><span class="green">UNCHANGED (${r.nUnch})</span> — Potential ⊇ Actual</div>`;
+}
+function renderNet(r){
+  const naive = r.nAct*RECORD_BYTES, causal = EVENT_BYTES;
+  document.getElementById("net").innerHTML =
+    `NAIVE   send ${r.nAct} changed record(s)   = ${naive} B\n`+
+    `CAUSAL  send 1 event, client re-derives  = ${causal} B\n`+
+    `entities touched: ${r.nAct}   reconstruct ops: ${r.nAct}`;
+}
+
+function hotReload(){
+  try{
+    sim = new WorldSim(document.getElementById("src").value);
+    buildScene(); renderFactions(); renderEventButtons();
+    document.getElementById("report").textContent = "— world rebuilt from text (authority) —";
+    document.getElementById("status").textContent = "  ✓ " + sim.spec.name + " · " + sim.g.nodes.size + " entities";
+  }catch(err){ document.getElementById("status").textContent = "  ✗ " + err.message; }
+}
+
+function init(){
+  scene = new THREE.Scene(); scene.background = new THREE.Color(0x0d1117);
+  scene.fog = new THREE.Fog(0x0d1117, 30, 90);
+  camera = new THREE.PerspectiveCamera(72, innerWidth/innerHeight, 0.1, 400);
+  renderer = new THREE.WebGLRenderer({antialias:true});
+  renderer.setSize(innerWidth, innerHeight); renderer.setPixelRatio(Math.min(2,devicePixelRatio));
+  document.getElementById("view").appendChild(renderer.domElement);
+  raycaster = new THREE.Raycaster();
+  addEventListener("resize", ()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
+  document.getElementById("src").value = DEFAULT_WORLD;
+  sim = new WorldSim(DEFAULT_WORLD);
+  buildScene(); initControls(); renderFactions(); renderEventButtons();
+  document.getElementById("status").textContent = "  ✓ " + sim.spec.name + " · " + sim.g.nodes.size + " entities";
+  let last = performance.now();
+  (function loop(now){ const dt = Math.min(0.05,(now-last)/1000); last = now; step(dt); renderer.render(scene,camera); requestAnimationFrame(loop); })(last);
+}
+init();
+</script>
+</body></html>
