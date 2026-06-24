@@ -69,6 +69,45 @@ status as a first-class visual:
 So a developer can literally *see* "this is a model boundary, not reality." That is the
 Arbitrary-Boundary Law made visible.
 
+## The replaceable lens — and the two products
+
+Because the renderer is honestly **downstream**, graphics are decoupled from existence. You can rip out
+the reference rasterizer and swap in an un-optimized debug wireframe, a high-fidelity Vulkan path-tracer
+running on an ASUS ROG Ally X, or a pure text stream for an AI agent. **The world does not care.** It
+persists beneath the lens because its integrity is maintained by the **runtime, not the viewport** —
+`observation ≠ authority`, machine-checked at the boundary (`render/geometry_boundary.py`: rendering
+cannot change the authority hash; delete any renderer and the world remains).
+
+That boundary splits the system into two products over one source of truth (`world.wrk` + the causal graph):
+
+- **Product A — the World Author.** Authors the *topology*: `.wrk` text → `WorldSpec` → `CausalGraph`,
+  with round-trip-stable serialization, design lint/health, and a pre-play validation gate. Topology is
+  cheap to change, geometry expensive — so the topology is the durable artifact and meshes are a
+  regenerable projection.
+- **Product B — the World Profiler.** Tracks and profiles the *living state*: a deterministic simulation
+  authority (events, graph-derived factions/territory), honest replication instrumentation, and the
+  consequence **diff** that turns an edit into "what got safer, what got riskier, what became more
+  coupled." *Git + Compiler + Profiler for living worlds.*
+
+### The `.wrk` authoring → studio → sim → diff line (built, PowerShell-verified)
+
+| File | Product | What it is | Grade |
+|---|---|---|---|
+| `authoring/world_format.py` | A | `.wrk` → WorldSpec → CausalGraph → Spatial → Runtime; deterministic round-trip serialize | MEASURED (round-trip) |
+| `authoring/world_design.py` | A | design warnings, failure cascade, regime (coupling), timeline, health report | MEASURED |
+| `authoring/world_validate.py` | A | pre-play gate: BLOCK undeclared feedback loops · WARN coupling · INFO compression | MEASURED (6/6) |
+| `authoring/world_diff.py` | B | consequence diff: SPOF / blast / loops / regime deltas + resilience verdict (heuristic) | MEASURED (7/7) |
+| `net/causal_net.py` · `net/causal_metrics.py` | B | naive ≡ causal replication equivalence; deterministic cost instrumentation | MEASURED (5/5) |
+| `render/geometry_boundary.py` | — | CausalWorld → GeometryAdapter → Renderer; proves render can't mutate authority | MEASURED (7/7) |
+| `sim/world_sim.py` | B | simulation authority: event vocabulary + graph-derived factions / territory | MEASURED (8/8) |
+| `fps_demo/weltwerk_studio.html` | A | 3-pane World Studio IDE (editor / 3D / inspector + validation gate) | IMPLEMENTED |
+| `fps_demo/weltwerk_world_prototype.html` | B | playable FPS slice; Potential/Actual readout, two-faction contest, hot reload | IMPLEMENTED |
+
+Next on this line (dependency-ordered): **live-edit** (= continuous `world_diff` + re-derive, view held)
+→ **runtime questions** (diff + sim trace: "why did blue lose territory?"). Both attach to the same
+authority; neither introduces a second source of truth. NOT claimed: MMO / UE5 / networking performance /
+latency / AI.
+
 ## What this slice contains (Phase 1 — built, **awaiting first run**)
 
 | File | What it is | Maturity | Evidence |
