@@ -114,6 +114,38 @@ Run (PowerShell, folder-directed; `PYTHONHASHSEED=0` for the determinism guarant
 cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk"; $env:PYTHONHASHSEED="0"; python test_weltwerk.py; python fork.py
 ```
 
+### Scaling probe (`scale/`) — does fork-and-observe survive a 1000× larger world?
+
+The kernel is scale-agnostic in *concept*; the unproven claim is **cost**. `scale/` is a contained
+experiment that separates two cost claims so they can't be conflated:
+
+- **Fork is O(1)** — copy-on-write: a fork shares an immutable base, empty overlay. (Measured.)
+- **A counterfactual costs only its blast radius** — you pay `O(N·H)` *once* for the authoritative
+  line A (reality is not free); the edit reuses A for every chunk it doesn't touch and re-simulates
+  only the dirty region: `O(dirty·H)`, not a second `O(N·H)`.
+
+The load-bearing finding: **locality of effect requires locality of randomness.** A single global RNG
+couples every chunk, so a local edit desyncs the whole world and the dirty set explodes to N. With a
+**positional** stream `seed(s, chunk, tick)` and chunk-local rules, the dirty set stays constant; the
+bench shows a local counterfactual's marginal cost ~flat while N grows 256×. **Boundary, reported not
+hidden:** cross-chunk coupling grows the dirty set as a light-cone, and a *global* edit erases the win
+entirely (measured). The crux safety net (`test_cow.py`): the by-difference reconstruction is
+byte-identical to a full honest simulation of the edited world — the cheaper mechanism may not change
+the answer.
+
+| File | What it is | Maturity | Evidence |
+|---|---|---|---|
+| `scale/cow_world.py` | chunked world, positional RNG, counterfactual-by-difference (reuse A for clean chunks) | IMPLEMENTED | verified (test_cow 6/6) |
+| `scale/test_cow.py` | crux: by-difference B == full honest sim (byte-identical) · O(1) fork · locality · global boundary · determinism | IMPLEMENTED | verified 6/6 |
+| `scale/scale_bench.py` | marginal cost of a local counterfactual as N grows 1000× (deterministic op-counts) | IMPLEMENTED | measured: cf flat ~800 steps, cf/naive 4%→0.02% over N=1k→256k |
+
+Not shown by this probe (still open): line A is still `O(N·H)`; no rendering, no network, no client
+prediction. `fork-cheap ≠ simulation-cheap`.
+
+```powershell
+cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\scale"; $env:PYTHONHASHSEED="0"; python test_cow.py; python scale_bench.py
+```
+
 ## Genealogy — this composes verified pieces, it does not reinvent them
 
 - **commit/speculative/recovery discipline** ← `experiments/live_world_kernel/live_world_kernel.py`
