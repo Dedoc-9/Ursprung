@@ -310,6 +310,31 @@ floods the triangle). The gap between green and red *is* the economic win, made 
 cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\view"; $env:PYTHONHASHSEED="0"; python test_causal_field.py; python causal_field.py
 ```
 
+### Authoring (`authoring/`) — text → causal topology, before geometry
+
+The thesis the project earned: work on a world's *causal structure* first; geometry and art are a later
+projection. `world_spec.py` parses a declarative DSL (`<src> <relation> <dst>` = a directed "can-affect"
+edge — e.g. `wall collapses_into courtyard`) into a named causal graph, then *measures* it: per-entity
+**Potential influence** (reflexive reachability = blast radius — the same `(I∨A)*` closure as
+`reachability_algebra`, over entities instead of chunks) and **feedback-cycle detection** (a structural
+amplification *risk* flag). `topology_view.py` renders it as a node-link wireframe: click an entity →
+green influence set; feedback loops outlined orange; panel shows blast radius + DAG/cycle regime.
+
+Honest: the spec is a **declared authoring input** (untrusted until measured); a cycle is an amplification
+**risk**, not a measured λ>0 (`structural-cycle ≠ measured-amplification` — confirm with `amplify.py`);
+**geometry is downstream** and not produced here. Topology is cheap to change, geometry expensive — so the
+causal topology is the durable artifact, meshes a regenerable projection.
+
+| File | What it is | Maturity | Evidence |
+|---|---|---|---|
+| `authoring/world_spec.py` | text DSL → causal graph; measured Potential blast radius + cycle-risk | IMPLEMENTED | awaiting run |
+| `authoring/test_world_spec.py` | parse exact · reachability == transitive closure · cycle detection · determinism | IMPLEMENTED | awaiting run |
+| `authoring/topology_view.py` | causal-topology wireframe (entities, edges, influence highlight) → HTML | IMPLEMENTED | awaiting run |
+
+```powershell
+cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\authoring"; $env:PYTHONHASHSEED="0"; python test_world_spec.py; python world_spec.py; python topology_view.py
+```
+
 ## Genealogy — this composes verified pieces, it does not reinvent them
 
 - **commit/speculative/recovery discipline** ← `experiments/live_world_kernel/live_world_kernel.py`
