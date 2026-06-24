@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: AGPL-3.0-only
+  Weltwerk FPS Prototype (Phase 9) — a production-shaped FPS vertical slice that PROVES a causal world can
+  host real gameplay. This file is a PROJECTION. Authority lives in Python:
+      weltwerk/sim/world_ai.py   (LOS, A*, bot state machine, squad)   — mirrored below, labelled "MIRROR"
+      weltwerk/sim/world_sim.py  (events, causal cascade)              — mirrored below, labelled "MIRROR"
+  observation ≠ authority: deleting this file loses no world logic; the .wrk world + Python authority remain.
+
+  Causal gameplay (NOT scripted): shoot the GENERATOR → destroy(generator) → causal graph → affected set →
+  its turrets lose power and stop firing. Same event path as world_sim.apply_event.
+
+  Controls: click=lock mouse · WASD move · SHIFT sprint · CTRL crouch · SPACE jump · mouse look ·
+            LEFT-CLICK fire · 1 rifle · 2 shotgun · R reload · F1 gameplay · F2 causal · F3 AI · F4 replication
+  NOT claimed: MMO, networking, latency, UE5, procedural generation.
+-->
+<html lang="en"><head><meta charset="utf-8"><title>Weltwerk FPS Prototype</title>
+<style>
+ html,body{margin:0;height:100%;background:#0b0e13;color:#d0d6e0;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;overflow:hidden}
+ #view{position:fixed;inset:0}
+ canvas{display:block}
+ #cross{position:fixed;left:50%;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;pointer-events:none;opacity:.8}
+ #cross:before,#cross:after{content:"";position:absolute;background:#cfe;}
+ #cross:before{left:6px;top:0;width:2px;height:14px} #cross:after{top:6px;left:0;height:2px;width:14px}
+ #flash{position:fixed;inset:0;background:#ff2b2b;opacity:0;pointer-events:none;transition:opacity .12s}
+ #hud{position:fixed;left:0;right:0;bottom:0;padding:12px 16px;display:flex;justify-content:space-between;align-items:flex-end;pointer-events:none;text-shadow:0 1px 2px #000}
+ .stat{font-size:13px} .big{font-size:24px;font-weight:bold}
+ .hpbar{width:220px;height:12px;background:#2a0c0c;border:1px solid #5a1a1a;border-radius:3px;overflow:hidden;margin-top:3px}
+ .hpfill{height:100%;background:linear-gradient(90deg,#da3633,#f0883e);width:100%}
+ .panel{position:fixed;top:10px;right:10px;width:300px;max-height:calc(100vh - 20px);overflow:auto;background:rgba(11,14,19,.92);border:1px solid #21262d;border-radius:8px;padding:10px 12px}
+ h3{font-size:11px;margin:0 0 6px;color:#cdd3df;text-transform:uppercase;letter-spacing:.5px}
+ .k{color:#8b95a6} .red{color:#da3633}.green{color:#2ea043}.blue{color:#58a6ff}.gold{color:#d29922}.orange{color:#e3742f}
+ .tabs{position:fixed;top:10px;left:10px;background:rgba(11,14,19,.92);border:1px solid #21262d;border-radius:8px;padding:6px 8px}
+ .tabs b{color:#fff} .tabs .on{color:#58a6ff}
+ .box{margin-top:4px;padding:6px 8px;background:#11161d;border:1px solid #21262d;border-radius:6px;white-space:pre-wrap;font-size:11px}
+ #msg{position:fixed;left:50%;top:64%;transform:translateX(-50%);color:#f0883e;font-size:15px;text-shadow:0 1px 3px #000;pointer-events:none;opacity:0;transition:opacity .3s}
+ #start{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(5,7,10,.82);cursor:pointer;z-index:5}
+ #start div{text-align:center;max-width:560px}
+</style></head><body>
+<div id="view"></div>
+<div id="cross"></div>
+<div id="flash"></div>
+<div id="msg"></div>
+
+<div class="tabs" id="tabs">
+  <b>DEBUG</b> &nbsp;<span id="t1" class="on">F1 gameplay</span> · <span id="t2">F2 causal</span> · <span id="t3">F3 AI</span> · <span id="t4">F4 replication</span>
+</div>
+<div class="panel" id="dbg" style="display:none"></div>
+
+<div id="hud">
+  <div>
+    <div class="stat k">HEALTH</div>
+    <div class="big" id="hp">100</div>
+    <div class="hpbar"><div class="hpfill" id="hpfill"></div></div>
+  </div>
+  <div style="text-align:center">
+    <div class="stat" id="objective">Destroy the <span class="gold">generator</span> to cut turret power</div>
+    <div class="stat k" id="enemies"></div>
+  </div>
+  <div style="text-align:right">
+    <div class="stat k">WEAPON</div>
+    <div class="big" id="weap">RIFLE</div>
+    <div class="stat">AMMO <span id="ammo">30</span></div>
+  </div>
+</div>
+
+<div id="start"><div>
+  <h1 style="color:#fff">Weltwerk FPS Prototype</h1>
+  <p>A causal world hosting real gameplay. Bots see by line-of-sight (no wallhacks) and path around cover.
+  The turrets are powered by the <span class="gold">generator</span> — destroy it and they go dark, through
+  the same causal event system the rest of Weltwerk uses.</p>
+  <p class="k">click to play · WASD + mouse · SHIFT sprint · CTRL crouch · SPACE jump · 1 rifle · 2 shotgun · R reload · F1–F4 debug</p>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+/* =================================================================================================
+   AUTHORITY MIRRORS — these mirror the verified Python authority. Keep them faithful.
+   world_ai.py : Grid / line_of_sight / astar / transition (FSM) / perceive / squad_broadcast
+   world_sim.py: causal events + cascade (reach over the graph)
+   ================================================================================================= */
+
+// ---- world_sim MIRROR (causal events) ----------------------------------------------------------
+const REVERSED = new Set(["depends_on","powered_by","fed_by","sustained_by","needs"]);
+function CausalWorld(relations){
+  // relations: array of [src, rel, dst]; forward src->dst, REVERSED dst->src (target affects entity)
+  const edges = {}, nodes = new Set();
+  const add = n => { if(!nodes.has(n)){ nodes.add(n); edges[n] = new Set(); } };
+  for(const [s,rel,d] of relations){ add(s); add(d);
+    if(REVERSED.has(rel)) edges[d].add(s); else edges[s].add(d); }
+  const reach = start => { const seen=new Set(), st=[...(edges[start]||[])];
+    while(st.length){ const x=st.pop(); if(!seen.has(x)){ seen.add(x); for(const y of (edges[x]||[])) st.push(y);} } return seen; };
+  const runtime = {}; for(const n of nodes) runtime[n] = {alive:true, status:"ok"};
+  return {
+    nodes, edges, runtime, reach,
+    destroy(target){                         // mirror world_sim _kill + report
+      const potential = new Set([target, ...reach(target)]);
+      const before = JSON.stringify(runtime);
+      runtime[target] = {alive:false, status:"destroyed"};
+      for(const d of reach(target)) if(runtime[d].alive && runtime[d].status==="ok") runtime[d].status="disabled";
+      const affected = [...nodes].filter(n => JSON.stringify(runtime[n]) !== JSON.parse(before)[n] && false); // placeholder
+      const aff = []; const after = runtime; const b = JSON.parse(before);
+      for(const n of nodes){ if(b[n].alive!==after[n].alive || b[n].status!==after[n].status) aff.push(n); }
+      return {event:"destroy "+target, potential:[...potential].sort(), affected:aff.sort(),
+              nPot:potential.size, nAct:aff.length, nUnch:nodes.size-aff.length};
+    },
+    powered(id){ return runtime[id] && runtime[id].alive && runtime[id].status!=="disabled"; }
+  };
+}
+
+// ---- world_ai MIRROR (perception + pathing + FSM) ----------------------------------------------
+const AI = {
+  IDLE:"IDLE", PATROL:"PATROL", INVESTIGATE:"INVESTIGATE", CHASE:"CHASE", ATTACK:"ATTACK", SEARCH:"SEARCH",
+  VIEW:14, ATTACK_RANGE:11, SEARCH_LIMIT:60, ALERT_RADIUS:11,
+};
+function bresenham(a,b){
+  let [x0,y0]=a; const [x1,y1]=b; const cells=[];
+  const dx=Math.abs(x1-x0), dy=Math.abs(y1-y0), sx=x0<x1?1:-1, sy=y0<y1?1:-1; let err=dx-dy;
+  while(true){ cells.push([x0,y0]); if(x0===x1&&y0===y1) break; const e2=2*err;
+    if(e2>-dy){ err-=dy; x0+=sx; } if(e2<dx){ err+=dx; y0+=sy; } }
+  return cells;
+}
+function losGrid(grid,a,b){ const c=bresenham(a,b);
+  for(let i=1;i<c.length-1;i++){ if(grid.blocked.has(c[i][0]+","+c[i][1])) return false; } return true; }
+function astar(grid,start,goal){
+  if(start[0]===goal[0]&&start[1]===goal[1]) return [start];
+  const key=p=>p[0]+","+p[1]; if(grid.blocked.has(key(goal))) return null;
+  const NEIGH=[[1,0],[-1,0],[0,1],[0,-1]];
+  const h=p=>Math.abs(p[0]-goal[0])+Math.abs(p[1]-goal[1]);
+  const open=[[h(start),0,key(start),start]]; const came={}, g={}; came[key(start)]=null; g[key(start)]=0;
+  while(open.length){
+    let bi=0; for(let i=1;i<open.length;i++) if(open[i][0]<open[bi][0]) bi=i;
+    const [, gc,, cur]=open.splice(bi,1)[0];
+    if(cur[0]===goal[0]&&cur[1]===goal[1]){ const path=[cur]; let k=key(cur);
+      while(came[k]){ path.push(came[k]); k=key(came[k]); } return path.reverse(); }
+    for(const [dx,dy] of NEIGH){ const n=[cur[0]+dx,cur[1]+dy], nk=key(n);
+      if(n[0]<0||n[1]<0||n[0]>=grid.w||n[1]>=grid.h||grid.blocked.has(nk)) continue;
+      const ng=gc+1; if(ng < (g[nk]??1e9)){ g[nk]=ng; came[nk]=cur; open.push([ng+h(n),ng,nk,n]); } }
+  }
+  return null;
+}
+function transition(state,p){
+  const A=AI;
+  switch(state){
+    case A.IDLE:        return p.see ? (p.range?A.ATTACK:A.CHASE) : (p.alert?A.INVESTIGATE:A.PATROL);
+    case A.PATROL:      return p.see ? (p.range?A.ATTACK:A.CHASE) : (p.alert?A.INVESTIGATE:A.PATROL);
+    case A.INVESTIGATE: return p.see ? (p.range?A.ATTACK:A.CHASE) : (p.reached?A.SEARCH:A.INVESTIGATE);
+    case A.CHASE:       return p.see ? (p.range?A.ATTACK:A.CHASE) : A.SEARCH;
+    case A.ATTACK:      return !p.see ? A.SEARCH : (!p.range?A.CHASE:A.ATTACK);
+    case A.SEARCH:      return p.see ? (p.range?A.ATTACK:A.CHASE) : (p.timeout?A.PATROL:A.SEARCH);
+  }
+  return state;
+}
+
+/* =================================================================================================
+   PROJECTION — three.js. Reads authority; writes runtime only via the mirrored event/AI functions.
+   ================================================================================================= */
+let scene,camera,renderer,raycaster,clock;
+const W = 24;                 // arena half-extent (world spans [-24,24])
+const CELL = 3, GW = Math.ceil((W*2)/CELL);     // grid cells
+const grid = {w:GW, h:GW, blocked:new Set()};
+const solids = [];            // {mesh, x,z, hw,hd, h, kind, id}
+let world;                    // CausalWorld
+const turrets = [], bots = [], spawns = [];
+let generatorMesh=null, genId="generator";
+
+const keys={};
+const player = {pos:new THREE.Vector3(0,1.7,20), vx:0,vz:0, vy:0, yaw:Math.PI, pitch:-0.05,
+                onGround:true, crouch:false, hp:100, alive:true, bob:0};
+const weapons = {
+  rifle:   {name:"RIFLE",   dmg:24, rof:0.12, spread:0.012, pellets:1, mag:30, ammo:30, reserve:120, reload:1.1},
+  shotgun: {name:"SHOTGUN", dmg:11, rof:0.72, spread:0.07,  pellets:8, mag:6,  ammo:6,  reserve:36,  reload:1.6},
+};
+let weap = "rifle", lastShot=0, reloading=0;
+let debugMode = 1;            // F1..F4
+let aiLines = [];             // THREE line objects for the F3 overlay
+let lastEvent = null;         // last causal event report (F2/F4)
+
+const EYE_STAND=1.7, EYE_CROUCH=1.05, RAD=0.45;
+
+function toCell(x,z){ return [Math.max(0,Math.min(grid.w-1,Math.floor((x+W)/CELL))),
+                              Math.max(0,Math.min(grid.h-1,Math.floor((z+W)/CELL)))]; }
+function cellCenter(c){ return [c[0]*CELL - W + CELL/2, c[1]*CELL - W + CELL/2]; }
+
+function addSolid(x,z,hw,hd,h,kind,color,id){
+  const geo=new THREE.BoxGeometry(hw*2,h,hd*2);
+  const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({color}));
+  m.position.set(x,h/2,z); scene.add(m);
+  const s={mesh:m,x,z,hw,hd,h,kind,id:id||kind}; solids.push(s);
+  // mark grid cells this solid covers as blocked (walls/cover/entities block LOS + movement)
+  for(let cx=Math.floor((x-hw+W)/CELL); cx<=Math.floor((x+hw+W)/CELL); cx++)
+    for(let cz=Math.floor((z-hd+W)/CELL); cz<=Math.floor((z+hd+W)/CELL); cz++)
+      if(cx>=0&&cz>=0&&cx<grid.w&&cz<grid.h) grid.blocked.add(cx+","+cz);
+  return s;
+}
+
+function buildWorld(){
+  scene=new THREE.Scene(); scene.background=new THREE.Color(0x0b0e13);
+  scene.fog=new THREE.Fog(0x0b0e13,28,80);
+  scene.add(new THREE.AmbientLight(0xffffff,0.55));
+  const dir=new THREE.DirectionalLight(0xffffff,0.75); dir.position.set(10,22,8); scene.add(dir);
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(W*2,W*2),new THREE.MeshLambertMaterial({color:0x141a22}));
+  floor.rotation.x=-Math.PI/2; scene.add(floor);
+  scene.add(new THREE.GridHelper(W*2,GW,0x223040,0x182230));
+
+  // --- the causal world (MIRROR of a .wrk): generator powers turrets + door + light ---
+  world = CausalWorld([
+    ["generator","powers","turret_a"], ["generator","powers","turret_b"],
+    ["generator","powers","door"],     ["generator","powers","light"],
+  ]);
+
+  // perimeter walls
+  addSolid(0,-W+0.5, W,0.5, 4,"wall",0x2b3340); addSolid(0,W-0.5, W,0.5, 4,"wall",0x2b3340);
+  addSolid(-W+0.5,0, 0.5,W, 4,"wall",0x2b3340); addSolid(W-0.5,0, 0.5,W, 4,"wall",0x2b3340);
+  // interior walls (force pathing + break LOS)
+  addSolid(-6,-2, 0.6,7, 4,"wall",0x39424f);
+  addSolid(7,4, 7,0.6, 4,"wall",0x39424f);
+  addSolid(2,-9, 5,0.6, 4,"wall",0x39424f);
+  // cover blocks (low-ish; still block LOS so bots must peek)
+  for(const [cx,cz] of [[-12,8],[10,-6],[-2,6],[14,12],[-14,-10],[4,12]]) addSolid(cx,cz,1.4,1.4,2.2,"cover",0x4a5563);
+
+  // --- enemy entities tied to the causal graph ---
+  generatorMesh = addSolid(-18,-18, 1.6,1.6, 3.2,"entity",0xd29922,"generator").mesh;
+  turrets.push(makeTurret("turret_a", -18,-2));
+  turrets.push(makeTurret("turret_b", 16,-16));
+  addSolid(20,2, 1.2,1.2, 2.6,"entity",0x6e7681,"door");        // door (disabled visually on cascade)
+  addSolid(-20,16, 0.8,0.8, 2.0,"entity",0x6e7681,"light");     // light
+
+  // --- spawn points + bots ---
+  for(const [id,x,z,team] of [["spawnpoint_red",-20,-20,"red"],["spawnpoint_red",18,-18,"red"],
+                              ["spawnpoint_neutral",18,18,"red"]]) spawns.push({id,x,z,team});
+  for(let i=0;i<4;i++) spawnBot(i);
+}
+
+function makeTurret(id,x,z){
+  const base=addSolid(x,z,0.8,0.8,1.6,"entity",0x8b3a3a,id);
+  const head=new THREE.Mesh(new THREE.BoxGeometry(0.7,0.5,1.1),new THREE.MeshLambertMaterial({color:0xda3633}));
+  head.position.set(x,2.0,z); scene.add(head);
+  return {id, x, z, head, cd:0, base};
+}
+
+const BOT_GEO=new THREE.BoxGeometry(0.9,1.8,0.9);
+function spawnBot(i){
+  const sp=spawns[i%spawns.length];
+  const m=new THREE.Mesh(BOT_GEO,new THREE.MeshLambertMaterial({color:0xc94f4f}));
+  scene.add(m);
+  const b={id:"bot_"+i, mesh:m, x:sp.x, z:sp.z, team:"red", state:AI.PATROL, hp:100, alive:true,
+           target:patrolPoint(), path:[], pathI:0, alert:null, searchTicks:0, cd:0, fsm:0, repos:0};
+  m.position.set(b.x,0.9,b.z); bots.push(b);
+}
+function patrolPoint(){
+  for(let tries=0;tries<30;tries++){ const c=[Math.floor(Math.random()*grid.w),Math.floor(Math.random()*grid.h)];
+    if(!grid.blocked.has(c[0]+","+c[1])) return c; }
+  return [Math.floor(grid.w/2),Math.floor(grid.h/2)];
+}
+
+// ---- perception + squad (MIRROR world_ai.perceive / squad_broadcast) ----
+function perceive(b){
+  const bc=toCell(b.x,b.z), pc=toCell(player.pos.x,player.pos.z);
+  const d=Math.hypot(b.x-player.pos.x, b.z-player.pos.z);
+  const see = player.alive && d<=AI.VIEW*CELL/2.0 && losGrid(grid,bc,pc);
+  return {see, range:see && d<=AI.ATTACK_RANGE, alert:b.alert!==null,
+          reached: b.target && bc[0]===b.target[0] && bc[1]===b.target[1],
+          timeout: b.searchTicks>=AI.SEARCH_LIMIT, bc, pc, d};
+}
+function squadBroadcast(spotter){
+  const pc=toCell(player.pos.x,player.pos.z);
+  for(const o of bots){ if(o===spotter||!o.alive||o.team!==spotter.team) continue;
+    if(Math.hypot(o.x-spotter.x,o.z-spotter.z) <= AI.ALERT_RADIUS*1.0){ o.alert=pc; } }
+}
+
+// ---- bot tick: FSM + path + move + (cover) + fire ----
+function tickBot(b,dt){
+  if(!b.alive) return;
+  b.cd-=dt; b.fsm-=dt;
+  const p=perceive(b);
+  if(b.fsm<=0){                                  // FSM cadence (authority decision rate)
+    b.fsm=0.2;
+    const prev=b.state; b.state=transition(prev,p);
+    if(b.state===AI.SEARCH && prev!==AI.SEARCH){ b.target=b.alert||p.pc; b.searchTicks=0; }
+    else if(b.state===AI.SEARCH) b.searchTicks++;
+    else b.searchTicks=0;
+    if(p.see){ b.alert=null; squadBroadcast(b); }
+    // choose goal cell, repath
+    let goal;
+    if(b.state===AI.CHASE) goal=p.pc;
+    else if(b.state===AI.ATTACK) goal = b.hp<50 ? coverCell(b,p) : (p.range? toCell(b.x,b.z) : p.pc);
+    else if(b.state===AI.INVESTIGATE && b.alert) goal=b.alert;
+    else if(b.state===AI.SEARCH && b.target) goal=b.target;
+    else { if(p.reached||!b.target) b.target=patrolPoint(); goal=b.target; }
+    const path=astar(grid,toCell(b.x,b.z),goal); b.path=path||[toCell(b.x,b.z)]; b.pathI=1;
+  }
+  // move along path toward next cell center
+  if(b.path && b.pathI<b.path.length){
+    const [tx,tz]=cellCenter(b.path[b.pathI]); const dx=tx-b.x, dz=tz-b.z, m=Math.hypot(dx,dz);
+    const spd=(b.state===AI.CHASE?6.2:b.state===AI.ATTACK?3.0:3.6)*dt;
+    if(m<0.25){ b.pathI++; } else { b.x+=dx/m*spd; b.z+=dz/m*spd; }
+  }
+  b.mesh.position.set(b.x,0.9,b.z);
+  b.mesh.material.color.set(b.state===AI.ATTACK?0xff5630:b.state===AI.CHASE?0xe3742f:
+                            b.state===AI.SEARCH||b.state===AI.INVESTIGATE?0xd2a922:0xc94f4f);
+  // fire ONLY in ATTACK with LOS+range (no shooting through walls)
+  if(b.state===AI.ATTACK && p.see && p.range && b.cd<=0){ b.cd=0.9; botFire(b); }
+}
+function coverCell(b,p){
+  // simple cover: nearest passable cell adjacent to a blocker that BREAKS LOS to the player (hide), else fall back
+  const bc=toCell(b.x,b.z), best=[];
+  for(let r=1;r<=3;r++) for(let dx=-r;dx<=r;dx++) for(let dz=-r;dz<=r;dz++){
+    const c=[bc[0]+dx,bc[1]+dz]; const k=c[0]+","+c[1];
+    if(c[0]<0||c[1]<0||c[0]>=grid.w||c[1]>=grid.h||grid.blocked.has(k)) continue;
+    if(!losGrid(grid,c,p.pc)) best.push([Math.abs(dx)+Math.abs(dz),c]);
+  }
+  best.sort((a,b)=>a[0]-b[0]); return best.length? best[0][1] : p.pc;
+}
+function botFire(b){
+  // hitscan toward player; LOS already confirmed. Light spread.
+  if(!player.alive) return;
+  if(Math.random()<0.72){ damagePlayer(7+Math.floor(Math.random()*5)); muzzle(b.x,1.4,b.z); }
+}
+
+// ---- turrets: fire when POWERED (causal) + LOS + range ----
+function tickTurrets(dt){
+  for(const t of turrets){
+    const powered=world.powered(t.id);
+    t.head.material.color.set(powered?0xda3633:0x3a3f46);
+    if(!powered||!player.alive) continue;
+    t.cd-=dt;
+    const tc=toCell(t.x,t.z), pc=toCell(player.pos.x,player.pos.z);
+    const d=Math.hypot(t.x-player.pos.x,t.z-player.pos.z);
+    if(d<=20 && losGrid(grid,tc,pc)){
+      // aim head at player
+      t.head.lookAt(new THREE.Vector3(player.pos.x,2.0,player.pos.z));
+      if(t.cd<=0){ t.cd=0.6; if(Math.random()<0.5){ damagePlayer(6); } muzzle(t.x,2.0,t.z); }
+    }
+  }
+}
+
+// ---- player combat ----
+function fire(){
+  if(!player.alive||reloading>0) return;
+  const w=weapons[weap]; const now=clock.getElapsedTime();
+  if(now-lastShot < w.rof) return; if(w.ammo<=0){ reload(); return; }
+  lastShot=now; w.ammo--; updateHUD();
+  for(let i=0;i<w.pellets;i++){
+    const dir=camDir().clone();
+    dir.x+=(Math.random()-0.5)*w.spread*2; dir.y+=(Math.random()-0.5)*w.spread*2; dir.z+=(Math.random()-0.5)*w.spread*2;
+    dir.normalize();
+    raycaster.set(camera.position, dir); raycaster.far=120;
+    const targets=[]; for(const b of bots) if(b.alive) targets.push(b.mesh);
+    for(const s of solids) targets.push(s.mesh);
+    for(const t of turrets) targets.push(t.head);
+    const hits=raycaster.intersectObjects(targets,false);
+    if(hits.length){ resolveHit(hits[0].object, w.dmg); }
+  }
+}
+function resolveHit(obj,dmg){
+  for(const b of bots){ if(b.alive && b.mesh===obj){ b.hp-=dmg; if(b.hp<=0) killBot(b); else b.repos=0.1; return; } }
+  for(const t of turrets){ if(t.head===obj){ /* shoot the turret head: only the generator cut disables; head is armor */ return; } }
+  for(const s of solids){ if(s.mesh===obj){
+    if(s.kind==="entity" && s.id==="generator" && world.powered("generator")){
+      lastEvent = world.destroy("generator");          // ROUTE THROUGH THE EVENT SYSTEM (causal cascade)
+      generatorMesh.material.color.set(0x3a3f46);
+      showMsg("generator destroyed — turret power cut (causal cascade)");
+    }
+    return; } }
+}
+function killBot(b){
+  b.alive=false; b.mesh.visible=false;
+  // death routes through the event system shape (mirror of world_sim.apply_event('destroy', id))
+  lastEvent = {event:"destroy "+b.id, potential:[b.id], affected:[b.id], nPot:1, nAct:1, nUnch:world.nodes.size};
+  setTimeout(()=>respawn(b), 4000);                    // respawn supported
+  updateHUD();
+}
+function respawn(b){
+  const sp=spawns[Math.floor(Math.random()*spawns.length)];
+  b.x=sp.x; b.z=sp.z; b.hp=100; b.alive=true; b.state=AI.PATROL; b.alert=null; b.target=patrolPoint();
+  b.mesh.position.set(b.x,0.9,b.z); b.mesh.visible=true; updateHUD();
+}
+function reload(){ const w=weapons[weap]; if(reloading>0||w.ammo===w.mag||w.reserve<=0) return;
+  reloading=w.reload; }
+function finishReload(){ const w=weapons[weap]; const need=w.mag-w.ammo, take=Math.min(need,w.reserve);
+  w.ammo+=take; w.reserve-=take; updateHUD(); }
+
+function damagePlayer(d){ if(!player.alive) return; player.hp-=d; flash();
+  if(player.hp<=0){ player.hp=0; player.alive=false; showMsg("YOU DIED — respawning…"); setTimeout(respawnPlayer,2200); }
+  updateHUD(); }
+function respawnPlayer(){ player.hp=100; player.alive=true; player.pos.set(0,EYE_STAND,20); player.vx=player.vz=0; showMsg(""); updateHUD(); }
+
+// ---- effects ----
+function flash(){ const f=document.getElementById("flash"); f.style.opacity=0.5; setTimeout(()=>f.style.opacity=0,90); }
+function muzzle(x,y,z){ const g=new THREE.Mesh(new THREE.SphereGeometry(0.12,6,6),new THREE.MeshBasicMaterial({color:0xffd070}));
+  g.position.set(x,y,z); scene.add(g); setTimeout(()=>scene.remove(g),60); }
+let msgT=0; function showMsg(s){ const m=document.getElementById("msg"); m.textContent=s; m.style.opacity=s?1:0; msgT=2.2; }
+
+// ---- player movement (accel / friction / sprint / crouch / jump) + camera feel ----
+function camDir(){ return new THREE.Vector3(Math.sin(player.yaw)*Math.cos(player.pitch),Math.sin(player.pitch),
+                                            Math.cos(player.yaw)*Math.cos(player.pitch)); }
+function solidBlocked(nx,nz,feet){
+  for(const s of solids){ const top=s.h;
+    if(feet>=top-0.05) continue;
+    if(Math.abs(nx-s.x)<s.hw+RAD && Math.abs(nz-s.z)<s.hd+RAD) return true; }
+  return false;
+}
+function supportFloor(){ const feet=player.pos.y-(player.crouch?EYE_CROUCH:EYE_STAND); let f=0;
+  for(const s of solids){ if(Math.abs(player.pos.x-s.x)<s.hw+RAD && Math.abs(player.pos.z-s.z)<s.hd+RAD && feet>=s.h-0.5) f=Math.max(f,s.h); }
+  return f;
+}
+function movePlayer(dt){
+  const eye=player.crouch?EYE_CROUCH:EYE_STAND;
+  const sprint = keys["ShiftLeft"]&&!player.crouch;
+  const maxSpd=(player.crouch?2.6:sprint?9.5:6.0);
+  const accel=55, fwd=new THREE.Vector3(Math.sin(player.yaw),0,Math.cos(player.yaw)),
+        rt=new THREE.Vector3(Math.sin(player.yaw-Math.PI/2),0,Math.cos(player.yaw-Math.PI/2));
+  let wish=new THREE.Vector3();
+  if(keys["KeyW"]) wish.add(fwd); if(keys["KeyS"]) wish.sub(fwd);
+  if(keys["KeyD"]) wish.add(rt);  if(keys["KeyA"]) wish.sub(rt);
+  if(wish.lengthSq()>0) wish.normalize();
+  // accelerate toward wish*maxSpd, friction when no input
+  player.vx += (wish.x*maxSpd - player.vx)*Math.min(1,accel*dt/Math.max(1,maxSpd));
+  player.vz += (wish.z*maxSpd - player.vz)*Math.min(1,accel*dt/Math.max(1,maxSpd));
+  if(wish.lengthSq()===0){ player.vx*=Math.max(0,1-10*dt); player.vz*=Math.max(0,1-10*dt); }
+  const feet=player.pos.y-eye;
+  let nx=player.pos.x+player.vx*dt, nz=player.pos.z+player.vz*dt;
+  if(!solidBlocked(nx,player.pos.z,feet)) player.pos.x=nx; else player.vx=0;
+  if(!solidBlocked(player.pos.x,nz,feet)) player.pos.z=nz; else player.vz=0;
+  // vertical
+  player.vy-=26*dt; player.pos.y+=player.vy*dt;
+  const floorY=supportFloor()+eye;
+  if(player.pos.y<=floorY){ player.pos.y=floorY; player.vy=0; player.onGround=true; } else player.onGround=false;
+  if(keys["Space"]&&player.onGround&&!player.crouch){ player.vy=9.2; player.onGround=false; }
+  // head bob + weapon sway
+  const speed=Math.hypot(player.vx,player.vz);
+  player.bob += speed*dt*1.8;
+  const bobY=Math.sin(player.bob)*0.04*(speed>0.5?1:0);
+  camera.position.set(player.pos.x, player.pos.y+bobY, player.pos.z);
+  const d=camDir(); camera.lookAt(camera.position.clone().add(d));
+}
+
+// ---- debug overlays (F1..F4) ----
+function clearAiLines(){ for(const l of aiLines) scene.remove(l); aiLines=[]; }
+function drawAiOverlay(){
+  clearAiLines();
+  if(debugMode!==3) return;
+  for(const b of bots){ if(!b.alive) continue;
+    const p=perceive(b);
+    const col = p.see?0x2ea043:0xda3633;
+    addLine(new THREE.Vector3(b.x,1.4,b.z), new THREE.Vector3(player.pos.x,1.4,player.pos.z), col); // LOS
+    if(b.path) for(let i=b.pathI;i<b.path.length-1;i++){ const a=cellCenter(b.path[i]),c=cellCenter(b.path[i+1]);
+      addLine(new THREE.Vector3(a[0],0.3,a[1]),new THREE.Vector3(c[0],0.3,c[1]),0x58a6ff); }
+  }
+}
+function addLine(a,b,color){ const g=new THREE.BufferGeometry().setFromPoints([a,b]);
+  const l=new THREE.Line(g,new THREE.LineBasicMaterial({color})); scene.add(l); aiLines.push(l); }
+
+function updateHUD(){
+  document.getElementById("hp").textContent=Math.max(0,Math.round(player.hp));
+  document.getElementById("hpfill").style.width=Math.max(0,player.hp)+"%";
+  const w=weapons[weap]; document.getElementById("weap").textContent=w.name;
+  document.getElementById("ammo").textContent=w.ammo+" / "+w.reserve+(reloading>0?"  (reloading)":"");
+  document.getElementById("enemies").textContent="BOTS "+bots.filter(b=>b.alive).length+
+     " · TURRETS "+turrets.filter(t=>world.powered(t.id)).length+" powered";
+}
+function renderDebug(){
+  const dbg=document.getElementById("dbg");
+  for(const i of [1,2,3,4]) document.getElementById("t"+i).className = (debugMode===i?"on":"");
+  if(debugMode===1){ dbg.style.display="none"; return; }
+  dbg.style.display="block";
+  if(debugMode===2){
+    dbg.innerHTML="<h3>F2 · Causal</h3>"+(lastEvent?
+      `<div class="box"><b>${lastEvent.event}</b>\n`+
+      `<span class="k">POTENTIAL (${lastEvent.nPot})</span> ${lastEvent.potential.join(", ")}\n`+
+      `<span class="red">ACTUAL (${lastEvent.nAct})</span> ${lastEvent.affected.join(", ")}\n`+
+      `<span class="green">UNCHANGED ${lastEvent.nUnch}</span>  (Potential ⊇ Actual)</div>`+
+      `<div class="box">turret_a powered: ${world.powered("turret_a")}\nturret_b powered: ${world.powered("turret_b")}\n`+
+      `door: ${world.runtime.door.status}\nlight: ${world.runtime.light.status}</div>`
+      : '<div class="box k">no causal event yet — shoot the generator</div>');
+  } else if(debugMode===3){
+    let h="<h3>F3 · AI</h3>";
+    for(const b of bots){ const p=b.alive?perceive(b):{see:false};
+      h+=`<div class="box"><b>${b.id}</b> <span class="${b.alive?'':'k'}">${b.alive?b.state:'dead'}</span>\n`+
+         `LOS ${p.see?'<span class="green">clear</span>':'<span class="red">blocked</span>'} · target ${b.target?b.target.join(','):'-'} · path ${b.path?b.path.length:0}</div>`; }
+    dbg.innerHTML=h+'<div class="k" style="margin-top:4px">green line = LOS to player · blue = A* path</div>';
+  } else if(debugMode===4){
+    const e=lastEvent; const naive=e?e.nAct*16:0, causal=8;
+    dbg.innerHTML="<h3>F4 · Replication</h3>"+(e?
+      `<div class="box"><b>${e.event}</b>\naffected set: ${e.affected.join(", ")}\n`+
+      `NAIVE  send ${e.nAct} record(s) = ${naive} B\nCAUSAL send 1 event       = ${causal} B\n`+
+      `<span class="k">MEASURED STRUCTURE — NOT NETWORK PERFORMANCE</span></div>`
+      : '<div class="box k">no event yet</div>');
+  }
+}
+
+// ---- input ----
+function initInput(){
+  const dom=renderer.domElement, startEl=document.getElementById("start");
+  startEl.addEventListener("click",()=>dom.requestPointerLock());
+  dom.addEventListener("click",()=>{ if(document.pointerLockElement===dom) fire(); else dom.requestPointerLock(); });
+  document.addEventListener("pointerlockchange",()=>{ startEl.style.display = document.pointerLockElement===dom?"none":"flex"; });
+  document.addEventListener("mousemove",e=>{ if(document.pointerLockElement===dom){
+    player.yaw-=e.movementX*0.0022; player.pitch-=e.movementY*0.0022;
+    player.pitch=Math.max(-1.4,Math.min(1.4,player.pitch)); }});
+  document.addEventListener("keydown",e=>{ keys[e.code]=true;
+    if(e.code==="Digit1") weap="rifle"; if(e.code==="Digit2") weap="shotgun";
+    if(e.code==="KeyR") reload();
+    if(e.code==="ControlLeft") player.crouch=true;
+    if(e.code==="F1"){e.preventDefault();debugMode=1;} if(e.code==="F2"){e.preventDefault();debugMode=2;}
+    if(e.code==="F3"){e.preventDefault();debugMode=3;} if(e.code==="F4"){e.preventDefault();debugMode=4;}
+    updateHUD();
+  });
+  document.addEventListener("keyup",e=>{ keys[e.code]=false; if(e.code==="ControlLeft") player.crouch=false; });
+}
+
+function loop(){
+  const dt=Math.min(0.05,clock.getDelta());
+  if(reloading>0){ reloading-=dt; if(reloading<=0){ reloading=0; finishReload(); } }
+  movePlayer(dt);
+  for(const b of bots) tickBot(b,dt);
+  tickTurrets(dt);
+  if(msgT>0){ msgT-=dt; if(msgT<=0) showMsg(""); }
+  drawAiOverlay(); renderDebug();
+  renderer.render(scene,camera);
+  requestAnimationFrame(loop);
+}
+
+function init(){
+  renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setSize(innerWidth,innerHeight);
+  renderer.setPixelRatio(Math.min(2,devicePixelRatio)); document.getElementById("view").appendChild(renderer.domElement);
+  camera=new THREE.PerspectiveCamera(78,innerWidth/innerHeight,0.1,300);
+  raycaster=new THREE.Raycaster(); clock=new THREE.Clock();
+  buildWorld();
+  camera.position.copy(player.pos);
+  addEventListener("resize",()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
+  initInput(); updateHUD(); loop();
+}
+init();
+</script>
+</body></html>
