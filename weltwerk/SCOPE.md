@@ -71,6 +71,44 @@ may eliminate the economic advantage while leaving correctness fully intact.
 > The repository currently proves that divergence-aware allocation can be **correct**. It does not yet
 > prove that divergence remains **sparse** in the classes of worlds we ultimately care about.
 
+## Transfer barriers
+
+The repository intentionally separates three proofs that want to collapse into one:
+
+1. **proof of correctness** — the mechanism computes the right answer;
+2. **proof of efficiency** — it does so more cheaply than the naive baseline;
+3. **proof of transfer** — the result still holds when the regime changes.
+
+A result transfers **only when every assumption required by the measured regime remains true.** The
+current scaling results depend on assumptions including: bounded local coupling; deterministic chunk
+decomposition; static (or explicitly declared) topology; and divergence remaining sparse relative to
+reachability.
+
+**No evidence currently establishes that these assumptions hold for:** player-driven economies, social
+coordination systems, faction warfare, migration-heavy simulations, persistent MMO populations, or
+adversarial player behaviour.
+
+**Therefore no MMO-scale performance claim is currently made.** The project demonstrates a *candidate
+mechanism* whose transfer remains to be tested. `proof-of-correctness ≠ proof-of-transfer`;
+`works-in-toy-regime ≠ transfers-to-production`.
+
+### Claim status at a glance
+
+| Claim | Status |
+|---|---|
+| Deterministic forked world | Strong |
+| Byte-identical reconstruction | Strong |
+| Observer / evidence separation | Strong |
+| `Potential ⊇ Actual` | Strong *within declared models* |
+| Divergence-aware allocation (correctness) | Strong *within declared models* |
+| Sparsity persists under agent transport | Unknown |
+| Sparsity persists under player economies | Unknown |
+| MMO-scale scheduler | Direction only |
+| World OS / causal substrate | Vision |
+
+A healthy distribution is *weighted toward the top rows*. The rows that are "Unknown / Direction /
+Vision" are named on purpose — they are where the next experiments go, not claims being leaned on.
+
 ## Known failure modes (what could still kill the thesis)
 
 These mechanisms would invalidate the *economic* thesis **without** invalidating *correctness*. They are
