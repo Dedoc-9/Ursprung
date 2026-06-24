@@ -187,7 +187,30 @@ def geometry(run):
             "late_new_rate": late_new_rate, "halted": run["halted"]}
 
 
+def choose_root(ext_sets, proxy_tasks, n_try=14):
+    """Pick a root that actually has ≥1 strictly-verified neighbour, so the trajectory is non-empty. A root with
+    none is a DEAD START (no trajectory to measure), distinct from a basin reached after exploring."""
+    rng = random.Random(SEED)
+    need = math.ceil(REP_FRAC * len(ext_sets))
+    fallback = Optimizer(tuple(range(D_DIM)), 0.30)
+    for _ in range(n_try):
+        size = rng.randint(4, D_DIM)
+        root = Optimizer(tuple(sorted(rng.sample(range(D_DIM), size))), rng.choice([0.2, 0.3, 0.4, 0.5]))
+        p_ext = ext_per_seed(root, ext_sets)
+        p_proxy = mean_cap(root, proxy_tasks)
+        for nb in enumerate_neighbors(root):
+            c_ext = ext_per_seed(nb, ext_sets)
+            eg = sum(c_ext) / len(c_ext) - sum(p_ext) / len(p_ext)
+            rep = sum(1 for c, p in zip(c_ext, p_ext) if c > p) >= need
+            cal = (mean_cap(nb, proxy_tasks) - p_proxy) <= eg + CAL_TOL
+            if eg > 0 and rep and cal:
+                return root
+    return fallback
+
+
 def classify_orbit(g):
+    if g["steps"] == 0:
+        return "NO_TRAJECTORY (dead start — root had no verified neighbours; not a basin)"
     if g["halted"] and g["steps"] < MAX_STEPS:
         return "CONVERGED (frontier exhausted — settled in a basin)"
     if g["late_new_rate"] < 0.15 and g["revisit_rate"] > 0:
@@ -197,12 +220,26 @@ def classify_orbit(g):
     return "MIXED / SLOWING"
 
 
+def run_summary():
+    """Headline axis outputs for the combined suite: capability ΔC (strict trajectory) + orbit class (explore)."""
+    proxy_tasks = [make_task(SEED + 1 + i) for i in range(N_PROXY)]
+    ext_sets = [[make_task(s * 1000 + i) for i in range(N_EXTERNAL)] for s in EXTERNAL_SEEDS]
+    root = choose_root(ext_sets, proxy_tasks)
+    rs = walk(root, "strict", ext_sets, proxy_tasks)
+    re_ = walk(root, "explore", ext_sets, proxy_tasks)
+    gs, ge = geometry(rs), geometry(re_)
+    return {"dC": rs["ext_curve"][-1] - rs["ext_curve"][0],
+            "strict_class": classify_orbit(gs), "explore_class": classify_orbit(ge),
+            "g_strict": gs, "g_explore": ge}
+
+
 def main():
     print("orbit_estimator — trajectory geometry in verified-improvement space (where does the system travel?).")
     print("metric D = active-set symmetric-difference + 2·|Δσ~1dp|; identity = (active set, σ~1dp). estimate, not verdict.\n")
     proxy_tasks = [make_task(SEED + 1 + i) for i in range(N_PROXY)]
     ext_sets = [[make_task(s * 1000 + i) for i in range(N_EXTERNAL)] for s in EXTERNAL_SEEDS]
-    root = Optimizer(tuple(range(D_DIM)), 0.30)
+    root = choose_root(ext_sets, proxy_tasks)
+    print(f"  root: active={root.active} σ={root.sigma} (chosen to have ≥1 verified neighbour; else dead-start)\n")
 
     results = {}
     for policy in ("strict", "explore"):
@@ -259,6 +296,8 @@ def main():
     # 5. orbit classification matches the measured geometry (verdict matches evidence)
     def label_sound(g):
         l = classify_orbit(g)
+        if l.startswith("NO_TRAJECTORY"):
+            return g["steps"] == 0
         if l.startswith("CONVERGED"):
             return g["halted"] and g["steps"] < MAX_STEPS
         if l.startswith("EXPANDING"):
