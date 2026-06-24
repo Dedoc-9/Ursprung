@@ -15,6 +15,28 @@ authoritative world state → deterministic snapshot → visual interpretation �
 
 The renderer may optimize *representation*. It must never mutate authoritative state.
 
+## Rules of engagement (for any agent — human or LLM — modifying this repo)
+
+This repository is an **Epistemic Runtime Environment**: it governs *claim integrity*, and that discipline binds
+the agent editing it as much as the code. Any pass — and an automated/LLM pass especially — operates under:
+
+1. **Tag every claim.** State a modification's **maturity** (`IMPLEMENTED` / `SCOPED` / `UNDERCOMMITTED`) and
+   **evidence** (`MEASURED_BY_INTERVENTION` / `MEASURED` / `DECLARED` / `N/A`). The no-inflation invariant is
+   absolute: *evidence may not exceed what maturity licenses.* Uncommitted rhetoric is `UNDERCOMMITTED / N/A`.
+2. **A passing check certifies execution, never semantic meaning.** Comb the output fields; a green self-test does
+   not prove a metric means what its name says. Watch specifically for **hidden averaging boundaries** and
+   **outcome-dependent assertions** — a self-test must assert *validity* (did it run, are the numbers consistent),
+   never the result you hoped for. (This session caught four such slips by reading output, not the green check.)
+3. **Propose nothing without a falsifier.** A new mechanism ships with a deterministic, seedable self-test
+   (`PYTHONHASHSEED=0`) that *can fail*, plus the stated condition that would refute it.
+4. **Preserve trajectory properties.** Path-dependent quantities (e.g. `m_novel(Sₜ)`) must not be collapsed to a
+   domain average; report disagreements between views rather than averaging them away.
+5. **Determinism is the floor.** Everything runs reproducibly under `PYTHONHASHSEED=0`; a result that depends on
+   hash-seed randomness is not a result.
+
+This is not a productivity technique — it is the same gate the code enforces on itself (`claim_ledger` →
+`rsi_engine` → `no_inflation_latch`), turned on whoever edits it. `declared ≠ verified`.
+
 ## The four layers — classify every system before building it
 
 | Layer | Meaning | May move the committed trajectory? |
