@@ -106,6 +106,9 @@ class WorldSim:
         self.events = []         # committed trajectory (the only record of what occurred)
         self._scc = _sccs(self.cg.edges)
         self.factions = self._find_factions()
+        # optional combat extras (backward-compatible: empty ⇒ armor 0, unchanged behaviour)
+        self.armor = {}          # entity -> {damage_type: points_absorbed}; default 0
+        self.station_kinds = {"repair_station", "healing_station", "heal_station", "med_station"}
 
     # ---- structure (static) --------------------------------------------------------------------
     def _find_factions(self) -> list:
@@ -158,10 +161,11 @@ class WorldSim:
                     self.runtime[e]["health"], self.controller(e)) for e in self.cg.nodes}
 
     # ---- the ONLY mutation path ----------------------------------------------------------------
-    def apply_event(self, kind: str, target: str, amount: int = 0, faction: str = "") -> dict:
+    def apply_event(self, kind: str, target: str, amount: int = 0, faction: str = "", dtype: str = "") -> dict:
         """Apply one event; return the honest report {potential, actual, affected, unchanged}.
         potential = entities the event COULD touch (downstream reach ∪ target). actual/affected = what
-        DID change (state-vector diff, including derived control flips). unchanged = the rest. Potential ⊇ Actual."""
+        DID change (state-vector diff, including derived control flips). unchanged = the rest. Potential ⊇ Actual.
+        `dtype` optionally selects a damage type; armor for that type is subtracted (default armor 0)."""
         if target not in self.cg.nodes:
             raise KeyError(f"no such entity: {target}")
         before = self._state_vector()
@@ -172,10 +176,12 @@ class WorldSim:
         elif kind == "damage":
             r = self.runtime[target]
             if r["alive"]:
-                r["health"] = max(0, r["health"] - max(0, amount))
+                absorbed = self.armor.get(target, {}).get(dtype, 0) if dtype else 0
+                eff = max(0, max(0, amount) - max(0, absorbed))      # armor reduces effective damage by type
+                r["health"] = max(0, r["health"] - eff)
                 if r["health"] == 0:
                     self._kill(target)
-                elif r["status"] == "ok":
+                elif eff > 0 and r["status"] == "ok":
                     r["status"] = "damaged"
         elif kind == "repair":
             r = self.runtime[target]
@@ -229,6 +235,15 @@ class WorldSim:
         for e in self.events:
             h.update(("|EV" + e).encode())
         return h.hexdigest()
+
+    def powered(self, e: str) -> bool:
+        """True iff entity e is alive AND not disabled — i.e. its causal power chain is intact."""
+        return e in self.runtime and self.runtime[e]["alive"] and self.runtime[e]["status"] != "disabled"
+
+    def station_active(self, e: str) -> bool:
+        """A repair/healing station functions iff it is POWERED. When its upstream power dies the cascade
+        marks it 'disabled' ⇒ station_active False, so repair/healing stops — causally, never scripted."""
+        return self.powered(e)
 
     def snapshot(self) -> Snapshot:
         ents = tuple(EntityView(

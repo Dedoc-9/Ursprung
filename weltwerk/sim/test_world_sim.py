@@ -125,6 +125,46 @@ def test_repair_revives_dead():
     return check("repair_revives_dead", dead and revived, f"reactor dead={dead} -> revived={revived}")
 
 
+STATION_WORLD = """
+world "Base"
+entity generator:
+  powers repair_station
+entity repair_station:
+  health 100
+"""
+ARMOR_WORLD = """
+world "A"
+entity tank:
+  health 100
+"""
+
+
+def test_station_powered_then_disabled():
+    w = WorldSim(STATION_WORLD)
+    before = w.station_active("repair_station")
+    w.apply_event("destroy", "generator")            # cut power → cascade disables the station
+    after = w.station_active("repair_station")
+    return check("station_powered_then_disabled", before and not after,
+                 f"repair_station active {before}→{after} after generator destroyed (causal, not scripted)")
+
+
+def test_armor_reduces_damage():
+    armored = WorldSim(ARMOR_WORLD); armored.armor["tank"] = {"kinetic": 20}
+    bare = WorldSim(ARMOR_WORLD)
+    armored.apply_event("damage", "tank", 30, dtype="kinetic")   # 30 − 20 armor = 10
+    bare.apply_event("damage", "tank", 30, dtype="kinetic")      # no armor map → 30
+    ok = armored.runtime["tank"]["health"] == 90 and bare.runtime["tank"]["health"] == 70
+    return check("armor_reduces_damage", ok,
+                 f"armored hp={armored.runtime['tank']['health']} > bare hp={bare.runtime['tank']['health']}")
+
+
+def test_damage_type_specific():
+    w = WorldSim(ARMOR_WORLD); w.armor["tank"] = {"kinetic": 20}
+    w.apply_event("damage", "tank", 30, dtype="energy")          # kinetic armor must NOT absorb energy
+    return check("damage_type_specific", w.runtime["tank"]["health"] == 70,
+                 f"energy ignores kinetic armor: hp={w.runtime['tank']['health']}")
+
+
 def main():
     results = [
         test_world_loads(),
@@ -135,6 +175,9 @@ def main():
         test_potential_superset_actual(),
         test_capture_flips_control(),
         test_repair_revives_dead(),
+        test_station_powered_then_disabled(),
+        test_armor_reduces_damage(),
+        test_damage_type_specific(),
     ]
     print("test_world_sim — Phase 7: the smallest living world (validity-not-outcome)\n")
     passed = 0

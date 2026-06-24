@@ -32,12 +32,17 @@ from dataclasses import dataclass, field
 
 # --- bot states (explicit; the transition table is keyed on these) ------------------------------
 IDLE, PATROL, INVESTIGATE, CHASE, ATTACK, SEARCH = "IDLE", "PATROL", "INVESTIGATE", "CHASE", "ATTACK", "SEARCH"
-STATES = (IDLE, PATROL, INVESTIGATE, CHASE, ATTACK, SEARCH)
+SUPPRESS, RETREAT, RELOAD = "SUPPRESS", "RETREAT", "RELOAD"
+STATES = (IDLE, PATROL, INVESTIGATE, CHASE, ATTACK, SEARCH, SUPPRESS, RETREAT, RELOAD)
 
 DEFAULT_VIEW_RANGE = 14.0
 DEFAULT_ATTACK_RANGE = 9.0
 SEARCH_LIMIT = 12          # ticks a bot searches a last-known position before giving up → PATROL
 ALERT_RADIUS = 10.0        # squad: allies within this distance of the spotter are alerted
+LOW_HP_FRAC = 0.35         # below this fraction of max health a bot prefers to RETREAT
+CONTACT_MEMORY = 8         # ticks the bot keeps acting on a recent sighting (SUPPRESS the last-known cell)
+REACTION_MIN_MS, REACTION_MAX_MS = 150, 350   # simulated human reaction delay before first engagement
+BURST_ROUNDS = 3           # bots fire in bursts, not laser-perfect continuous spam
 
 
 class Grid:
@@ -133,6 +138,11 @@ class Percept:
     heard_alert: bool = False
     reached_target: bool = False
     search_timed_out: bool = False
+    low_hp: bool = False             # health below LOW_HP_FRAC ⇒ prefer to retreat
+    out_of_ammo: bool = False        # magazine empty ⇒ must reload
+    recent_contact: bool = False     # saw the player within CONTACT_MEMORY ticks ⇒ may suppress
+    reached_cover: bool = False      # standing on the chosen cover cell
+    reloading_done: bool = True      # reload timer elapsed
 
 
 # --- the state machine: one small handler per state (explicit, not a blob) -----------------------
@@ -154,15 +164,45 @@ def _from_investigate(p):
     return INVESTIGATE
 
 
-def _from_chase(p):
+def _engage(p):
+    """Shared combat priority: reload if empty, retreat if hurt, else attack/chase by range."""
+    if p.out_of_ammo: return RELOAD
+    if p.low_hp: return RETREAT
     if p.can_see_player: return ATTACK if p.in_range else CHASE
-    return SEARCH                       # lost sight → search the last-known position
+    return None
+
+
+def _from_chase(p):
+    e = _engage(p)
+    if e: return e
+    return SUPPRESS if p.recent_contact else SEARCH   # lost sight: pin last-known, else search
 
 
 def _from_attack(p):
-    if not p.can_see_player: return SEARCH
-    if not p.in_range: return CHASE
-    return ATTACK
+    e = _engage(p)
+    if e: return e
+    return SUPPRESS if p.recent_contact else SEARCH    # _engage returns None only when sight lost
+
+
+def _from_suppress(p):
+    e = _engage(p)
+    if e: return e
+    return SUPPRESS if p.recent_contact else SEARCH    # suppress fire until contact memory expires
+
+
+def _from_retreat(p):
+    if p.low_hp:                                       # still hurt → keep falling back to cover
+        if p.out_of_ammo and p.reached_cover: return RELOAD
+        return RETREAT
+    if p.can_see_player: return ATTACK if p.in_range else CHASE   # recovered → re-engage
+    return SEARCH if p.recent_contact else PATROL
+
+
+def _from_reload(p):
+    if not p.reloading_done: return RELOAD             # still reloading
+    if p.low_hp: return RETREAT
+    if p.can_see_player: return ATTACK if p.in_range else CHASE
+    return SUPPRESS if p.recent_contact else SEARCH
 
 
 def _from_search(p):
@@ -174,6 +214,7 @@ def _from_search(p):
 TRANSITIONS = {
     IDLE: _from_idle, PATROL: _from_patrol, INVESTIGATE: _from_investigate,
     CHASE: _from_chase, ATTACK: _from_attack, SEARCH: _from_search,
+    SUPPRESS: _from_suppress, RETREAT: _from_retreat, RELOAD: _from_reload,
 }
 
 
@@ -193,7 +234,16 @@ class Bot:
     alert: tuple = None             # last-known player cell heard from a squadmate (None = no alert)
     search_ticks: int = 0
     health: int = 100
+    max_health: int = 100
     alive: bool = True
+    # combat memory + state
+    ammo: int = 30
+    mag: int = 30
+    reloading: int = 0              # ticks remaining on a reload
+    last_seen: tuple = None         # last cell the player was directly seen at (bot memory)
+    last_damage_from: str = ""      # id/direction of the last damage source (bot memory)
+    time_since_contact: int = 999   # ticks since the player was last seen (bot memory)
+    cover: tuple = None             # chosen cover cell
 
 
 def perceive(grid: Grid, bot: Bot, player_cell, view_range=DEFAULT_VIEW_RANGE,
@@ -208,7 +258,52 @@ def perceive(grid: Grid, bot: Bot, player_cell, view_range=DEFAULT_VIEW_RANGE,
         heard_alert=bot.alert is not None,
         reached_target=bot.target is not None and bot.pos == bot.target,
         search_timed_out=bot.search_ticks >= SEARCH_LIMIT,
+        low_hp=bot.health <= LOW_HP_FRAC * max(1, bot.max_health),
+        out_of_ammo=bot.ammo <= 0,
+        recent_contact=bot.time_since_contact <= CONTACT_MEMORY,
+        reached_cover=bot.cover is not None and bot.pos == bot.cover,
+        reloading_done=bot.reloading <= 0,
     )
+
+
+def hit_chance(dist, moving=False, suppressed=False, low_hp=False) -> float:
+    """Deterministic accuracy MODEL (the authority defines it; the projection rolls against it). Accuracy
+    falls with distance, while moving, while suppressed, and at low health. Pure; clamped to [0.05, 0.95]."""
+    acc = 0.9
+    acc -= 0.02 * max(0.0, dist - 4.0)        # distance falloff beyond a comfort radius
+    if moving:     acc -= 0.25
+    if suppressed: acc -= 0.35
+    if low_hp:     acc -= 0.15
+    return max(0.05, min(0.95, round(acc, 4)))
+
+
+def reaction_delay(seed: int) -> int:
+    """Simulated human reaction delay in ms, deterministic per seed, in [REACTION_MIN_MS, REACTION_MAX_MS].
+    A bot does not engage the instant the player appears — it reacts after this delay."""
+    span = REACTION_MAX_MS - REACTION_MIN_MS
+    return REACTION_MIN_MS + (abs(hash(("react", seed))) % (span + 1))
+
+
+def burst_pattern(rounds: int = BURST_ROUNDS, gap: float = 0.08, cooldown: float = 0.55) -> dict:
+    """Bots fire in bursts, not continuous laser spam. Returns the burst shape (rounds > 1)."""
+    return {"rounds": max(2, rounds), "gap": gap, "cooldown": cooldown}
+
+
+def find_cover(grid: Grid, bot_cell, player_cell, search: int = 3):
+    """Lightweight cover reasoning (not a navmesh): the nearest passable cell that BREAKS line of sight to
+    the player. Returns that cell, or bot_cell if none is found nearby. Pure + deterministic."""
+    best = None
+    for r in range(1, search + 1):
+        cands = []
+        for dx in range(-r, r + 1):
+            for dy in range(-r, r + 1):
+                c = (bot_cell[0] + dx, bot_cell[1] + dy)
+                if grid.passable(*c) and not line_of_sight(grid, c, player_cell):
+                    cands.append((abs(dx) + abs(dy), c))
+        if cands:
+            best = min(cands)[1]
+            break
+    return best if best is not None else bot_cell
 
 
 def squad_broadcast(bots, spotter: Bot, player_cell, radius: float = ALERT_RADIUS):
@@ -226,9 +321,16 @@ def squad_broadcast(bots, spotter: Bot, player_cell, radius: float = ALERT_RADIU
 
 def plan(grid: Grid, bot: Bot, player_cell) -> list:
     """Choose the bot's goal cell from its state and path to it (A* around walls). Pure given inputs.
-    CHASE/ATTACK head for the player; INVESTIGATE/SEARCH head for the last-known (alert/target) cell."""
-    if bot.state in (CHASE, ATTACK):
+    CHASE heads for the player; ATTACK closes only if not already in range; RETREAT/RELOAD head for cover;
+    SUPPRESS holds position; INVESTIGATE/SEARCH head for the last-known (alert/target) cell."""
+    if bot.state == CHASE:
         goal = tuple(player_cell)
+    elif bot.state == ATTACK:
+        goal = bot.pos if bot.pos == tuple(bot.pos) and math.dist(bot.pos, player_cell) <= DEFAULT_ATTACK_RANGE else tuple(player_cell)
+    elif bot.state in (RETREAT, RELOAD):
+        goal = bot.cover or bot.pos
+    elif bot.state == SUPPRESS:
+        goal = bot.pos                          # hold and fire at the last-known cell
     elif bot.state == INVESTIGATE and bot.alert is not None:
         goal = bot.alert
     elif bot.state == SEARCH and bot.target is not None:
@@ -244,22 +346,46 @@ def step_bot(grid: Grid, bot: Bot, player_cell, view_range=DEFAULT_VIEW_RANGE,
     """Advance one bot by one tick: perceive → transition → (re)plan → record. Returns a debug record
     (state, percept, path) the projection can display in the AI overlay. Does NOT move continuous geometry
     — the projection interpolates toward path[1]; the AUTHORITY is the cell-level decision here."""
+    RELOAD_TICKS = 6
+    # --- update bot MEMORY before deciding (perception happened this tick) ---
+    if visible(grid, bot.pos, player_cell, view_range):
+        bot.last_seen = tuple(player_cell)
+        bot.time_since_contact = 0
+    else:
+        bot.time_since_contact += 1
     p = perceive(grid, bot, player_cell, view_range, attack_range)
     prev = bot.state
     bot.state = transition(prev, p)
-    # bookkeeping: entering SEARCH pins the last-known cell; SEARCH counts down; sight clears alerts
+    # entering SEARCH pins the last-known cell; SEARCH counts down; sight clears alerts
     if bot.state == SEARCH and prev != SEARCH:
-        bot.target = bot.alert or tuple(player_cell)
+        bot.target = bot.alert or bot.last_seen or tuple(player_cell)
         bot.search_ticks = 0
     elif bot.state == SEARCH:
         bot.search_ticks += 1
     else:
         bot.search_ticks = 0
+    # entering RETREAT/RELOAD picks cover once; RELOAD runs a timer then refills the magazine
+    if bot.state in (RETREAT, RELOAD) and prev not in (RETREAT, RELOAD):
+        bot.cover = find_cover(grid, bot.pos, player_cell)
+    if bot.state == RELOAD:
+        if prev != RELOAD:
+            bot.reloading = RELOAD_TICKS
+        bot.reloading = max(0, bot.reloading - 1)
+        if bot.reloading == 0:
+            bot.ammo = bot.mag
+    else:
+        bot.reloading = 0
     if p.can_see_player:
         bot.alert = None              # direct sight supersedes hearsay
+    # firing: ATTACK needs current LOS+range; SUPPRESS fires at the remembered cell. A round is spent per tick.
+    can_fire = (bot.state == ATTACK and p.can_see_player and p.in_range) or \
+               (bot.state == SUPPRESS and bot.ammo > 0 and bot.last_seen is not None)
+    if can_fire and bot.ammo > 0:
+        bot.ammo -= 1
     bot.path = plan(grid, bot, player_cell)
     return {"id": bot.id, "state": bot.state, "prev": prev, "percept": p, "path": list(bot.path),
-            "can_fire": bot.state == ATTACK and p.can_see_player and p.in_range}
+            "ammo": bot.ammo, "cover": bot.cover, "last_seen": bot.last_seen,
+            "time_since_contact": bot.time_since_contact, "can_fire": bool(can_fire)}
 
 
 # --- demo -----------------------------------------------------------------------------------------

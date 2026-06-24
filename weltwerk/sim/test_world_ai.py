@@ -22,8 +22,10 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from world_ai import (ATTACK, CHASE, INVESTIGATE, PATROL, SEARCH, Bot, Grid, Percept, astar,
-                      line_of_sight, perceive, squad_broadcast, step_bot, transition, visible)
+from world_ai import (ATTACK, CHASE, INVESTIGATE, PATROL, SEARCH, SUPPRESS, RETREAT, RELOAD,
+                      REACTION_MIN_MS, REACTION_MAX_MS, Bot, Grid, Percept, astar, find_cover,
+                      hit_chance, line_of_sight, perceive, reaction_delay, squad_broadcast,
+                      step_bot, transition, visible)
 
 
 def check(name, ok, detail):
@@ -118,6 +120,65 @@ def test_determinism():
     return check("determinism", ok, f"path stable={p1==p2}, step stable={r1==r2}")
 
 
+def test_attack_to_suppress():
+    s = transition(ATTACK, Percept(can_see_player=False, recent_contact=True))
+    return check("attack_to_suppress", s == SUPPRESS, f"ATTACK + lost-sight + recent-contact → {s}")
+
+
+def test_low_hp_retreats():
+    s = transition(ATTACK, Percept(can_see_player=True, in_range=True, low_hp=True))
+    return check("low_hp_retreats", s == RETREAT, f"ATTACK + low HP → {s}")
+
+
+def test_out_of_ammo_reloads():
+    s = transition(ATTACK, Percept(can_see_player=True, in_range=True, out_of_ammo=True))
+    return check("out_of_ammo_reloads", s == RELOAD, f"ATTACK + empty mag → {s}")
+
+
+def test_reload_completes():
+    g = Grid(10, 3, set())
+    b = Bot(id="r", pos=(1, 1), state=ATTACK, ammo=0, mag=30)
+    max_ammo = 0
+    for _ in range(10):
+        step_bot(g, b, (3, 1))          # player in clear LOS + range the whole time
+        max_ammo = max(max_ammo, b.ammo)
+    # the empty mag reloads to full (max_ammo hits mag), then the bot re-engages and spends rounds again
+    ok = max_ammo == b.mag and b.state == ATTACK
+    return check("reload_completes", ok, f"reloaded to {max_ammo}/{b.mag}, then back to {b.state} (now {b.ammo})")
+
+
+def test_accuracy_model():
+    close, far = hit_chance(2.0), hit_chance(25.0)
+    base, supp, mov = hit_chance(8.0), hit_chance(8.0, suppressed=True), hit_chance(8.0, moving=True)
+    ok = close > far and supp < base and mov < base
+    return check("accuracy_model", ok, f"close {close} > far {far}; suppressed {supp} < base {base}; moving {mov} < base")
+
+
+def test_reaction_delay_range():
+    vals = [reaction_delay(s) for s in range(8)]
+    ok = all(REACTION_MIN_MS <= v <= REACTION_MAX_MS for v in vals) and len(set(vals)) > 1
+    return check("reaction_delay_range", ok, f"all in [{REACTION_MIN_MS},{REACTION_MAX_MS}]; sample {vals[:4]}")
+
+
+def test_find_cover_breaks_los():
+    g = Grid(10, 3, {(5, 0), (5, 1), (5, 2)})        # full wall column at x=5
+    cover = find_cover(g, (3, 1), (8, 1))            # bot left of wall, player right
+    ok = not line_of_sight(g, cover, (8, 1)) and g.passable(*cover)
+    return check("find_cover_breaks_los", ok, f"cover {cover} breaks LOS to player={not line_of_sight(g, cover, (8,1))}")
+
+
+def test_bot_memory():
+    g = Grid(10, 3, set())
+    b = Bot(id="m", pos=(1, 1))
+    step_bot(g, b, (5, 1))                            # clear LOS ⇒ remember the sighting
+    seen_ok = b.last_seen == (5, 1) and b.time_since_contact == 0
+    gw = Grid(10, 3, {(3, 0), (3, 1), (3, 2)})        # wall now hides the player
+    step_bot(gw, b, (5, 1))
+    forget_ok = b.time_since_contact >= 1
+    return check("bot_memory", seen_ok and forget_ok,
+                 f"last_seen={b.last_seen}, time_since_contact grew to {b.time_since_contact}")
+
+
 def main():
     results = [
         test_los_blocked(),
@@ -130,6 +191,14 @@ def main():
         test_astar_around_wall(),
         test_destroy_generator_cascade(),
         test_determinism(),
+        test_attack_to_suppress(),
+        test_low_hp_retreats(),
+        test_out_of_ammo_reloads(),
+        test_reload_completes(),
+        test_accuracy_model(),
+        test_reaction_delay_range(),
+        test_find_cover_breaks_los(),
+        test_bot_memory(),
     ]
     print("test_world_ai — Phase 9: combat-AI authority (validity-not-outcome)\n")
     passed = 0

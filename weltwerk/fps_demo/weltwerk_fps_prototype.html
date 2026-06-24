@@ -169,13 +169,18 @@ const player = {pos:new THREE.Vector3(0,1.7,20), vx:0,vz:0, vy:0, yaw:Math.PI, p
                 onGround:true, crouch:false, hp:100, alive:true, bob:0, spawnProtect:0};
 const PLAYER_SPAWNS=[[0,20],[20,18],[-20,18],[18,8],[-18,10]];
 const weapons = {
-  rifle:   {name:"RIFLE",   dmg:24, rof:0.12, spread:0.012, pellets:1, mag:30, ammo:30, reserve:120, reload:1.1},
-  shotgun: {name:"SHOTGUN", dmg:11, rof:0.72, spread:0.07,  pellets:8, mag:6,  ammo:6,  reserve:36,  reload:1.6},
+  rifle:   {name:"RIFLE",    dmg:24, rof:0.14, spread:0.010, pellets:1, mag:20, ammo:20, reserve:120, reload:1.1, auto:false, recoil:0.020},
+  ar:      {name:"ASSAULT",  dmg:16, rof:0.085,spread:0.016, pellets:1, mag:30, ammo:30, reserve:150, reload:1.3, auto:true,  recoil:0.012, bloom:0.010},
+  shotgun: {name:"SHOTGUN",  dmg:11, rof:0.72, spread:0.075, pellets:9, mag:6,  ammo:6,  reserve:36,  reload:1.6, auto:false, recoil:0.05},
 };
-let weap = "rifle", lastShot=0, reloading=0;
+let weap = "rifle", lastShot=0, reloading=0, bloom=0;
 let debugMode = 1;            // F1..F4
 let aiLines = [];             // THREE line objects for the F3 overlay
 let lastEvent = null;         // last causal event report (F2/F4)
+let worldRel = [];            // current causal relations (the .wrk authority, editable via F8)
+let slide = 0;                // remaining slide impulse timer
+let firing = false;           // mouse held (auto weapons)
+let inspectorOpen = false, editorOpen = false, selectedEntity = null;
 
 const EYE_STAND=1.7, EYE_CROUCH=1.05, RAD=0.45;
 
@@ -204,11 +209,17 @@ function buildWorld(){
   floor.rotation.x=-Math.PI/2; scene.add(floor);
   scene.add(new THREE.GridHelper(W*2,GW,0x223040,0x182230));
 
-  // --- the causal world (MIRROR of a .wrk): generator powers turrets + door + light ---
-  world = CausalWorld([
-    ["generator","powers","turret_a"], ["generator","powers","turret_b"],
-    ["generator","powers","door"],     ["generator","powers","light"],
-  ]);
+  // --- the causal world (MIRROR of a .wrk): a multi-hop power network ---
+  //   generator → battery → turrets ;  generator → radar → drone ;  generator → repair_station/door/light
+  // Destroying the generator cascades to ALL; destroying the battery cuts only the turrets. Editable via F8.
+  worldRel = [
+    ["generator","powers","battery"],
+    ["battery","powers","turret_a"], ["battery","powers","turret_b"],
+    ["generator","powers","radar"],  ["radar","powers","drone"],
+    ["generator","powers","repair_station"],
+    ["generator","powers","door"],   ["generator","powers","light"],
+  ];
+  world = CausalWorld(worldRel);
 
   // perimeter walls
   addSolid(0,-W+0.5, W,0.5, 4,"wall",0x2b3340); addSolid(0,W-0.5, W,0.5, 4,"wall",0x2b3340);
@@ -222,10 +233,14 @@ function buildWorld(){
 
   // --- enemy entities tied to the causal graph ---
   generatorMesh = addSolid(-18,-18, 1.6,1.6, 3.2,"entity",0xd29922,"generator").mesh;
+  addSolid(-18,-12, 1.2,1.2, 2.4,"entity",0x9a6b1f,"battery");   // battery (between generator and turrets)
   turrets.push(makeTurret("turret_a", -18,-2));
   turrets.push(makeTurret("turret_b", 16,-16));
+  addSolid(2,18, 1.0,1.0, 2.8,"entity",0x2f7f8c,"radar");        // radar (powered by generator)
+  addSolid(4,16, 0.6,0.6, 1.4,"entity",0x2f7f8c,"drone");        // drone (controlled by radar)
+  addSolid(-20,16, 1.0,1.0, 2.2,"entity",0x2ea043,"repair_station"); // repair station (heals player when powered)
   addSolid(20,2, 1.2,1.2, 2.6,"entity",0x6e7681,"door");        // door (disabled visually on cascade)
-  addSolid(-20,16, 0.8,0.8, 2.0,"entity",0x6e7681,"light");     // light
+  addSolid(-20,8, 0.8,0.8, 2.0,"entity",0x6e7681,"light");      // light
 
   // --- spawn points + bots ---
   for(const [id,x,z,team] of [["spawnpoint_red",-20,-20,"red"],["spawnpoint_red",18,-18,"red"],
@@ -342,9 +357,12 @@ function fire(){
   const w=weapons[weap]; const now=clock.getElapsedTime();
   if(now-lastShot < w.rof) return; if(w.ammo<=0){ reload(); return; }
   lastShot=now; w.ammo--; updateHUD();
+  player.pitch=Math.min(1.4, player.pitch + (w.recoil||0.015));    // recoil kicks the view up
+  if(w.bloom) bloom=Math.min(0.06, bloom + w.bloom);               // sustained auto fire blooms
+  const spread = w.spread + bloom;
   for(let i=0;i<w.pellets;i++){
     const dir=camDir().clone();
-    dir.x+=(Math.random()-0.5)*w.spread*2; dir.y+=(Math.random()-0.5)*w.spread*2; dir.z+=(Math.random()-0.5)*w.spread*2;
+    dir.x+=(Math.random()-0.5)*spread*2; dir.y+=(Math.random()-0.5)*spread*2; dir.z+=(Math.random()-0.5)*spread*2;
     dir.normalize();
     raycaster.set(camera.position, dir); raycaster.far=120;
     const targets=[]; for(const b of bots) if(b.alive) targets.push(b.mesh);
@@ -358,10 +376,11 @@ function resolveHit(obj,dmg){
   for(const b of bots){ if(b.alive && b.mesh===obj){ b.hp-=dmg; if(b.hp<=0) killBot(b); else b.repos=0.1; return; } }
   for(const t of turrets){ if(t.head===obj){ /* shoot the turret head: only the generator cut disables; head is armor */ return; } }
   for(const s of solids){ if(s.mesh===obj){
-    if(s.kind==="entity" && s.id==="generator" && world.powered("generator")){
-      lastEvent = world.destroy("generator");          // ROUTE THROUGH THE EVENT SYSTEM (causal cascade)
-      generatorMesh.material.color.set(0x3a3f46);
-      showMsg("generator destroyed — turret power cut (causal cascade)");
+    // shooting ANY powered causal entity routes through the event system; the cascade does the rest
+    if(s.kind==="entity" && world.nodes.has(s.id) && world.powered(s.id)){
+      lastEvent = world.destroy(s.id);                 // event → graph → affected → runtime (NOT scripted)
+      s.mesh.material.color.set(0x3a3f46);
+      showMsg(s.id+" destroyed — affected: "+lastEvent.affected.filter(x=>x!==s.id).join(", "));
     }
     return; } }
 }
@@ -426,8 +445,15 @@ function supportFloor(){ const feet=player.pos.y-(player.crouch?EYE_CROUCH:EYE_S
 function movePlayer(dt){
   const eye=player.crouch?EYE_CROUCH:EYE_STAND;
   const sprint = keys["ShiftLeft"]&&!player.crouch;
-  const maxSpd=(player.crouch?2.6:sprint?9.5:6.0);
-  const accel=55, fwd=new THREE.Vector3(Math.sin(player.yaw),0,Math.cos(player.yaw)),
+  const spd0=Math.hypot(player.vx,player.vz);
+  // slide: crouch while sprinting fast on the ground → a short low-friction boost
+  if(keys["ControlLeft"] && keys["ShiftLeft"] && player.onGround && slide<=0 && spd0>5) slide=0.55;
+  slide=Math.max(0, slide-dt);
+  const sliding = slide>0;
+  const airborne = !player.onGround;
+  const maxSpd=(sliding?11:player.crouch?2.6:sprint?9.5:6.0);
+  const accel=airborne?12:sliding?6:55;     // reduced control in air / during slide
+  const fwd=new THREE.Vector3(Math.sin(player.yaw),0,Math.cos(player.yaw)),
         rt=new THREE.Vector3(Math.sin(player.yaw-Math.PI/2),0,Math.cos(player.yaw-Math.PI/2));
   let wish=new THREE.Vector3();
   if(keys["KeyW"]) wish.add(fwd); if(keys["KeyS"]) wish.sub(fwd);
@@ -436,7 +462,7 @@ function movePlayer(dt){
   // accelerate toward wish*maxSpd, friction when no input
   player.vx += (wish.x*maxSpd - player.vx)*Math.min(1,accel*dt/Math.max(1,maxSpd));
   player.vz += (wish.z*maxSpd - player.vz)*Math.min(1,accel*dt/Math.max(1,maxSpd));
-  if(wish.lengthSq()===0){ player.vx*=Math.max(0,1-10*dt); player.vz*=Math.max(0,1-10*dt); }
+  if(wish.lengthSq()===0 && !sliding){ player.vx*=Math.max(0,1-10*dt); player.vz*=Math.max(0,1-10*dt); }
   const feet=player.pos.y-eye;
   let nx=player.pos.x+player.vx*dt, nz=player.pos.z+player.vz*dt;
   if(!solidBlocked(nx,player.pos.z,feet)) player.pos.x=nx; else player.vx=0;
@@ -512,17 +538,23 @@ function renderDebug(){
 function initInput(){
   const dom=renderer.domElement, startEl=document.getElementById("start");
   startEl.addEventListener("click",()=>dom.requestPointerLock());
-  dom.addEventListener("click",()=>{ if(document.pointerLockElement===dom) fire(); else dom.requestPointerLock(); });
-  document.addEventListener("pointerlockchange",()=>{ startEl.style.display = document.pointerLockElement===dom?"none":"flex"; });
+  dom.addEventListener("mousedown",()=>{ if(document.pointerLockElement===dom){ firing=true; fire(); } else if(!editorOpen&&!inspectorOpen) dom.requestPointerLock(); });
+  window.addEventListener("mouseup",()=>{ firing=false; });
+  document.addEventListener("pointerlockchange",()=>{ const locked=document.pointerLockElement===dom;
+    startEl.style.display = (locked||editorOpen||inspectorOpen)?"none":"flex"; if(!locked) firing=false; });
   document.addEventListener("mousemove",e=>{ if(document.pointerLockElement===dom){
     player.yaw-=e.movementX*0.0022; player.pitch-=e.movementY*0.0022;
     player.pitch=Math.max(-1.4,Math.min(1.4,player.pitch)); }});
   document.addEventListener("keydown",e=>{ keys[e.code]=true;
-    if(e.code==="Digit1") weap="rifle"; if(e.code==="Digit2") weap="shotgun";
+    if(e.code==="Digit1") weap="rifle"; if(e.code==="Digit2") weap="ar"; if(e.code==="Digit3") weap="shotgun";
     if(e.code==="KeyR") reload();
     if(e.code==="ControlLeft") player.crouch=true;
-    if(e.code==="F1"){e.preventDefault();debugMode=1;} if(e.code==="F2"){e.preventDefault();debugMode=2;}
-    if(e.code==="F3"){e.preventDefault();debugMode=3;} if(e.code==="F4"){e.preventDefault();debugMode=4;}
+    if(["KeyW","KeyA","KeyS","KeyD","Space","ShiftLeft","Tab","F1","F2","F3","F4","F8"].includes(e.code) && document.pointerLockElement===dom) e.preventDefault();
+    if(e.code==="F1") debugMode=1; if(e.code==="F2") debugMode=2; if(e.code==="F3") debugMode=3; if(e.code==="F4") debugMode=4;
+    if(e.code==="F8"){ e.preventDefault(); editorOpen=!editorOpen; document.getElementById("editor").style.display=editorOpen?"block":"none";
+      if(editorOpen){ document.getElementById("wrk").value=relToWrk(worldRel); if(document.pointerLockElement) document.exitPointerLock(); } }
+    if(e.code==="Tab"){ e.preventDefault(); inspectorOpen=!inspectorOpen; document.getElementById("inspector").style.display=inspectorOpen?"block":"none";
+      if(inspectorOpen){ document.getElementById("entlist").innerHTML=buildEntList(); if(document.pointerLockElement) document.exitPointerLock(); } }
     updateHUD();
   });
   document.addEventListener("keyup",e=>{ keys[e.code]=false; if(e.code==="ControlLeft") player.crouch=false; });
@@ -532,13 +564,77 @@ function loop(){
   const dt=Math.min(0.05,clock.getDelta());
   if(player.spawnProtect>0) player.spawnProtect-=dt;
   if(reloading>0){ reloading-=dt; if(reloading<=0){ reloading=0; finishReload(); } }
+  if(firing && weapons[weap].auto) fire();           // automatic weapons fire while held
+  bloom = Math.max(0, bloom - dt*0.06);                // bloom recovers when not firing
   movePlayer(dt);
   for(const b of bots) tickBot(b,dt);
   tickTurrets(dt);
+  // repair/healing station: heals the player when standing near it AND it is POWERED (causal, not scripted)
+  const rs = solids.find(s=>s.id==="repair_station");
+  if(rs && player.alive && world.powered("repair_station") && Math.hypot(player.pos.x-rs.x,player.pos.z-rs.z)<3.5 && player.hp<100){
+    player.hp=Math.min(100,player.hp+18*dt); updateHUD();
+  }
+  if(inspectorOpen && selectedEntity){ const ei=document.getElementById("entinfo"); if(ei) ei.textContent=inspectText(selectedEntity); }
   if(msgT>0){ msgT-=dt; if(msgT<=0) showMsg(""); }
   drawAiOverlay(); renderDebug();
   renderer.render(scene,camera);
   requestAnimationFrame(loop);
+}
+
+// ---- Phase 11: live world editor (F8) + inspector (TAB). MIRRORS world_edit.apply_edit / explain. ----
+function relToWrk(rel){ return rel.map(([s,r,d]) => s+" "+r+" "+d).join("\n"); }
+function wrkToRel(text){
+  const out=[]; for(const line of text.split("\n")){ const t=line.trim(); if(!t||t.startsWith("#")) continue;
+    const p=t.split(/\s+/); if(p.length>=3) out.push([p[0],p[1],p.slice(2).join(" ")]); } return out;
+}
+function setEditorMsg(s){ const e=document.getElementById("edmsg"); if(e) e.textContent=s; }
+function editorApply(){
+  const newRel = wrkToRel(document.getElementById("wrk").value);
+  if(!newRel.length){ setEditorMsg("REJECTED: empty / unparseable world — old authority stands."); return; }
+  const oldSet=new Set(worldRel.map(r=>r.join("|"))), newSet=new Set(newRel.map(r=>r.join("|")));
+  const added=newRel.filter(r=>!oldSet.has(r.join("|"))), removed=worldRel.filter(r=>!newSet.has(r.join("|")));
+  // edit = NEW authority: rebuild the causal world. camera/health/ammo are player state ⇒ preserved (untouched here).
+  worldRel = newRel; world = CausalWorld(newRel);
+  lastEvent = null;
+  setEditorMsg("REBUILT (edit = new authority). camera/health/ammo preserved.\n"+
+    "added:   "+(added.map(r=>r.join(" ")).join(", ")||"—")+"\n"+
+    "removed: "+(removed.map(r=>r.join(" ")).join(", ")||"—")+"\n"+
+    "turret_a powered: "+world.powered("turret_a")+" · turret_b: "+world.powered("turret_b")+"\n"+
+    "radar: "+world.powered("radar")+" · repair_station: "+world.powered("repair_station"));
+  updateHUD();
+}
+function buildEntList(){
+  return [...world.nodes].sort().map(n =>
+    `<div onclick="selectEntity('${n}')" style="cursor:pointer;padding:1px 5px">${world.powered(n)?'<span class=green>●</span>':'<span class=red>●</span>'} ${n}</div>`).join("");
+}
+function selectEntity(n){ selectedEntity=n; }
+function inspectText(n){
+  if(!world.nodes.has(n)) return "—";
+  const r=world.runtime[n];
+  const deps=[...world.nodes].filter(s=>(world.edges[s]||new Set()).has(n)).sort();   // who can affect n
+  const dependents=[...world.reach(n)].sort();                                          // who n affects
+  const powered=world.powered(n);
+  const why = !r.alive ? "destroyed" : (powered ? "powered: alive and its power path is intact"
+              : "disabled: an upstream power source is dead (cut the cascade above it)");
+  return "ENTITY        "+n+"\nALIVE         "+r.alive+"\nSTATUS        "+r.status+
+         "\nPOWERED       "+powered+"\nWHY           "+why+
+         "\nDEPENDS ON    "+(deps.join(", ")||"—")+"\nAFFECTS       "+(dependents.join(", ")||"—")+
+         "\nBLAST RADIUS  "+dependents.length+" of "+world.nodes.size;
+}
+function setupP11UI(){
+  const ed=document.createElement("div"); ed.id="editor"; ed.className="panel";
+  ed.style.cssText="left:10px;top:120px;width:330px;display:none";
+  ed.innerHTML='<h3>F8 · World Editor — .wrk authority</h3>'+
+    '<textarea id="wrk" spellcheck="false" style="width:100%;height:150px;background:#0b0f14;color:#cdd3df;border:1px solid #30363d;border-radius:6px;font:11px/1.4 ui-monospace,monospace;box-sizing:border-box;padding:6px"></textarea>'+
+    '<div><button onclick="editorApply()">Apply — rebuild authority</button></div>'+
+    '<div id="edmsg" class="box" style="white-space:pre-wrap">edit src relation dst, one per line. Apply re-derives the graph + power. Destroy the generator afterward to see the new cascade.</div>'+
+    '<div class="k" style="font-size:10px;margin-top:3px">edit = NEW authority (runtime resets — the discontinuity, reported not hidden). Player state preserved.</div>';
+  document.body.appendChild(ed);
+  const ins=document.createElement("div"); ins.id="inspector"; ins.className="panel";
+  ins.style.cssText="left:10px;top:120px;width:300px;display:none";
+  ins.innerHTML='<h3>TAB · Live Inspector</h3><div id="entlist" style="max-height:150px;overflow:auto;border-bottom:1px solid #21262d;margin-bottom:5px"></div>'+
+    '<div id="entinfo" class="box" style="white-space:pre-wrap">click an entity — answers come from runtime authority</div>';
+  document.body.appendChild(ins);
 }
 
 function init(){
@@ -549,7 +645,7 @@ function init(){
   buildWorld();
   camera.position.copy(player.pos);
   addEventListener("resize",()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
-  initInput(); updateHUD(); loop();
+  setupP11UI(); initInput(); updateHUD(); loop();
 }
 init();
 </script>
