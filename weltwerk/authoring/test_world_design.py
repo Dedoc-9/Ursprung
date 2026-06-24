@@ -18,7 +18,7 @@ Run:  PYTHONHASHSEED=0 python3 test_world_design.py
 from __future__ import annotations
 
 from world_design import (FACTION_WORLD, design_warnings, failure_cascade, regime,
-                          simulate_timeline)
+                          simulate_timeline, world_health_report)
 from world_format import build_causal_graph, parse_world
 
 WRK = """
@@ -94,8 +94,19 @@ def test_cascade_orders_layers():
     return check("cascade_orders_layers", ok, f"cascade layers from generator reach gate+turret: {ok}")
 
 
+def test_health_report_honest_and_deterministic():
+    g = build_causal_graph(parse_world(WRK))
+    r1 = world_health_report(g); r2 = world_health_report(g)
+    ok = (r1 == r2 and "WORLD HEALTH REPORT" in r1
+          and "MEASURED, not a runtime prediction" in r1   # the no-prediction rule, enforced in the report
+          and "Failure modes:" in r1)
+    return check("health_report_honest_and_deterministic", ok,
+                 f"report deterministic + labelled measured-not-predicted: {ok}")
+
+
 def main():
     results = [
+        test_health_report_honest_and_deterministic(),
         test_warnings_deterministic(),
         test_designer_edit_modifies_graph(),
         test_timeline_deterministic(),

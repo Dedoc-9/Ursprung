@@ -139,6 +139,39 @@ def simulate_timeline(spec, destroy_seq: list) -> list:
     return ticks
 
 
+def world_health_report(cg) -> str:
+    """A glance-level report a developer reads BEFORE building a world. All MEASURED structure — the
+    'summary' is not a runtime prediction (we never claim prediction; only what the graph already says)."""
+    n = len(cg.nodes) or 1
+    warns = design_warnings(cg)
+    reg = regime(cg)
+    loops = [c for c in sccs(cg) if len(c) > 1]
+    largest = max((len(c) for c in loops), default=0)
+    ranked = sorted(cg.nodes, key=lambda x: (-cg.blast_radius(x), x))[:5]
+    L = ["WORLD HEALTH REPORT", "-" * 34,
+         f"Coupling: {reg['label']}",
+         f"Largest feedback loop (SCC): {largest} node(s)", "",
+         "Critical nodes (by blast radius):"]
+    for x in ranked:
+        pct = cg.blast_radius(x) / n
+        fill = max(0, min(10, round(pct * 10)))
+        L.append(f"  {x:<14}{'█' * fill}{'░' * (10 - fill)} {round(100 * pct)}%")
+    has_cascade = reg["peak_blast_pct"] >= 0.5
+    has_loop = bool(loops)
+    has_orphan = any(w["kind"] == "orphaned" for w in warns)
+    spof = sum(1 for w in warns if w["kind"] == "single_point_of_failure")
+    L += ["", "Failure modes:",
+          f"  [{'!' if has_cascade else ' '}] cascade risk",
+          f"  [{'!' if has_loop else ' '}] feedback loop",
+          f"  [{'!' if has_orphan else ' '}] isolated zones", "",
+          "Structural summary (MEASURED, not a runtime prediction):",
+          f"  max blast radius: {round(100 * reg['peak_blast_pct'])}% of world",
+          f"  single points of failure: {spof}",
+          f"  causal compression headroom: {'low' if reg['peak_blast_pct'] >= 0.5 else 'high'} "
+          f"({'high coupling ⇒ edits reach far ⇒ little to prune' if reg['peak_blast_pct'] >= 0.5 else 'local edits ⇒ prunable'})"]
+    return "\n".join(L)
+
+
 FACTION_WORLD = """
 world "Frontier"
 zone red_territory
@@ -182,6 +215,7 @@ def main():
     print("\n  TIMELINE — destroy the reactor (power), then the gate:")
     for t in simulate_timeline(parse_world(DEMO_WORLD), ["power", "gate"]):
         print(f"    tick {t['tick']}: {t['event'] or 'initial'}  diverged={t['diverged']}  (new: {t['new']})")
+    print("\n" + "\n".join("  " + ln for ln in world_health_report(cg).splitlines()))
     print("\n  FACTION sample (causal layer only — owns/attacks/allied/trades parse as relations):")
     fcg = build_causal_graph(parse_world(FACTION_WORLD))
     print(f"    faction_red blast radius: {fcg.blast_radius('faction_red')} → {sorted(fcg.influence('faction_red')-{'faction_red'})}")
