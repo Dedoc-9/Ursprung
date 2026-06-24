@@ -207,7 +207,7 @@ function analyzeDSL(){
   const R={}; nodes.forEach(n=>R[n]=reach(adj,n));
   // SCCs via mutual reachability
   const seen=new Set(),sccs=[];
-  for(const n of nodes.slice().sort()){ if(seen.has(n))continue; const comp=[n,...[...R[n]].filter(m=>R[m]&&R[m].has(n))]; comp.forEach(x=>seen.add(x)); sccs.push(comp); }
+  for(const n of nodes.slice().sort()){ if(seen.has(n))continue; const comp=[...new Set([n,...[...R[n]].filter(m=>R[m]&&R[m].has(n))])]; comp.forEach(x=>seen.add(x)); sccs.push(comp); }
   const fb=sccs.filter(c=>c.length>1);
   const load=nodes.slice().sort((a,b)=>R[b].size-R[a].size)[0];
   let out=`entities ${nodes.length} · regime ${fb.length?'HAS-CYCLES (amplification risk)':'DAG (bounded)'}\n`;
