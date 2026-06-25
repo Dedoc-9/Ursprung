@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: AGPL-3.0-only
+  Weltwerk — Gaussian Splat Lens + Editor (Phase 13). A from-scratch in-browser 3D Gaussian-splat renderer
+  and editor. In Weltwerk terms a splat scene is a PROJECTION (a GeometryAdapter / lens) — a representation,
+  never authority. You can edit the representation freely; it does not define truth.
+
+  The on-disk .splat format is the VERIFIED contract (weltwerk/splat/splat_format.py, test 8/8); this file's
+  JS mirrors it byte-for-byte for load + export.
+
+  Renderer: instanced quads, each shaded as a 2D Gaussian (exp(-r²)), depth-sorted back-to-front alpha blend.
+  HONEST: this is a simplified billboard-gaussian splatter (per-splat colour/opacity/size), NOT full
+  3D-covariance EWA splatting, and there is no training/capture pipeline. See README.
+  NOT claimed: photoreal capture quality, novel-view synthesis fidelity, real-time millions of splats.
+-->
+<html lang="en"><head><meta charset="utf-8"><title>Weltwerk — Splat Lens + Editor</title>
+<style>
+ html,body{margin:0;height:100%;background:#06080d;color:#dfe6f2;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;overflow:hidden}
+ #view{position:fixed;inset:0}
+ canvas{display:block}
+ .panel{position:fixed;background:rgba(8,11,18,.92);border:1px solid #1f2733;border-radius:9px;padding:10px 12px;backdrop-filter:blur(3px)}
+ #tools{top:10px;left:10px;width:226px}
+ #hud{top:10px;right:10px;width:200px;text-align:right}
+ #help{bottom:10px;left:50%;transform:translateX(-50%);color:#9aa6bb;font-size:11px}
+ h3{font-size:11px;margin:0 0 7px;color:#cdd6e6;text-transform:uppercase;letter-spacing:1px}
+ .lab{color:#8b97ad;font-size:11px;margin-top:7px}
+ button{background:#141b27;color:#dfe6f2;border:1px solid #2a3442;border-radius:6px;padding:5px 9px;cursor:pointer;font:inherit;margin:3px 3px 0 0}
+ button.on{border-color:#58c8ff;color:#fff;background:#13243f}
+ input[type=range]{width:100%} input[type=color]{width:40px;height:22px;vertical-align:middle;background:none;border:1px solid #2a3442;border-radius:4px}
+ .big{font-size:22px;font-weight:bold} .k{color:#8b97ad}
+ #drop{position:fixed;inset:0;border:3px dashed #58c8ff;background:rgba(20,40,70,.4);display:none;align-items:center;justify-content:center;font-size:20px;color:#cfe;z-index:9}
+ a.btn{display:inline-block;text-decoration:none}
+</style></head><body>
+<div id="view"></div>
+<div id="drop">drop a .splat or .ply file to load</div>
+
+<div class="panel" id="tools">
+  <h3>Splat Lens · Editor</h3>
+  <div class="k">a replaceable Weltwerk projection — edits the representation, never the authority.</div>
+  <div class="lab">TOOL</div>
+  <div><button id="bOrbit" class="on" onclick="setTool('orbit')">Orbit</button><button id="bBrush" onclick="setTool('brush')">Erase brush</button><button id="bCrop" onclick="setTool('crop')">Crop box</button></div>
+  <div class="lab">SPLAT SIZE</div><input type="range" id="size" min="0.3" max="3" step="0.05" value="1">
+  <div class="lab">ERASE BRUSH RADIUS</div><input type="range" id="brush" min="0.2" max="3" step="0.05" value="0.8">
+  <div id="cropUI" style="display:none">
+    <div class="lab">CROP BOX (drag sliders; box shown in scene)</div>
+    <div class="k">center</div>
+    cx<input type="range" id="cx" min="-8" max="8" step="0.1" value="0">
+    cy<input type="range" id="cy" min="-1" max="6" step="0.1" value="1.6">
+    cz<input type="range" id="cz" min="-8" max="8" step="0.1" value="0">
+    <div class="k">size</div>
+    s <input type="range" id="cs" min="0.5" max="16" step="0.1" value="4">
+    <div><button onclick="cropCut(true)">Cut inside</button><button onclick="cropCut(false)">Keep inside</button></div>
+    <div class="lab">RECOLOR / OPACITY (inside box)</div>
+    <input type="color" id="col" value="#58c8ff"><button onclick="recolorInside()">Recolor</button>
+    op<input type="range" id="op" min="0.05" max="1" step="0.05" value="1"><button onclick="opacityInside()">Set opacity</button>
+  </div>
+  <div class="lab">SCENE</div>
+  <div><button onclick="loadSynthetic()">Synthetic</button><label class="btn"><button onclick="document.getElementById('file').click()">Load file</button></label><button onclick="exportSplat()">Export .splat</button></div>
+  <input type="file" id="file" accept=".splat,.ply" style="display:none">
+  <div id="undo" class="k" style="margin-top:6px"></div>
+</div>
+
+<div class="panel" id="hud">
+  <div class="lab">SPLATS</div><div class="big" id="count">0</div>
+  <div class="k" id="fps">– fps</div>
+  <div class="k" id="tool">orbit</div>
+</div>
+<div class="panel" id="help">drag = orbit · wheel = zoom · shift+drag = pan · brush/crop tools edit the splats · drop a .splat to load</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+/* ===== .splat DATA CONTRACT (mirror of weltwerk/splat/splat_format.py — verified 8/8) ===== */
+const SPLAT_BYTES=32;
+function decodeSplatBuffer(buf){ const dv=new DataView(buf), n=Math.floor(buf.byteLength/SPLAT_BYTES), out=[];
+  for(let i=0;i<n;i++){ const o=i*SPLAT_BYTES;
+    out.push({ x:dv.getFloat32(o,true), y:dv.getFloat32(o+4,true), z:dv.getFloat32(o+8,true),
+      sx:dv.getFloat32(o+12,true), sy:dv.getFloat32(o+16,true), sz:dv.getFloat32(o+20,true),
+      r:dv.getUint8(o+24)/255, g:dv.getUint8(o+25)/255, b:dv.getUint8(o+26)/255, o:dv.getUint8(o+27)/255 }); }
+  return out; }
+function encodeSplatBuffer(splats){ const buf=new ArrayBuffer(splats.length*SPLAT_BYTES), dv=new DataView(buf);
+  splats.forEach((s,i)=>{ const o=i*SPLAT_BYTES; const sc=s.scl||0.05;
+    dv.setFloat32(o,s.x,true); dv.setFloat32(o+4,s.y,true); dv.setFloat32(o+8,s.z,true);
+    dv.setFloat32(o+12,sc,true); dv.setFloat32(o+16,sc,true); dv.setFloat32(o+20,sc,true);
+    dv.setUint8(o+24,s.r*255); dv.setUint8(o+25,s.g*255); dv.setUint8(o+26,s.b*255); dv.setUint8(o+27,(s.op==null?1:s.op)*255);
+    dv.setUint8(o+28,128); dv.setUint8(o+29,128); dv.setUint8(o+30,128); dv.setUint8(o+31,255); }); return buf; }
+
+/* ===== synthetic scene (mirror of make_synthetic) — runs with zero assets ===== */
+function hsv(h,s,v){ const i=Math.floor(h*6)%6,f=h*6-Math.floor(h*6),p=v*(1-s),q=v*(1-f*s),t=v*(1-(1-f)*s);
+  const a=[[v,t,p],[q,v,p],[p,v,t],[p,q,v],[t,p,v],[v,p,q]][i]; return [a[0],a[1],a[2]]; }
+function makeSynthetic(n){ n=n||9000; const out=[]; let seed=12345; const rnd=()=>{ seed=(seed*1103515245+12345)&0x7fffffff; return seed/0x7fffffff; };
+  const R=2.4,r=0.8;
+  for(let i=0;i<n*0.6;i++){ const u=rnd()*Math.PI*2,v=rnd()*Math.PI*2;
+    const x=(R+r*Math.cos(v))*Math.cos(u), z=(R+r*Math.cos(v))*Math.sin(u), y=r*Math.sin(v)+1.6, c=hsv(u/(Math.PI*2),0.7,1.0);
+    out.push({x,y,z,r:c[0],g:c[1],b:c[2],op:0.9,scl:0.05}); }
+  for(let i=0;i<n*0.4;i++){ const a=rnd()*Math.PI*2,rad=Math.sqrt(rnd())*7,g=(40+rnd()*50)/255;
+    out.push({x:Math.cos(a)*rad,y:0,z:Math.sin(a)*rad,r:g,g:g+0.03,b:g+0.07,op:0.8,scl:0.09}); }
+  return out; }
+
+/* ===== renderer ===== */
+let scene,camera,renderer,mesh,geo,mat;
+let splats=[];                          // master CPU list (the editable representation)
+const cam={target:new THREE.Vector3(0,1.4,0),theta:0.7,phi:1.15,rad:11};
+let tool="orbit", sortTimer=0, lastCamKey="";
+const cropBox={c:new THREE.Vector3(0,1.6,0),s:4}; let cropHelper=null;
+let frames=0,fpsT=0;
+
+const VERT=`precision highp float;
+attribute vec2 corner; attribute vec3 aPos; attribute vec3 aColor; attribute float aOpacity; attribute float aScale;
+uniform mat4 projectionMatrix; uniform mat4 modelViewMatrix; uniform float uSize;
+varying vec2 vC; varying vec3 vCol; varying float vOp;
+void main(){ vec4 mv=modelViewMatrix*vec4(aPos,1.0); mv.xy+=corner*aScale*uSize; gl_Position=projectionMatrix*mv; vC=corner; vCol=aColor; vOp=aOpacity; }`;
+const FRAG=`precision highp float; varying vec2 vC; varying vec3 vCol; varying float vOp;
+void main(){ float d2=dot(vC,vC); float a=vOp*exp(-d2*4.0); if(a<0.02) discard; gl_FragColor=vec4(vCol,a); }`;
+
+function buildMesh(){
+  if(mesh){ scene.remove(mesh); geo.dispose(); }
+  const n=splats.length;
+  geo=new THREE.InstancedBufferGeometry();
+  geo.setAttribute("corner",new THREE.Float32BufferAttribute([-1,-1, 1,-1, 1,1, -1,1],2));
+  geo.setIndex([0,1,2,0,2,3]);
+  geo.setAttribute("aPos",new THREE.InstancedBufferAttribute(new Float32Array(n*3),3));
+  geo.setAttribute("aColor",new THREE.InstancedBufferAttribute(new Float32Array(n*3),3));
+  geo.setAttribute("aOpacity",new THREE.InstancedBufferAttribute(new Float32Array(n),1));
+  geo.setAttribute("aScale",new THREE.InstancedBufferAttribute(new Float32Array(n),1));
+  geo.instanceCount=n;
+  if(!mat) mat=new THREE.RawShaderMaterial({vertexShader:VERT,fragmentShader:FRAG,uniforms:{uSize:{value:1}},
+    transparent:true,depthTest:true,depthWrite:false,blending:THREE.NormalBlending});
+  mesh=new THREE.Mesh(geo,mat); mesh.frustumCulled=false; scene.add(mesh);
+  fillSorted(true); document.getElementById("count").textContent=n.toLocaleString();
+}
+function fillSorted(force){
+  const n=splats.length; if(!n) return;
+  const cp=camera.position;
+  const idx=splats.map((s,i)=>i);
+  idx.sort((a,b)=>{ const A=splats[a],B=splats[b]; const da=(A.x-cp.x)**2+(A.y-cp.y)**2+(A.z-cp.z)**2, db=(B.x-cp.x)**2+(B.y-cp.y)**2+(B.z-cp.z)**2; return db-da; }); // far → near
+  const P=geo.attributes.aPos.array,C=geo.attributes.aColor.array,O=geo.attributes.aOpacity.array,S=geo.attributes.aScale.array;
+  for(let i=0;i<n;i++){ const s=splats[idx[i]]; P[i*3]=s.x;P[i*3+1]=s.y;P[i*3+2]=s.z; C[i*3]=s.r;C[i*3+1]=s.g;C[i*3+2]=s.b; O[i]=s.op==null?1:s.op; S[i]=s.scl||0.05; }
+  geo.attributes.aPos.needsUpdate=geo.attributes.aColor.needsUpdate=geo.attributes.aOpacity.needsUpdate=geo.attributes.aScale.needsUpdate=true;
+}
+
+/* ===== camera orbit ===== */
+function updateCam(){ const t=cam.target; camera.position.set(
+  t.x+cam.rad*Math.sin(cam.phi)*Math.sin(cam.theta), t.y+cam.rad*Math.cos(cam.phi), t.z+cam.rad*Math.sin(cam.phi)*Math.cos(cam.theta)); camera.lookAt(t); }
+function initInput(){ const dom=renderer.domElement; let drag=false,pan=false,px=0,py=0;
+  dom.addEventListener("mousedown",e=>{ drag=true; pan=e.shiftKey||e.button===2; px=e.clientX; py=e.clientY;
+    if(tool==="brush"&&!pan&&e.button===0) eraseAt(e); });
+  window.addEventListener("mouseup",()=>{ drag=false; });
+  window.addEventListener("mousemove",e=>{ if(!drag) return; const dx=e.clientX-px,dy=e.clientY-py; px=e.clientX; py=e.clientY;
+    if(tool==="brush"&&!pan){ eraseAt(e); return; }
+    if(pan){ const r=new THREE.Vector3(Math.cos(cam.theta),0,-Math.sin(cam.theta)); const u=new THREE.Vector3(0,1,0);
+      cam.target.addScaledVector(r,-dx*0.01*cam.rad*0.1); cam.target.addScaledVector(u,dy*0.01*cam.rad*0.1); }
+    else { cam.theta-=dx*0.006; cam.phi=Math.max(0.05,Math.min(Math.PI-0.05,cam.phi-dy*0.006)); } updateCam(); });
+  dom.addEventListener("wheel",e=>{ e.preventDefault(); cam.rad=Math.max(2,Math.min(40,cam.rad*(1+Math.sign(e.deltaY)*0.1))); updateCam(); },{passive:false});
+  dom.addEventListener("contextmenu",e=>e.preventDefault());
+  document.getElementById("size").oninput=e=>{ mat.uniforms.uSize.value=parseFloat(e.target.value); };
+  for(const id of ["cx","cy","cz","cs"]) document.getElementById(id).oninput=updateCrop;
+  // drag & drop
+  const drop=document.getElementById("drop");
+  window.addEventListener("dragover",e=>{ e.preventDefault(); drop.style.display="flex"; });
+  window.addEventListener("dragleave",e=>{ if(e.clientX===0&&e.clientY===0) drop.style.display="none"; });
+  window.addEventListener("drop",e=>{ e.preventDefault(); drop.style.display="none"; if(e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); });
+  document.getElementById("file").addEventListener("change",e=>{ if(e.target.files[0]) loadFile(e.target.files[0]); });
+}
+function rayFromMouse(e){ const r=renderer.domElement.getBoundingClientRect();
+  const ndc=new THREE.Vector2(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1);
+  const rc=new THREE.Raycaster(); rc.setFromCamera(ndc,camera); return rc.ray; }
+function eraseAt(e){ const ray=rayFromMouse(e), br=parseFloat(document.getElementById("brush").value);
+  const before=splats.length; const p=new THREE.Vector3();
+  splats=splats.filter(s=>{ p.set(s.x,s.y,s.z); return ray.distanceToPoint(p) > br; });
+  if(splats.length!==before){ buildMesh(); flash(before-splats.length+" erased"); } }
+
+/* ===== crop / edit ===== */
+function updateCrop(){ cropBox.c.set(parseFloat(cx.value),parseFloat(cy.value),parseFloat(cz.value)); cropBox.s=parseFloat(cs.value);
+  if(cropHelper){ scene.remove(cropHelper); } if(tool==="crop"){ const b=new THREE.Box3().setFromCenterAndSize(cropBox.c,new THREE.Vector3(cropBox.s,cropBox.s,cropBox.s));
+    cropHelper=new THREE.Box3Helper(b,0x58c8ff); scene.add(cropHelper); } }
+function inBox(s){ const h=cropBox.s/2,c=cropBox.c; return Math.abs(s.x-c.x)<=h&&Math.abs(s.y-c.y)<=h&&Math.abs(s.z-c.z)<=h; }
+function cropCut(cutInside){ const before=splats.length; splats=splats.filter(s=> cutInside? !inBox(s) : inBox(s)); buildMesh(); flash(Math.abs(before-splats.length)+(cutInside?" cut":" kept")); }
+function hexRGB(h){ const n=parseInt(h.slice(1),16); return [(n>>16&255)/255,(n>>8&255)/255,(n&255)/255]; }
+function recolorInside(){ const c=hexRGB(document.getElementById("col").value); let k=0; for(const s of splats) if(inBox(s)){ s.r=c[0];s.g=c[1];s.b=c[2]; k++; } buildMesh(); flash(k+" recoloured"); }
+function opacityInside(){ const v=parseFloat(document.getElementById("op").value); let k=0; for(const s of splats) if(inBox(s)){ s.op=v; k++; } buildMesh(); flash(k+" opacity set"); }
+function flash(t){ const u=document.getElementById("undo"); u.textContent=t; setTimeout(()=>{ if(u.textContent===t) u.textContent=""; },1800); }
+
+/* ===== tools ===== */
+function setTool(t){ tool=t; for(const [id,name] of [["bOrbit","orbit"],["bBrush","brush"],["bCrop","crop"]]) document.getElementById(id).className=(t===name?"on":"");
+  document.getElementById("tool").textContent=t; document.getElementById("cropUI").style.display=(t==="crop"?"block":"none"); updateCrop(); }
+
+/* ===== load / save ===== */
+function loadSynthetic(){ splats=makeSynthetic(9000); cam.target.set(0,1.4,0); cam.rad=11; updateCam(); buildMesh(); flash("synthetic scene"); }
+function loadFile(f){ const name=f.name.toLowerCase(); const rd=new FileReader();
+  rd.onload=()=>{ try{
+    if(name.endsWith(".splat")){ splats=decodeSplatBuffer(rd.result).map(s=>({x:s.x,y:s.y,z:s.z,r:s.r,g:s.g,b:s.b,op:s.o,scl:Math.max(0.02,(s.sx+s.sy+s.sz)/3)})); }
+    else if(name.endsWith(".ply")){ splats=parsePLY(rd.result); }
+    if(splats.length>120000) splats=splats.filter((_,i)=>i%Math.ceil(splats.length/120000)===0); // subsample for the browser
+    recenter(); buildMesh(); flash(name+": "+splats.length.toLocaleString()+" splats");
+  }catch(err){ flash("load error: "+err.message); } };
+  rd.readAsArrayBuffer(f); }
+function recenter(){ if(!splats.length) return; let cx=0,cy=0,cz=0; for(const s of splats){ cx+=s.x;cy+=s.y;cz+=s.z; } cx/=splats.length;cy/=splats.length;cz/=splats.length;
+  for(const s of splats){ s.x-=cx; s.y-=cy; s.z-=cz; } cam.target.set(0,0,0); cam.rad=10; updateCam(); }
+function parsePLY(buf){ const dv=new DataView(buf); let txt=""; for(let i=0;i<Math.min(buf.byteLength,4096);i++) txt+=String.fromCharCode(dv.getUint8(i));
+  const end=txt.indexOf("end_header"); if(end<0) throw new Error("no PLY header"); const header=txt.slice(0,end).split("\n");
+  let count=0; const props=[]; let binary=txt.includes("binary_little_endian");
+  for(const ln of header){ const t=ln.trim(); if(t.startsWith("element vertex")) count=parseInt(t.split(/\s+/)[2]); if(t.startsWith("property")){ const p=t.split(/\s+/); props.push({type:p[1],name:p[2]}); } }
+  const sz={float:4,float32:4,double:8,uchar:1,uint8:1,int:4,uint:4,short:2,ushort:2}; let stride=0; for(const p of props){ p.off=stride; stride+=sz[p.type]||4; }
+  const dataStart=txt.indexOf("end_header")+ "end_header\n".length; const find=n=>props.find(p=>p.name===n);
+  const px=find("x"),py=find("y"),pz=find("z"),pr=find("red")||find("f_dc_0"),pg=find("green")||find("f_dc_1"),pb=find("blue")||find("f_dc_2");
+  if(!binary) throw new Error("only binary_little_endian PLY supported");
+  const out=[]; const rd=(p,o)=> p.type.startsWith("uchar")||p.type.startsWith("uint8")?dv.getUint8(o+p.off): p.type.startsWith("double")?dv.getFloat64(o+p.off,true):dv.getFloat32(o+p.off,true);
+  const isDC=pr&&pr.name.startsWith("f_dc");
+  for(let i=0;i<count;i++){ const o=dataStart+i*stride; let r=0.7,g=0.7,b=0.7;
+    if(pr){ if(isDC){ r=Math.min(1,Math.max(0,0.5+rd(pr,o)*0.282)); g=Math.min(1,Math.max(0,0.5+rd(pg,o)*0.282)); b=Math.min(1,Math.max(0,0.5+rd(pb,o)*0.282)); } else { r=rd(pr,o)/255; g=rd(pg,o)/255; b=rd(pb,o)/255; } }
+    out.push({x:rd(px,o),y:rd(py,o),z:rd(pz,o),r,g,b,op:0.9,scl:0.04}); }
+  return out; }
+function exportSplat(){ const buf=encodeSplatBuffer(splats); const blob=new Blob([buf],{type:"application/octet-stream"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="weltwerk_edit.splat"; a.click(); flash("exported "+splats.length+" splats"); }
+
+/* ===== loop ===== */
+function loop(){ const now=performance.now(); frames++; if(now-fpsT>500){ document.getElementById("fps").textContent=Math.round(frames*1000/(now-fpsT))+" fps"; frames=0; fpsT=now; }
+  const key=camera.position.x.toFixed(1)+","+camera.position.y.toFixed(1)+","+camera.position.z.toFixed(1);
+  sortTimer++; if(geo&&splats.length&&(key!==lastCamKey||sortTimer>20)){ fillSorted(); lastCamKey=key; sortTimer=0; }
+  renderer.render(scene,camera); requestAnimationFrame(loop); }
+function init(){ renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setSize(innerWidth,innerHeight); renderer.setPixelRatio(Math.min(2,devicePixelRatio));
+  renderer.setClearColor(0x06080d,1); document.getElementById("view").appendChild(renderer.domElement);
+  scene=new THREE.Scene(); camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,0.05,500);
+  scene.add(new THREE.GridHelper(20,20,0x1a2230,0x121821));
+  addEventListener("resize",()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
+  updateCam(); initInput(); loadSynthetic(); loop(); }
+init();
+</script>
+</body></html>
