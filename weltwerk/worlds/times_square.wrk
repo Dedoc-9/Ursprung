@@ -1,0 +1,78 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Times Square — Phase 12 causal scenario. The CITY IS THE GRAPH: every light, screen, turret, and
+# territory in the projection derives from these relations. Destroy infrastructure → the city reacts.
+world "Times_Square"
+
+zone north_plaza
+zone south_plaza
+zone central
+
+# --- factions own infrastructure by CONTROLLING its root power source ---
+entity faction_blue:
+  zone north_plaza
+  controls power_station
+entity faction_red:
+  zone south_plaza
+  controls transit_hub
+
+# --- BLUE network: power_station feeds the media/surveillance grid + a turret ---
+entity power_station:
+  zone north_plaza
+  health 200
+  powers media_tower
+  powers surveillance_net
+  powers billboard_north
+  powers turret_blue
+entity media_tower:
+  zone north_plaza
+  health 120
+  powers billboard_central
+entity surveillance_net:
+  zone north_plaza
+  health 80
+  powers drone_cam
+  powers data_center
+entity billboard_north:
+  zone north_plaza
+  health 40
+entity billboard_central:
+  zone central
+  health 40
+entity turret_blue:
+  zone north_plaza
+  health 100
+entity drone_cam:
+  zone central
+  health 30
+
+# --- RED network: transit_hub feeds market/supply + a turret, and also reaches the data_center ---
+entity transit_hub:
+  zone south_plaza
+  health 150
+  powers market
+  powers billboard_south
+  powers turret_red
+  powers data_center
+entity market:
+  zone south_plaza
+  health 100
+  feeds supply_depot
+entity supply_depot:
+  zone south_plaza
+  health 100
+entity billboard_south:
+  zone south_plaza
+  health 40
+entity turret_red:
+  zone south_plaza
+  health 100
+
+# --- SHARED / contested: data_center is reached by BOTH (surveillance_net + transit_hub) and powers the
+#     central square. Cut blue's surveillance path and the data_center (and the square) flip to red. ---
+entity data_center:
+  zone central
+  health 120
+  powers central_square
+entity central_square:
+  zone central
+  health 50

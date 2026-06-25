@@ -19,7 +19,7 @@ text → wireframe → voxel → meshes → FPS city → **gaussian splats**.
 ## Run
 
 ```powershell
-cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\splat"; python test_splat_format.py; python splat_format.py
+cd "weltwerk\splat"; python test_splat_format.py; python splat_format.py
 ```
 
 `test_splat_format.py` → **8/8**; `splat_format.py` writes `synthetic.splat`. Then open

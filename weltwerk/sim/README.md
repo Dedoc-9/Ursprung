@@ -76,13 +76,13 @@ authority out of the text.
 ## Verify (PowerShell — sandbox mount truncates these files; PowerShell reads the real ones)
 
 ```powershell
-cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\sim"
+cd "weltwerk\sim"
 $env:PYTHONHASHSEED="0"
 python test_world_sim.py          # expect 7/7
 python world_sim.py               # the destroy-the-reactor walkthrough
 
 # syntax-check the prototype, then open it
-cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\fps_demo"
+cd "weltwerk\fps_demo"
 node --check weltwerk_world_prototype.html   # (or just open it in a browser)
 ```
 

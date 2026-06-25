@@ -29,7 +29,7 @@ topologies.
 ## Run
 
 ```powershell
-cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\sim"; $env:PYTHONHASHSEED="0"; python test_causal_scale_bench.py; python causal_scale_bench.py
+cd "weltwerk\sim"; $env:PYTHONHASHSEED="0"; python test_causal_scale_bench.py; python causal_scale_bench.py
 ```
 
 ## MEASURED

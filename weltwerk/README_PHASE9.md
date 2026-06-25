@@ -24,7 +24,7 @@ world.wrk → WorldSpec → CausalGraph → lint/health/validation → RuntimeWo
 ## Run
 
 ```powershell
-cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\sim"; $env:PYTHONHASHSEED="0"; python test_world_ai.py; python world_ai.py
+cd "weltwerk\sim"; $env:PYTHONHASHSEED="0"; python test_world_ai.py; python world_ai.py
 ```
 
 Then open `weltwerk\fps_demo\weltwerk_fps_prototype.html` in a browser. Click to play. Controls: **WASD**

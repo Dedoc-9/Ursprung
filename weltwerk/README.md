@@ -154,13 +154,13 @@ an observer cannot silently become a truth source; it does **not** certify it me
 Run the observer slice:
 
 ```powershell
-cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk"; $env:PYTHONHASHSEED="0"; python test_observers.py; python test_conformance.py; python observers.py
+cd "weltwerk"; $env:PYTHONHASHSEED="0"; python test_observers.py; python test_conformance.py; python observers.py
 ```
 
 Run (PowerShell, folder-directed; `PYTHONHASHSEED=0` for the determinism guarantee):
 
 ```powershell
-cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk"; $env:PYTHONHASHSEED="0"; python test_weltwerk.py; python fork.py
+cd "weltwerk"; $env:PYTHONHASHSEED="0"; python test_weltwerk.py; python fork.py
 ```
 
 ### Scaling probe (`scale/`) — does fork-and-observe survive a 1000× larger world?
@@ -192,7 +192,7 @@ Not shown by this probe (still open): line A is still `O(N·H)`; no rendering, n
 prediction. `fork-cheap ≠ simulation-cheap`.
 
 ```powershell
-cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\scale"; $env:PYTHONHASHSEED="0"; python test_cow.py; python scale_bench.py
+cd "weltwerk\scale"; $env:PYTHONHASHSEED="0"; python test_cow.py; python scale_bench.py
 ```
 
 #### Light-cone (`scale/light_cone.py`) — when chunks are COUPLED, how fast does an edit travel?
@@ -218,7 +218,7 @@ reconstruction stays byte-identical to a full honest sim *under coupling* — th
 | `scale/light_cone_bench.py` | velocity vs world size; cf_cost vs horizon; the safe-preview window | IMPLEMENTED | awaiting run |
 
 ```powershell
-cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\scale"; $env:PYTHONHASHSEED="0"; python test_light_cone.py; python light_cone_bench.py
+cd "weltwerk\scale"; $env:PYTHONHASHSEED="0"; python test_light_cone.py; python light_cone_bench.py
 ```
 
 #### Teleport / two-layer cost (`scale/teleport.py`) — potential cone vs actual divergence
@@ -247,7 +247,7 @@ one of its inputs actually diverged. **The observer stops being descriptive and 
 | `scale/teleport_bench.py` | ring vs teleport: potential cone explosion vs actual sparsity; conservative vs pruned cost | IMPLEMENTED | awaiting run |
 
 ```powershell
-cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\scale"; $env:PYTHONHASHSEED="0"; python test_teleport.py; python teleport_bench.py
+cd "weltwerk\scale"; $env:PYTHONHASHSEED="0"; python test_teleport.py; python teleport_bench.py
 ```
 
 #### Causal Budget Theorem (`scale/causal_budget.py`) — replicate by causality, not distance
@@ -270,7 +270,7 @@ fractal-cut rejected; Wilder import = wild boundary ⊃ finite support).
 | `scale/test_reachability_algebra.py` | potential==reflexive ball · bare-power-undercounts · transmit-min · feasible-is-up-set · compute-closure · determinism | IMPLEMENTED | awaiting run |
 
 ```powershell
-cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\scale"; $env:PYTHONHASHSEED="0"; python test_causal_budget.py; python causal_budget.py; python test_reachability_algebra.py; python reachability_algebra.py
+cd "weltwerk\scale"; $env:PYTHONHASHSEED="0"; python test_causal_budget.py; python causal_budget.py; python test_reachability_algebra.py; python reachability_algebra.py
 ```
 
 #### Agent transport (`scale/agent_transport.py`) — the sparsity falsifier
@@ -292,7 +292,7 @@ count is exact, not an artifact.)
 | `scale/agent_transport_bench.py` | the verdict: sparsity vs horizon (measured 0.36→0.05 = sparse) | IMPLEMENTED | measured: SPARSE (dissipative) |
 
 ```powershell
-cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\scale"; $env:PYTHONHASHSEED="0"; python test_agent_transport.py; python agent_transport_bench.py
+cd "weltwerk\scale"; $env:PYTHONHASHSEED="0"; python test_agent_transport.py; python agent_transport_bench.py
 ```
 
 ### VIEW — the causal debugger (`view/causal_view.py`)
@@ -312,7 +312,7 @@ browser.
 | `view/test_causal_view.py` | validity: nesting holds · 4 classes partition all chunks · counts == engine · determinism | IMPLEMENTED | awaiting run |
 
 ```powershell
-cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\view"; $env:PYTHONHASHSEED="0"; python test_causal_view.py; python causal_view.py
+cd "weltwerk\view"; $env:PYTHONHASHSEED="0"; python test_causal_view.py; python causal_view.py
 ```
 
 (`causal_view.py` writes `causal_view.html` — open it in a browser.)
@@ -331,7 +331,7 @@ YES/NO.*
 | `view/test_regime_view.py` | validity: regime measure deterministic · footprint ⊆ cone · well-defined · classes valid | IMPLEMENTED | awaiting run |
 
 ```powershell
-cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\view"; $env:PYTHONHASHSEED="0"; python test_regime_view.py; python regime_view.py
+cd "weltwerk\view"; $env:PYTHONHASHSEED="0"; python test_regime_view.py; python regime_view.py
 ```
 
 **Space-time causal field** (`view/causal_field.py`) — the capstone view, where the theory draws its own
@@ -346,7 +346,7 @@ floods the triangle). The gap between green and red *is* the economic win, made 
 | `view/test_causal_field.py` | validity: red ⊆ potential ∀t (no superluminal divergence) · frames well-formed · cone monotone · determinism | IMPLEMENTED | awaiting run |
 
 ```powershell
-cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\view"; $env:PYTHONHASHSEED="0"; python test_causal_field.py; python causal_field.py
+cd "weltwerk\view"; $env:PYTHONHASHSEED="0"; python test_causal_field.py; python causal_field.py
 ```
 
 ### Authoring (`authoring/`) — text → causal topology, before geometry
@@ -371,7 +371,7 @@ causal topology is the durable artifact, meshes a regenerable projection.
 | `authoring/topology_view.py` | causal-topology wireframe (entities, edges, influence highlight) → HTML | IMPLEMENTED | awaiting run |
 
 ```powershell
-cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\authoring"; $env:PYTHONHASHSEED="0"; python test_world_spec.py; python world_spec.py; python topology_view.py
+cd "weltwerk\authoring"; $env:PYTHONHASHSEED="0"; python test_world_spec.py; python world_spec.py; python topology_view.py
 ```
 
 **Causal design linter** (`authoring/world_lint.py`) — the "World Author" core: a structural diagnostic
@@ -389,7 +389,7 @@ measured-amplification`). This turns the fortress's one-off SCC catch into a rep
 | `authoring/test_world_lint.py` | SCC exact · criticality finds the bottleneck · load-bearing rank · isolated detected · determinism | IMPLEMENTED | awaiting run |
 
 ```powershell
-cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\authoring"; $env:PYTHONHASHSEED="0"; python test_world_lint.py; python world_lint.py
+cd "weltwerk\authoring"; $env:PYTHONHASHSEED="0"; python test_world_lint.py; python world_lint.py
 ```
 
 ## Genealogy — this composes verified pieces, it does not reinvent them

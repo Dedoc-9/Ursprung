@@ -22,7 +22,7 @@ authority is the tiebreaker. Delete the HTML and the world still exists.
 ## Run the tests (PowerShell — sandbox mount truncates the imported modules)
 
 ```powershell
-cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\sim"; $env:PYTHONHASHSEED="0"
+cd "weltwerk\sim"; $env:PYTHONHASHSEED="0"
 python test_world_ai.py        # 18
 python test_world_sim.py       # 11
 python test_world_edit.py      #  9
