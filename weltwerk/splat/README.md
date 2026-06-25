@@ -11,16 +11,41 @@ text → wireframe → voxel → meshes → FPS city → **gaussian splats**.
 
 | File | Role | Grade |
 |---|---|---|
-| `splat_format.py` | the `.splat` 32-byte **data contract** (encode/decode/scene/synthetic) | MEASURED |
-| `test_splat_format.py` | 8 tests: layout, exactness, quantization, round-trip, rejection, determinism | MEASURED (8/8) |
-| `weltwerk_splat_editor.html` | the WebGL renderer + editor (JS mirrors the contract) | IMPLEMENTED |
-| `synthetic.splat` | a loadable scene emitted by `splat_format.py` (optional) | — |
+| `splat_format.py` | the `.splat` 32-byte **data contract** (encode/decode/scene/synthetic) | MEASURED (8/8) |
+| `splat_dsl.py` | **text → splat compiler** — LLM-authorable DSL, deterministic, content-hashed, invariant-checked | MEASURED (8/8) |
+| `test_splat_format.py` · `test_splat_dsl.py` | the two verified contracts | MEASURED |
+| `weltwerk_splat_editor.html` | WebGL **anisotropic** renderer + editor + in-browser DSL panel (mirrors both) | IMPLEMENTED |
 
 ## Run
 
 ```powershell
-cd "weltwerk\splat"; python test_splat_format.py; python splat_format.py
+cd "weltwerk\splat"; python test_splat_format.py; python test_splat_dsl.py; python splat_dsl.py
 ```
+
+`test_splat_format` → **8/8**, `test_splat_dsl` → **8/8**; `splat_dsl.py` writes `dsl_demo.splat`. Then open
+`weltwerk_splat_editor.html` — it compiles the DSL on load. Edit the **Text → Splat** panel and press
+**Compile** to author a scene from text; orbit/erase/crop to edit; **Export .splat** to save.
+
+## Phase 14 — what's genuinely superior here (and what isn't)
+
+We will not out-render PlayCanvas SuperSplat or a GPU EWA splatter on raw fidelity. What this has that **no
+splat editor has** is on a different axis — and it's the project's whole point: **text is the authority, the
+splat cloud is a deterministic, verifiable projection of it.**
+
+- **Text → splat compiler (`splat_dsl.py`).** A small, line-oriented, LLM-authorable DSL (`torus`, `sphere`,
+  `box`, `plane` with `pos/color/density/gscale/seed`) compiles to a splat cloud. Superior on **authorability**:
+  an LLM can write/edit the *text*, not wrangle a point cloud — true text-to-graphics.
+- **Precise guarantees (MEASURED, 8/8).** The compile is **deterministic** (same text ⇒ same splats ⇒ same
+  **content hash** = a provenance handle), **invariants are enforced** (opacity ∈ [0,1], every scale axis > 0,
+  finite positions, a hard count cap), and **errors are structured** `{line, kind, message}` so an LLM can
+  iterate without a human. The on-disk `.splat` contract is byte-exact and separately tested.
+- **Anisotropic rasterization.** The editor now projects each splat's 3D covariance (scale + rotation) to a 2D
+  ellipse in the vertex shader (Jacobian + 2×2 eigen-decomposition) — splats render as oriented gaussians, not
+  round points. This is the real fidelity step (e.g. the synthetic torus's gaussians lie flat, tangent to the
+  surface).
+
+So the honest claim: **superior on provenance, determinism, and text/LLM-authorability; competitive (not
+leading) on raw visual fidelity.** `deterministic ≠ photoreal`; `content-hash ≠ scene-quality`.
 
 `test_splat_format.py` → **8/8**; `splat_format.py` writes `synthetic.splat`. Then open
 `weltwerk_splat_editor.html`. It loads a synthetic scene immediately (no assets needed). Drag a real
