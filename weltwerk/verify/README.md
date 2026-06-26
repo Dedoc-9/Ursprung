@@ -1,26 +1,36 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-only -->
 # weltwerk/verify — bounded model checking of the causal kernel
 
-The first NASA-merge subsystem. It reimplements, clean-room, the **explicit-state model-checking**
-discipline that NASA's Java Pathfinder embodies — *systematically explore every reachable state and
-return a shortest counterexample* — and applies it to something JPF never targeted: an **authored
-causal world**. No JPF source is used (JPF checks Java bytecode; this checks `WorldSim`). License +
-provenance: this is original AGPL-3.0 code, recorded in
-[`../../docs/LICENSE_DECISIONS.md`](../../docs/LICENSE_DECISIONS.md) and
+The first NASA-merge subsystem. It implements an **explicit-state bounded model checker** — *systematically
+explore the reachable states and return a shortest counterexample* — **inspired by techniques used in
+systems such as NASA's Java Pathfinder, adapted to `WorldSim`'s causal transition system.** This is an
+inspiration, not an equivalence: no feature parity with JPF is claimed and no JPF source is used (JPF
+checks Java bytecode; this checks an authored causal world). License + provenance: original AGPL-3.0 code,
+recorded in [`../../docs/LICENSE_DECISIONS.md`](../../docs/LICENSE_DECISIONS.md) and
 [`../../docs/PROVENANCE.md`](../../docs/PROVENANCE.md).
+
+### Vocabulary (kept precise, theme preserved)
+
+- **ghost** — a *state* that violates an invariant.
+- **ghost trace** — the *shortest, replayable* event sequence that reaches a ghost (the counterexample).
+- **ghost report** — `diagnose`'s ranked *explanation* of a ghost trace (hypotheses + next observation).
+
+These are distinct objects; the README uses each term in exactly that sense.
 
 ## The idea, in Weltwerk's own terms
 
 | Model checking | Weltwerk |
 |---|---|
-| set of reachable states under the action alphabet | **Actual** (what the world can actually become) |
-| all action sequences up to the depth bound | **Potential** (the combinatorial upper bound) |
-| a state that violates an invariant | a **ghost** — returned as the *shortest, replayable* event trace |
-| exhaustive (frontier emptied) search | a **proof** of the invariants over the reachable set |
+| all action sequences up to the depth bound | **Potential** — the combinatorial space `Potential(action sequences)` |
+| the reachable states *induced by* those sequences | **Actual** — `Reachable(actual)`, what the world can actually become |
+| a reachable state that violates an invariant | a **ghost** (with its shortest, replayable **ghost trace**) |
+| exhaustive (frontier emptied) search | a **proof** of the invariants over the reachable state graph |
 
-`Actual ⊆ Potential` is not just the law the checker *tests* on every transition (`actual ⊆ potential`);
-it is also the shape of the search itself — the explored state set is almost always far smaller than the
-combinatorial bound, which is the project's sparsity thesis showing up in verification.
+The checker does **not** enumerate `Potential` itself (it never visits impossible states): it explores
+`Reachable(actual)` *inside* `Potential(action sequences)`. So `Actual ⊆ Potential` is both the law the
+checker *tests* on every transition (`actual ⊆ potential`) and the shape of the search — the reachable
+set is almost always far smaller than the combinatorial bound, which is the project's sparsity thesis
+showing up in verification.
 
 ## Files
 
@@ -28,31 +38,35 @@ combinatorial bound, which is the project's sparsity thesis showing up in verifi
 |---|---|---|
 | `kernel_check.py` | BFS explicit-state checker over `WorldSim`; invariants + transition law; shortest ghost trace; `replay_path` witness check | MEASURED (8/8) |
 | `test_kernel_check.py` | 8 validity-not-outcome proofs | MEASURED (8/8) |
-| `diagnose.py` | model-based diagnosis (the inverse): observed state → minimal fault hypotheses, ranked, with a discriminating observation; consumes `kernel_check` ghosts | IMPLEMENTED (pending local test run) |
-| `test_diagnose.py` | 8 validity-not-outcome proofs | WRITTEN (run to confirm) |
+| `diagnose.py` | model-based diagnosis (the inverse): observed state → ranked fault hypotheses, with a discriminating observation; consumes `kernel_check` ghosts | MEASURED (8/8) |
+| `test_diagnose.py` | 8 validity-not-outcome proofs | MEASURED (8/8) |
 
 ## Diagnosis (the inverse of the checker)
 
 `kernel_check` answers *"this invariant failed / these states diverge"* (forward). `diagnose` answers the
-human's next question — *"why?"* (inverse). Given an **observed** world state, it returns the minimal
-**fault hypotheses** (entity losses) whose simulated cascade reproduces the observation, ranked, each with
-a single **suggested observation** that would best distinguish the surviving rivals. It consumes the
-checker's ghost traces directly (`from_ghost`). Pipeline: counterexample → symptoms → candidate causes
+human's next question — *"why?"* (inverse). Given an **observed** world state, it returns **fault
+hypotheses** (entity losses) whose simulated cascade reproduces the observation, ranked, each with a
+single **suggested observation** that would best distinguish the surviving rivals. It consumes the
+checker's ghost traces directly (`from_ghost`). Pipeline: ghost trace → symptoms → candidate causes
 (consistency by simulation) → ranking → ghost report.
 
 **`confidence` is a ranking weight, not a probability.** It is a transparent, normalized score
-(parsimony of faults × parsimony of effects) used to *allocate investigation*. It does **not** estimate
-the probability that a hypothesis is true. `consistency ≠ causation`; `minimal ≠ correct`;
-`weight ≠ P(true)`. Competing explanations are preserved (`underdetermined`), never collapsed.
+(parsimony of faults × parsimony of effects) used to *allocate investigation*. **No probabilistic model
+is assumed; scores are ordinal ranking weights only** — they do not estimate the probability that a
+hypothesis is true. `consistency ≠ causation`; `minimal ≠ correct`; `weight ≠ P(true)`. Competing
+explanations are preserved (`underdetermined`), never collapsed.
 
-Fault model = **entity loss** only (not damage amounts, captures, or timing). Minimal-cardinality search
-(singles, then pairs). Consistency is judged over observed entities only — which is why *partial*
-observation produces genuine, honestly-reported ambiguity. `unobserved ≠ ok`; `not-explained ≠ no-cause`.
+The hypotheses are **minimal with respect to the implemented search strategy** — currently
+*minimum-cardinality entity-loss* hypotheses (singles, then pairs) — **not** globally minimal over every
+conceivable fault model. Fault model = **entity loss** only (not damage amounts, captures, or timing).
+Consistency is judged over observed entities only — which is why *partial* observation produces genuine,
+honestly-reported ambiguity. `unobserved ≠ ok`; `not-explained ≠ no-cause`; `minimal-here ≠ globally-minimal`.
 
 ## Honest grading of a result (the epistemic states)
 
 - **CLOSED** — the frontier emptied before the depth bound: the explored set is the *complete* reachable
-  set for this alphabet, so the invariants are **PROVEN** over it. `state-space-closed = proof`.
+  set for this alphabet, so the invariants are **PROVEN over the finite reachable state graph induced by
+  the selected action alphabet and transition function** — and nothing beyond it. `state-space-closed = proof`.
 - **BOUNDED** — the depth bound cut off real frontier: invariants hold on what was explored; the rest is
   **UNDERDETERMINED**. `depth-limited ≠ proof`.
 - **VIOLATED** — an invariant fails; the shortest ghost trace is attached and is verified replayable.
@@ -80,9 +94,7 @@ cd "weltwerk\verify"; python diagnose.py; python test_diagnose.py
 under partial observation and the observation that would discriminate. `test_diagnose.py` should report
 **8/8**.
 
-> Note: the `diagnose` tests were authored but not executed in-session — the sandbox mount served a
-> truncated view of an unrelated authoring file, so verification is deferred to the PowerShell run above.
-> `kernel_check` is confirmed 8/8 from the prior run.
+Both suites are confirmed **8/8** from local PowerShell runs.
 
 ## Why this was the first merge chosen
 
@@ -97,7 +109,11 @@ The differentiating IP is the mapping to `Potential ⊇ Actual`, not the textboo
 1. ✅ Transition system (`../sim/world_sim.py`)
 2. ✅ Explicit-state model checker (`kernel_check.py`) — produces ghosts + traces
 3. ✅ Diagnosis engine (`diagnose.py`) — turns ghosts into ranked fault hypotheses + a probe to run next
-4. **IKOS-style abstract interpretation** (next) — a sound over-approximation that scales past the
-   bounded checker; feeds `world_lint`. Reimplement from Cousot & Cousot — NOSA, no source.
-5. **Counterfactual explanations** — "if event X had not occurred…" over the trace.
-6. **Automated repair suggestions** — from a diagnosis, the minimal edit that restores invariants.
+4. **Symbolic checking (BDD / SAT / SMT)** — when explicit-state BFS stops scaling, represent sets of
+   states symbolically. Explicit-state BFS reaches surprisingly far for authored worlds, so this is a
+   *scale* option, not an immediate need; it slots in before abstract interpretation because it still
+   answers the same exact-reachability question, just on a compressed state representation.
+5. **IKOS-style abstract interpretation** — a sound over-approximation that scales past exact methods;
+   feeds `world_lint`. Reimplement from Cousot & Cousot — NOSA, no source.
+6. **Counterfactual explanations** — "if event X had not occurred…" over the trace.
+7. **Automated repair suggestions** — from a diagnosis, the minimal edit that restores invariants.
