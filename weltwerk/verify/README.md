@@ -204,12 +204,58 @@ stays an explanation/proposal engine, not an autonomous modifier: verification p
 interpret, repair proposes — a human/system decides. Remaining optional work: symbolic **approach B** (real
 scaling, gated on need) and an unsat-core `ConstraintCertificate`.
 
-**Immediate next (recommended order):** (a) ✅ **engine-conformance harness** (`conformance.py` +
-`test_engine_conformance.py`) — gates every engine (returns a `VerificationResult`, emits a replayable
-`Trace` on violation, no new status, deterministic, frontier-consistent); future backends must pass it.
-(b) ✅ **counterfactual explanations** (`counterfactual.py`, trace-level). Next: **automated repair**
-(minimal edit that restores invariants) and the stronger counterfactual forms (alphabet-forbid re-verify;
-symbolic `assert NOT`). (c) only later, symbolic **approach B** if scaling demands it.
-
 (Build-order numbers and phase grouping are orthogonal: the numbers say what was built when; the phases say
 what kind of question each stage answers.)
+
+## Future update paths (all optional, gated on need)
+
+The spine is complete; nothing below is required for the system to be useful. The governing rule for any
+addition: **a new capability must consume an existing artifact or produce a new reusable artifact** —
+anything else is a convenience layer that belongs elsewhere.
+
+- **Branch A — symbolic scale (approach B).** Re-encode `apply_event` directly as SMT constraints
+  (`imperative kernel → SMT encoding → symbolic fixpoint / k-induction`) for reachability that scales past
+  enumeration. This was risky before and is safe now: the **differential harness** means a second semantics
+  is not "we wrote another semantics" but "we wrote another semantics *and every world checks both*."
+- **Branch B — stronger certificates (`ConstraintCertificate`).** Move from the explicit certificate
+  ("here is the reachable set I computed", as expensive to check as to produce) toward a *compact reason*
+  the bad set is unreachable (e.g. an inductive invariant), with an independent checker. This is where the
+  verify-cheaper-than-prove asymmetry actually appears. `bounded-contradiction-explanation ≠ proof-of-impossibility`.
+- **Non-code, and probably first:** freeze the public interfaces, write the architecture doc from the final
+  state, and add an end-to-end example (`ghost → diagnosis → counterfactual → repair candidate → human
+  decision`). The code has outgrown the original roadmap; consolidating beats piling on features.
+
+## Self-upgrading rules — the agentic realization layer (scoped)
+
+This kernel is the layer an agentic system needs to revise *its own rules* without the blind, unverifiable
+self-modification that makes that dangerous. The loop:
+
+```
+AI proposes a law / invariant / .wrk edit
+        ↓
+verification spine tests it          (CLOSED = proof over the alphabet; BOUNDED = underdetermined)
+        ↓
+differential harness guards the semantics   (explicit ≡ symbolic; catches encoding drift)
+        ↓
+counterfactual + repair candidate say exactly what to tweak   (critical events; REMOVE_EVENT candidates)
+        ↓
+human / system decides, applies a SMALL, REVERSIBLE, AUDITED change   (commit = the only record)
+        ↓
+re-verify  (loop)
+```
+
+What this *buys*: every self-edit is **bounded, checkable, reversible, and attributed** — the opposite of
+an agent rewriting its rules from vibes. What it does **not** buy — stated plainly, because the whole repo
+is built on not overclaiming:
+
+- Verification is bounded: `CLOSED = proof over the chosen alphabet/transition function`, `BOUNDED ≠ proof`,
+  `unsat-at-k ≠ unreachable`. Soundness is relative to the model, alphabet, and invariants the AI supplied.
+- The differential harness catches *engine disagreement*, not *all* bugs; agreement is evidence, not proof.
+- Counterfactual/repair are *trace-level* and *candidate-level*: `prevents-this-ghost ≠ makes-world-safe`,
+  `candidate ≠ repair`, `restores-under-(M,E,K) ≠ world-safe`.
+- So this **reduces** the risk of chaotic self-modification by making each step small and audited; it does
+  **not** *guarantee* no collapse. It is a discipline and a scaffold, not a safety certificate.
+
+In short: the AI proposes, the spine tests, the harness guards the meaning, the counterfactual says what to
+change — and the *committed trajectory* records what actually occurred. `integrity ≠ truth`; the system may
+rank, allocate, verify, and propose, but only the commit records what happened.
