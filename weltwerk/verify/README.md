@@ -94,6 +94,7 @@ far smaller than the combinatorial bound, the project's sparsity thesis showing 
 | `counterfactual.py` | Phase C: **critical events in a ghost trace** by single-event ablation (trace-level; engine-agnostic; pure-stdlib) | MEASURED — `test_counterfactual` 8/8 |
 | `repair.py` | Phase C.2: **repair candidates** — `REMOVE_EVENT` seeded from the counterfactual critical set; `restores_trace` (replay) + `restores_world` (forbid the action, re-verify; enum carrying `engine`+`bound`, never a bare bool) | MEASURED — `test_repair` 8/8 |
 | `rsi_bench.py` | the **runnable RSI benchmark**: a restore-search task over a generated TRAIN/HELD-OUT world distribution, judged only by the frozen engine; baseline / learned / memorizer policies; REG, transfer, verdict-invariance, recall, fixed-budget, acceleration. Honest, NULL-capable | MEASURED — `test_rsi_bench` (apparatus validity) |
+| `rsi_bench_scale.py` | the **enterprise-evidence** version: many seeded worlds with trap structures, an adversarial policy suite (baseline/random/greedy-blast/frequency/learned/memorizer/overfit), held-out sign-test **p-values**, efficiency-per-training-experiment, and an honest iterated-improvement curve | MEASURED — `test_rsi_bench_scale` (apparatus validity) |
 
 ## Engines and the differential harness
 
@@ -151,11 +152,15 @@ Core (pure-stdlib, no dependencies):
 cd "weltwerk\verify"; python test_interfaces.py; python test_transition.py; python test_engine.py; python test_artifacts.py; python test_kernel_check.py; python test_diagnose.py; python test_engine_conformance.py; python test_counterfactual.py; python test_analysis_contract.py; python test_repair.py; python test_rsi_bench.py
 ```
 
-The full RSI benchmark report (honest, NULL-capable) prints from:
+The RSI benchmark reports (honest, NULL-capable) print from:
 
 ```powershell
-cd "weltwerk\verify"; python rsi_bench.py
+cd "weltwerk\verify"; python rsi_bench.py; python rsi_bench_scale.py
 ```
+
+`rsi_bench_scale.py` adds scale + held-out **p-values**, an adversarial policy suite (only generalizing
+policies beat baseline; memorizer/overfit/greedy-blast do not), efficiency-per-training-experiment, and an
+iterated-improvement curve reported honestly (it saturates when the signal is one-shot-learnable).
 
 Symbolic backend (optional — needs z3; the suites SKIP cleanly if it is absent):
 
