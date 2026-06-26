@@ -167,6 +167,25 @@ Java↔Python vendoring); (c) it **raises the central claim** — Weltwerk can n
 previously only spot-tested. The differentiating IP is the mapping to `Potential ⊇ Actual`, not the
 textbook search.
 
+## Analysis & proof documents
+
+Beyond the code, three documents reason *about* this kernel (design intent, then increasing rigor):
+
+- [`DESIGN.md`](DESIGN.md) — the verification-interface design contract (Phase A.2 ten principles + status map).
+- [`RSI_RESEARCH_MEMO.md`](RSI_RESEARCH_MEMO.md) — a skeptical research memo: can this evolve toward recursive
+  self-improvement using only existing artifacts? Finding: ~80% wiring; the hard part (improvement vs
+  inflation) is already solved elsewhere in the repo; build only an `ExperimentLog` + a proposal-ranking loop.
+- [`RECURSIVE_IMPROVEMENT_PROOF.md`](RECURSIVE_IMPROVEMENT_PROOF.md) — a proof-oriented analysis with every
+  claim tagged ARCH / TEST / THM-C / OPEN. Establishes the **Bounded Recursive Improvement Principle** and
+  the **Recursive Improvement Preservation Theorem**: a recursive system preserves validity iff each
+  modification is judged by a criterion independent of the modification process. The contribution is a
+  boundary condition — **recursive capability improvement without recursive authority creation**:
+  `improved_map ≠ changed_criterion`, `search_acceleration ≠ semantic_acceleration`, `experience ≠ authority`.
+  The verdict is meaningful exactly insofar as the proposer cannot move the judge.
+
+These are *analysis*, not roadmap: no future engine is claimed as fact, and the agentic loop in the next
+section is bounded by exactly these results.
+
 ## Roadmap
 
 The Phase A.2 **architecture spine is complete**: contract → semantics → engine → artifacts → second engine
