@@ -48,7 +48,7 @@ combinatorial bound, which is the project's sparsity thesis showing up in verifi
 ## Run (PowerShell, folder-directed)
 
 ```powershell
-cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\weltwerk\verify"; python kernel_check.py; python test_kernel_check.py
+cd "weltwerk\verify"; python kernel_check.py; python test_kernel_check.py
 ```
 
 `kernel_check.py` prints a CLOSED proof over the demo world, then demonstrates a **ghost**: it checks a
