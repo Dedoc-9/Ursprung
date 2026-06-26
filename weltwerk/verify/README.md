@@ -104,16 +104,49 @@ stays own-copyright and preserves the dual-license option (no NOSA exposure, no 
 and (c) **raises the central claim**: it lets Weltwerk *prove* invariants it previously only spot-tested.
 The differentiating IP is the mapping to `Potential ⊇ Actual`, not the textbook search.
 
-## Roadmap (each stage consumes the previous one's artifacts)
+## Roadmap
+
+Each stage consumes the previous one's artifacts while broadening what the system can do. The stages fall
+into three phases — all asking questions about *the same transition system*:
+
+```
+Transition system
+      ↓
+Exact explicit-state verification
+      ↓
+Diagnosis
+      ↓
+Exact symbolic verification
+      ↓
+Sound approximation
+      ↓
+Explanation
+      ↓
+Repair
+```
+
+**Phase A — Verification (exact reachability).**
 
 1. ✅ Transition system (`../sim/world_sim.py`)
-2. ✅ Explicit-state model checker (`kernel_check.py`) — produces ghosts + traces
-3. ✅ Diagnosis engine (`diagnose.py`) — turns ghosts into ranked fault hypotheses + a probe to run next
-4. **Symbolic checking (BDD / SAT / SMT)** — when explicit-state BFS stops scaling, represent sets of
-   states symbolically. Explicit-state BFS reaches surprisingly far for authored worlds, so this is a
-   *scale* option, not an immediate need; it slots in before abstract interpretation because it still
-   answers the same exact-reachability question, just on a compressed state representation.
-5. **IKOS-style abstract interpretation** — a sound over-approximation that scales past exact methods;
-   feeds `world_lint`. Reimplement from Cousot & Cousot — NOSA, no source.
+2. ✅ Explicit-state model checker (`kernel_check.py`) — produces ghosts + ghost traces
+4. **Symbolic checking (BDD / SAT / SMT)** — when explicit-state BFS stops scaling, represent *sets* of
+   reachable states symbolically rather than enumerating individual states. This preserves the exact
+   reachability question while changing the underlying representation. For authored worlds, explicit-state
+   BFS may remain practical for quite large models, so symbolic checking is a scalability option rather
+   than an immediate replacement.
+
+**Phase B — Analysis (sound approximation, when exact exploration becomes impractical).**
+
+5. **Abstract-interpretation pass** — a *sound over-approximation* that scales past exact methods; feeds
+   `world_lint`. Abstract interpretation is a general verification framework from the academic literature
+   (Patrick & Radhia Cousot), *not* a NASA-specific technique; NASA's IKOS is one implementation of it.
+   Our pass would be a clean-room implementation from the **published theory**, not from IKOS source
+   (whose license is treated as NOSA — see `../../docs/PROVENANCE.md`). `over-approx ≠ exact`.
+
+**Phase C — Assistance (help users understand and respond to results).**
+
+3. ✅ Diagnosis engine (`diagnose.py`) — turns a ghost trace into ranked fault hypotheses + a probe to run next
 6. **Counterfactual explanations** — "if event X had not occurred…" over the trace.
 7. **Automated repair suggestions** — from a diagnosis, the minimal edit that restores invariants.
+
+(The numbers mark build order; the phase grouping shows what kind of question each stage answers.)
