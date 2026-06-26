@@ -13,7 +13,8 @@ text → wireframe → voxel → meshes → FPS city → **gaussian splats**.
 |---|---|---|
 | `splat_format.py` | the `.splat` 32-byte **data contract** (encode/decode/scene/synthetic) | MEASURED (8/8) |
 | `splat_dsl.py` | **text → splat compiler** — LLM-authorable DSL, deterministic, content-hashed, invariant-checked | MEASURED (8/8) |
-| `test_splat_format.py` · `test_splat_dsl.py` | the two verified contracts | MEASURED |
+| `splat_adapter.py` | **WorldSim → splats** GeometryAdapter — the inversion: splats as a non-authoritative lens | MEASURED |
+| `test_splat_format.py` · `test_splat_dsl.py` · `test_multilens.py` | the verified contracts + the lens proof | MEASURED |
 | `weltwerk_splat_editor.html` | WebGL **anisotropic** renderer + editor + in-browser DSL panel (mirrors both) | IMPLEMENTED |
 
 ## Run
@@ -60,6 +61,35 @@ Controls: drag = orbit · wheel = zoom · shift+drag = pan · **Erase brush** (c
 - Position and colour survive encode→decode **exactly**; rotation within the 1/128 quantization bound.
 - Whole scenes **round-trip**; malformed (non-multiple-of-32) buffers are **rejected**; the synthetic scene
   is **deterministic**. The editor's JS mirrors this byte-for-byte, so a file written by one is read by the other.
+
+## Phase 15 — the inversion, proven: splats are an interchangeable, non-authoritative lens
+
+This is the architecturally distinctive part (the renderer itself is good engineering, not novel). Most splat
+systems treat the cloud as the scene. Weltwerk inverts that:
+
+```
+world.wrk → CausalGraph → WorldSim (runtime AUTHORITY) → splat_adapter → Gaussian splats   (disposable)
+```
+
+`splat_adapter.world_to_splats(sim)` projects a `WorldSim` snapshot to gaussians (colour from
+`controller()`, brightness from `powered()`; destroyed entities vanish, disabled ones dim). It is a **pure
+read** — it never calls `apply_event`. `test_multilens.py` turns the claim into machine-checked evidence:
+
+- **Multi-lens authority invariance (MEASURED).** One snapshot projected through `render_primitives` (voxel/
+  FPS) + a topology lens + the splat lens leaves the authority hash **byte-identical**. The GeometryAdapter
+  boundary does real work: the world's identity is independent of how it's viewed. (`multilens_authority_invariant`)
+- **Causal → splat coupling (MEASURED).** `destroy(generator)` makes the generator's splats **vanish** and the
+  downstream turret's splats **dim** — driven by the graph alone; nothing edits the splat file or the renderer.
+  (`causal_coupling`)
+- Lenses are pure reads, agree on the same entity set, and the projected cloud round-trips the `.splat`
+  contract. (`lenses_are_pure_reads`, `same_world_many_lenses`, `splat_roundtrip`)
+
+So the same deterministic world can be viewed as wireframe, voxels, meshes, an FPS city, or splats **without
+changing replay, diffs, forks, or the authority** — and that is now a passing test, not a paragraph.
+
+**Digital-twin boundary (honest).** This is the *authority → splats* half. The reverse —
+`scan → splats → entity extraction → authority graph` — hides a genuine perception/segmentation research
+problem (`perception ≠ authority`) and is **NOT** built or claimed here.
 
 ## IMPLEMENTED (the editor — exercised on open, not auto-tested)
 
