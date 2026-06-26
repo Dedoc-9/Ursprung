@@ -129,11 +129,14 @@ Repair
 
 1. ✅ Transition system (`../sim/world_sim.py`)
 2. ✅ Explicit-state model checker (`kernel_check.py`) — produces ghosts + ghost traces
-4. **Symbolic checking (BDD / SAT / SMT)** — when explicit-state BFS stops scaling, represent *sets* of
-   reachable states symbolically rather than enumerating individual states. This preserves the exact
-   reachability question while changing the underlying representation. For authored worlds, explicit-state
-   BFS may remain practical for quite large models, so symbolic checking is a scalability option rather
-   than an immediate replacement.
+4. **Symbolic checking (BDD / SAT / SMT)** — preserve the exact reachability question while representing
+   *sets* of states symbolically instead of enumerating them. In addition to scaling exact verification,
+   expose reusable **proof artifacts** (witnesses, predecessor relations, proof certificates, and
+   unsatisfiable cores where applicable) so later phases — diagnosis, abstract interpretation,
+   counterfactual reasoning, and automated repair — consume a **common verification interface** rather
+   than depending on a specific search algorithm. For authored worlds, explicit-state BFS may remain
+   practical for quite large models, so this is a scalability + artifact-richness step, not merely an
+   optimization or an immediate replacement. Target interface: [`DESIGN.md`](DESIGN.md).
 
 **Phase B — Analysis (sound approximation, when exact exploration becomes impractical).**
 
