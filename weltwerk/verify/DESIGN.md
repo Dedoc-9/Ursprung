@@ -1,10 +1,16 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-only -->
 # verify/ — verification interface design (forward-looking)
 
-**Status: VISION / PLANNED.** This is a design contract for the *next* verify stages (symbolic checking →
-abstract interpretation → counterfactuals → repair), not a description of shipped code. Where a principle
-is already partly realized in `kernel_check.py` / `diagnose.py`, the map below says so honestly.
-`designed ≠ implemented`; `interface-sketch ≠ guarantee`.
+**Status: VISION / PLANNED, with Phase A.2 Step 1 landed.** This is a design contract for the *next*
+verify stages (symbolic checking → abstract interpretation → counterfactuals → repair), not a description
+of shipped code. Where a principle is already realized in `kernel_check.py` / `diagnose.py` /
+`interfaces.py`, the map below says so honestly. `designed ≠ implemented`; `interface-sketch ≠ guarantee`.
+
+**Phase A.2 progress:** Step 1 (stable `ReachabilityResult` / `VerificationResult` contract) is done —
+`interfaces.py`, `test_interfaces.py` (8/8), `kernel_check.py` untouched. Remaining: Step 2 transition
+relation, Step 3 engine abstraction (`ExplicitStateEngine`), Step 4 stable artifacts (fills `certificate`,
+predecessor relation), Step 5 prototype symbolic backend (gated on the z3-vs-pure-Python decision), Step 6
+differential testing (explicit vs symbolic agree on every world).
 
 ## The one idea
 
@@ -36,7 +42,7 @@ ReachabilityResult
 | 7 | **Actions as symbolic objects**: `Action(name, preconditions, effects, category)` | supports abstraction, planning, repair synthesis, explanation without redesign | NOT YET — actions are arg tuples (`("destroy", target)`) |
 | 8 | **Immutable traces** — no phase may mutate a trace | diagnosis, counterfactuals, repair, visualization all reference the same permanent artifact safely | NOT YET — traces are plain `list`s; should become a frozen `Trace` |
 | 9 | **Separate search from policy**: `SearchEngine` + `StoppingPolicy` + `Property`, not "BFS knows when to stop" | bounded / complete / symbolic / heuristic search all reuse one engine | NOT YET — `check()` hardcodes BFS + depth bound + `stop_on_first` |
-| 10 | **Proof objects, not `PASS`** — return a `VerificationResult` every phase consumes | diagnosis/counterfactuals/repair consume the witness; abstract interpretation compares its approximation to the exact result; visualization renders it | PARTIAL — `CheckResult{status, states_explored, frontier-implied, violations, ...}` already *is* a proof object; needs a `certificate` field + a `witness` accessor |
+| 10 | **Proof objects, not `PASS`** — return a `VerificationResult` every phase consumes | diagnosis/counterfactuals/repair consume the witness; abstract interpretation compares its approximation to the exact result; visualization renders it | **DONE (Step 1)** — `interfaces.py` defines frozen `ReachabilityResult` + `VerificationResult` (status, witness, explored_states, frontier_exhausted, engine, violations) with a `verify()` entry point over the reference engine; `certificate` is a deliberate placeholder for Step 4 |
 
 ## Target proof object
 
