@@ -34,12 +34,16 @@ MODEL BOUNDARIES (Arbitrary-Boundary Law — stated, not hidden):
     `holds-here ≠ true`.
 
 NOT a substitute for: testing concrete gameplay, performance, or any property outside the alphabet.
+
+PHASE A.2 STEP 3: the SEARCH ALGORITHM has moved to `engine.ExplicitStateBFSEngine`. This module is now
+the compatibility API — `check()` (a shim that delegates to the engine), the `CheckResult` / `Violation`
+result types, `replay_path`, the kernel state helpers (`_snapshot_state`/`_restore_state`/`_sig`/
+`build_alphabet`), and `DEFAULT_INVARIANTS`. No search algorithm remains here. `compat-layer ≠ algorithm`.
 """
 from __future__ import annotations
 
 import os
 import sys
-from collections import deque
 from dataclasses import dataclass, field
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "sim"))
@@ -151,103 +155,17 @@ class CheckResult:
 
 def check(world_text: str, *, max_depth: int = 6, include_capture: bool = False,
           invariants: dict = None, stop_on_first: bool = True) -> CheckResult:
-    """Breadth-first explicit-state model check of WorldSim(world_text).
+    """Compatibility shim (Phase A.2 Step 3): the legacy entry point. NO search algorithm lives here.
 
-    Explores every state reachable by applying actions from the alphabet, up to `max_depth` events.
-    Checks each `invariant` on every discovered state, and the central law actual ⊆ potential on every
-    transition. Returns a CheckResult; CLOSED iff the frontier emptied before the bound was binding.
+    It assembles a `WorldModel` + `VerificationOptions` and delegates to the single search implementation,
+    `engine.ExplicitStateBFSEngine`, returning the same `CheckResult` as before. The BFS moved out; behavior
+    did not. Imports are deferred to keep this module free of an engine/transition import cycle.
+    `compat-layer ≠ algorithm`.
     """
-    invariants = invariants or DEFAULT_INVARIANTS
-    base = WorldSim(world_text)                    # one reusable engine; we save/restore its state
-    alphabet = build_alphabet(base, include_capture)
-    a = len(alphabet)
-    potential_bound = sum(a ** i for i in range(max_depth + 1))
-
-    init = _snapshot_state(base)
-    init_sig = _sig(init)
-    parent = {init_sig: None}                      # sig -> (parent_sig, action) for path reconstruction
-    states = {init_sig: init}
-    queue = deque([(init_sig, 0)])
-    violations = []
-    transitions = 0
-    truncated = False
-    reached_depth = 0
-
-    def path_to(sig):
-        out = []
-        while parent[sig] is not None:
-            psig, action = parent[sig]
-            out.append(action)
-            sig = psig
-        return list(reversed(out))
-
-    def check_state(sig):
-        _restore_state(base, states[sig])
-        for name, pred in invariants.items():
-            try:
-                ok = pred(base)
-            except Exception:                      # an invariant that throws is a violation, not a crash
-                ok = False
-            if not ok:
-                violations.append(Violation(name, sig, path_to(sig), "state"))
-                return False
-        return True
-
-    if not check_state(init_sig) and stop_on_first:
-        return CheckResult("VIOLATED", len(states), transitions, reached_depth, truncated,
-                           potential_bound, a, violations)
-
-    while queue:
-        sig, depth = queue.popleft()
-        reached_depth = max(reached_depth, depth)
-        if depth >= max_depth:
-            # would we have discovered anything new? if so, the bound is genuinely binding.
-            _restore_state(base, states[sig])
-            for action in alphabet:
-                _restore_state(base, states[sig])
-                try:
-                    base.apply_event(*action)
-                except Exception:
-                    continue
-                if _sig(_snapshot_state(base)) not in states:
-                    truncated = True
-                    break
-            continue
-        for action in alphabet:
-            _restore_state(base, states[sig])
-            try:
-                rep = base.apply_event(*action)
-            except Exception:
-                continue
-            transitions += 1
-            # transition invariant: the central law. actual ⊆ potential, ALWAYS.
-            if not set(rep["actual"]) <= set(rep["potential"]):
-                nst_sig = _sig(_snapshot_state(base))
-                if nst_sig not in parent:
-                    parent[nst_sig] = (sig, action)
-                violations.append(Violation("potential_superset_actual", nst_sig,
-                                            path_to(nst_sig), "transition"))
-                if stop_on_first:
-                    return CheckResult("VIOLATED", len(states), transitions, reached_depth,
-                                       truncated, potential_bound, a, violations)
-            nst = _snapshot_state(base)
-            nsig = _sig(nst)
-            if nsig not in states:
-                states[nsig] = nst
-                parent[nsig] = (sig, action)
-                if check_state(nsig) is False and stop_on_first:
-                    return CheckResult("VIOLATED", len(states), transitions, reached_depth,
-                                       truncated, potential_bound, a, violations)
-                queue.append((nsig, depth + 1))
-
-    if violations:
-        status = "VIOLATED"
-    elif truncated:
-        status = "BOUNDED"
-    else:
-        status = "CLOSED"
-    return CheckResult(status, len(states), transitions, reached_depth, truncated,
-                       potential_bound, a, violations)
+    from engine import ExplicitStateBFSEngine, VerificationOptions, build_model   # deferred (no cycle)
+    model = build_model(world_text, include_capture=include_capture, invariants=invariants)
+    options = VerificationOptions(depth_bound=max_depth, stop_on_first=stop_on_first)
+    return ExplicitStateBFSEngine().run(model, options)
 
 
 def replay_path(world_text: str, path: list) -> tuple:

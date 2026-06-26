@@ -43,8 +43,16 @@ class Action:
     dtype: str = ""
 
     def as_args(self) -> Tuple:
-        """Arguments for `WorldSim.apply_event(*args)`. Defaults match apply_event's own defaults."""
-        return (self.kind, self.target, self.amount, self.faction, self.dtype)
+        """Arguments for `WorldSim.apply_event(*args)`, in the *minimal* arity the reference alphabet used
+        (so witness paths stay byte-identical to the legacy checker): ('destroy', t) / ('repair', t) /
+        ('capture', t, 0, f). apply_event's own defaults fill the rest."""
+        if self.dtype:
+            return (self.kind, self.target, self.amount, self.faction, self.dtype)
+        if self.faction:
+            return (self.kind, self.target, self.amount, self.faction)
+        if self.amount:
+            return (self.kind, self.target, self.amount)
+        return (self.kind, self.target)
 
     @classmethod
     def from_tuple(cls, t: Tuple) -> "Action":
@@ -100,11 +108,14 @@ class TransitionRelation:
         return self._alphabet
 
     def step(self, state: State, action: Action) -> Transition:
-        """The single T(s, a, s') fact for one (state, action). Raises if the action is inapplicable."""
+        """The single T(s, a, s') fact for one (state, action). Raises if the action is inapplicable.
+        The transition's `potential`/`actual` sets (from apply_event's report) ride in `metadata` — that is
+        transition *semantics*; an engine enforces the `actual ⊆ potential` law over them. `report ≠ law`."""
         _restore_state(self._base, state.snapshot)
-        self._base.apply_event(*action.as_args())
+        rep = self._base.apply_event(*action.as_args())
         snap = _snapshot_state(self._base)
-        return Transition(state, action, State(_sig(snap), snap))
+        meta = {"potential": tuple(rep["potential"]), "actual": tuple(rep["actual"])}
+        return Transition(state, action, State(_sig(snap), snap), metadata=meta)
 
     def successors(self, state: State) -> list:
         """All T(s, a, s') from `state`, in deterministic alphabet order. Inapplicable actions are skipped
@@ -113,12 +124,20 @@ class TransitionRelation:
         for a in self._alphabet:
             _restore_state(self._base, state.snapshot)
             try:
-                self._base.apply_event(*a.as_args())
+                rep = self._base.apply_event(*a.as_args())
             except Exception:
                 continue
             snap = _snapshot_state(self._base)
-            out.append(Transition(state, a, State(_sig(snap), snap)))
+            meta = {"potential": tuple(rep["potential"]), "actual": tuple(rep["actual"])}
+            out.append(Transition(state, a, State(_sig(snap), snap), metadata=meta))
         return out
+
+    def materialize(self, state: State) -> "WorldSim":
+        """Return a concrete WorldSim positioned at `state` — so an engine can evaluate invariants
+        (predicates over a WorldSim) without reaching into the kernel's snapshot mechanics. The returned
+        object is the relation's shared base, valid until the next relation call; read it before then."""
+        _restore_state(self._base, state.snapshot)
+        return self._base
 
 
 def main():

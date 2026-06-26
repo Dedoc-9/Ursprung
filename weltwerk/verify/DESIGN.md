@@ -6,13 +6,15 @@ verify stages (symbolic checking → abstract interpretation → counterfactuals
 of shipped code. Where a principle is already realized in `kernel_check.py` / `diagnose.py` /
 `interfaces.py`, the map below says so honestly. `designed ≠ implemented`; `interface-sketch ≠ guarantee`.
 
-**Phase A.2 progress:** Steps 1–2 done. Step 1 — stable `ReachabilityResult` / `VerificationResult`
+**Phase A.2 progress:** Steps 1–3 done. Step 1 — stable `ReachabilityResult` / `VerificationResult`
 contract (`interfaces.py`, 8/8). Step 2 — transition relation `T(s,a,s')` (`transition.py`,
-`test_transition.py` 8/8), differential-tested to match the reference engine; `kernel_check.py` still
-untouched. Remaining: Step 3 engine abstraction (`ExplicitStateEngine` consumes `T`; `check()` rewired
-behind it), Step 4 stable artifacts (fills `certificate`, predecessor relation), Step 5 prototype symbolic
-backend (gated on the z3-vs-pure-Python decision), Step 6 differential testing (explicit vs symbolic agree
-on every world).
+`test_transition.py` 8/8), differential-tested. Step 3 — engine abstraction (`engine.py`:
+`VerificationEngine` protocol + `ExplicitStateBFSEngine` + `WorldModel` + `VerificationOptions`;
+`test_engine.py`); the BFS left `kernel_check.py`, which is now a compatibility shim (no search algorithm
+remains). One BFS, behind one interface. Remaining: Step 4 stable artifacts (fills `certificate`,
+predecessor relation, first-class `Invariant`, immutable `Trace`), Step 5 prototype symbolic backend
+(gated on the z3-vs-pure-Python decision), Step 6 differential testing (explicit vs symbolic agree on
+every world).
 
 ## The one idea
 
@@ -43,7 +45,7 @@ ReachabilityResult
 | 6 | **Unsat-core support early** (for SMT): report "impossible because constraints A, D, F conflict", not just "impossible" | diagnosis ranks the conflicting constraints; repair targets only them; counterfactuals ask which to change | PLANNED — no SMT engine yet |
 | 7 | **Actions as symbolic objects**: `Action(name, preconditions, effects, category)` | supports abstraction, planning, repair synthesis, explanation without redesign | **PARTIAL (Step 2)** — `transition.Action` is a frozen value type (kind/target/amount/faction/dtype); preconditions/effects/category are the documented next extension; `kernel_check` still uses tuples until Step 3 |
 | 8 | **Immutable traces** — no phase may mutate a trace | diagnosis, counterfactuals, repair, visualization all reference the same permanent artifact safely | NOT YET — traces are plain `list`s; should become a frozen `Trace` |
-| 9 | **Separate search from policy**: `SearchEngine` + `StoppingPolicy` + `Property`, not "BFS knows when to stop" | bounded / complete / symbolic / heuristic search all reuse one engine | NOT YET — `check()` hardcodes BFS + depth bound + `stop_on_first` |
+| 9 | **Separate search from policy**: `SearchEngine` + `StoppingPolicy` + `Property`, not "BFS knows when to stop" | bounded / complete / symbolic / heuristic search all reuse one engine | **DONE (Step 3)** — `engine.py`: `VerificationEngine` protocol + `ExplicitStateBFSEngine` (the only impl); search lives here, options in `VerificationOptions`, the world in `WorldModel`; `kernel_check.check()` is now a shim with no algorithm |
 | 10 | **Proof objects, not `PASS`** — return a `VerificationResult` every phase consumes | diagnosis/counterfactuals/repair consume the witness; abstract interpretation compares its approximation to the exact result; visualization renders it | **DONE (Step 1)** — `interfaces.py` defines frozen `ReachabilityResult` + `VerificationResult` (status, witness, explored_states, frontier_exhausted, engine, violations) with a `verify()` entry point over the reference engine; `certificate` is a deliberate placeholder for Step 4 |
 
 ## Target proof object
