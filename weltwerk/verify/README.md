@@ -183,6 +183,13 @@ Beyond the code, three documents reason *about* this kernel (design intent, then
   `improved_map ≠ changed_criterion`, `search_acceleration ≠ semantic_acceleration`, `experience ≠ authority`.
   The verdict is meaningful exactly insofar as the proposer cannot move the judge.
 
+- [`RSI_EXPERIMENT_PROGRAM.md`](RSI_EXPERIMENT_PROGRAM.md) — a falsifier-first experimental design for
+  *demonstrating* (or refuting) recursive capability improvement: three non-negotiable controls
+  (verdict-invariance, held-out transfer, compute-equalization), five measurements each with a falsifying
+  experiment, an RSI metric suite computed only by frozen instruments, and the strongest defensible claim —
+  *improves the ability to discover verified improvements, not the authority to define them.* Status: design,
+  no results.
+
 These are *analysis*, not roadmap: no future engine is claimed as fact, and the agentic loop in the next
 section is bounded by exactly these results.
 
