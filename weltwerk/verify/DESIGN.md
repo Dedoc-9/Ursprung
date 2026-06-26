@@ -1,19 +1,21 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-only -->
 # verify/ — verification interface design (forward-looking)
 
-**Status: VISION / PLANNED, with Phase A.2 Steps 1–4 landed.** This is a design contract for the *next*
+**Status: VISION / PLANNED, with Phase A.2 Steps 1–6 landed (symbolic backend = approach A, optional z3).** This is a design contract for the *next*
 verify stages (symbolic checking → abstract interpretation → counterfactuals → repair), not a description
 of shipped code. Where a principle is already realized in `kernel_check.py` / `diagnose.py` /
 `interfaces.py`, the map below says so honestly. `designed ≠ implemented`; `interface-sketch ≠ guarantee`.
 
-**Phase A.2 progress:** Steps 1–4 done. Step 1 — stable contract (`interfaces.py`). Step 2 — transition
-relation `T(s,a,s')` (`transition.py`), differential-tested. Step 3 — engine abstraction (`engine.py`:
-`VerificationEngine` + `ExplicitStateBFSEngine` + `WorldModel` + `VerificationOptions`); the BFS left
-`kernel_check.py` (now a compatibility shim). Step 4 — durable artifacts (`artifacts.py`: `Trace`,
-`Invariant`, `Violation`, `ReachabilityCertificate` with `verify()`; `test_artifacts.py`), all additive
-with every existing field/view preserved. Remaining: Step 5 prototype symbolic backend (gated on the
-z3-vs-pure-Python decision — the predecessor relation #3 and symbolic witnesses #5 land alongside it),
-Step 6 differential testing (explicit vs symbolic agree on every world).
+**Phase A.2 progress:** Steps 1–6 done. Step 1 — stable contract (`interfaces.py`). Step 2 — transition
+relation `T(s,a,s')` (`transition.py`). Step 3 — engine abstraction (`engine.py`); BFS left `kernel_check.py`
+(shim). Step 4 — durable artifacts (`artifacts.py`). Step 5 — **second engine** (`symbolic_engine.py`,
+approach A: SMT/BMC over the *extracted* relation; z3 confined to `solver_adapter.py`, **optional** —
+`pip install z3-solver`; core stays pure-stdlib). Step 6 — differential harness (`differential.py`,
+`test_differential.py`): explicit vs symbolic agree on every model. *The solver is an engine dependency,
+not an architecture dependency.* Next artifacts: predecessor relation (#3) and a symbolic `ConstraintCertificate`
+with unsat cores (#5/#6) — "bounded contradiction explanation", never "proof of impossibility". Scaling
+(approach B: SMT re-encoding of `apply_event`) is a later, separately-gated step, now safe because the
+differential harness will catch encoding drift.
 
 ## The one idea
 
@@ -40,7 +42,7 @@ ReachabilityResult
 | 2 | **Stable state IDs**: every discovered witness carries `StateID, ParentID, GeneratingAction, Depth` | replay, diagnosis, repair, visualization all get easier | PARTIAL — `_sig(state)` is a canonical id; `parent[sig] = (parent_sig, action)` gives ParentID+action; depth tracked in BFS but not stored on the state |
 | 3 | **Predecessor information** (`predecessors(state)`, or computable) not just a single `parent` | enables minimal repair, causal slicing, "what could have led here?", reverse reachability | NOT YET — only a single BFS `parent` is stored |
 | 4 | **Invariants as first-class objects**: `Invariant(name, predicate, explanation, severity)` | every phase reuses them — diagnosis reports `violated: <name>`, repair asks "restore `<name>`", counterfactuals ask "when did `<name>` first break?" | **DONE (Step 4)** — `artifacts.Invariant` (name/predicate/explanation/severity); `DEFAULT_INVARIANTS` promoted; engine uses `.predicate` ONLY (`label ≠ control`); `Violation` carries the metadata |
-| 5 | **Preserve symbolic witnesses** (don't immediately flatten a BDD/SAT model); keep both the symbolic witness *and* a concrete replay trace | concrete replay is for humans; symbolic witness is for repair optimization | PLANNED — explicit-state only produces concrete traces today |
+| 5 | **Preserve symbolic witnesses** (don't immediately flatten a BDD/SAT model); keep both the symbolic witness *and* a concrete replay trace | concrete replay is for humans; symbolic witness is for repair optimization | **PARTIAL (Step 5)** — concrete witness extraction done: SMT model → action sequence → relation replay → `Trace`. Preserving the raw *symbolic* model (and unsat cores) is the next symbolic artifact |
 | 6 | **Unsat-core support early** (for SMT): report "impossible because constraints A, D, F conflict", not just "impossible" | diagnosis ranks the conflicting constraints; repair targets only them; counterfactuals ask which to change | PLANNED — no SMT engine yet |
 | 7 | **Actions as symbolic objects**: `Action(name, preconditions, effects, category)` | supports abstraction, planning, repair synthesis, explanation without redesign | **PARTIAL (Step 2)** — `transition.Action` is a frozen value type (kind/target/amount/faction/dtype); preconditions/effects/category are the documented next extension; `kernel_check` still uses tuples until Step 3 |
 | 8 | **Immutable traces** — no phase may mutate a trace | diagnosis, counterfactuals, repair, visualization all reference the same permanent artifact safely | **DONE (Step 4)** — `artifacts.Trace` (frozen; `events`/`states`/`length`/`terminal_state`; enforces `len(events)==length-1`); on the result as `trace` for VIOLATED. (Raw `path` list remains as a back-compat view.) |
