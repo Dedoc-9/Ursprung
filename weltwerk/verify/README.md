@@ -26,8 +26,28 @@ combinatorial bound, which is the project's sparsity thesis showing up in verifi
 
 | File | Role | Grade |
 |---|---|---|
-| `kernel_check.py` | BFS explicit-state checker over `WorldSim`; invariants + transition law; shortest ghost trace; `replay_path` witness check | IMPLEMENTED (pending local test run) |
-| `test_kernel_check.py` | 8 validity-not-outcome proofs | WRITTEN (run to confirm) |
+| `kernel_check.py` | BFS explicit-state checker over `WorldSim`; invariants + transition law; shortest ghost trace; `replay_path` witness check | MEASURED (8/8) |
+| `test_kernel_check.py` | 8 validity-not-outcome proofs | MEASURED (8/8) |
+| `diagnose.py` | model-based diagnosis (the inverse): observed state → minimal fault hypotheses, ranked, with a discriminating observation; consumes `kernel_check` ghosts | IMPLEMENTED (pending local test run) |
+| `test_diagnose.py` | 8 validity-not-outcome proofs | WRITTEN (run to confirm) |
+
+## Diagnosis (the inverse of the checker)
+
+`kernel_check` answers *"this invariant failed / these states diverge"* (forward). `diagnose` answers the
+human's next question — *"why?"* (inverse). Given an **observed** world state, it returns the minimal
+**fault hypotheses** (entity losses) whose simulated cascade reproduces the observation, ranked, each with
+a single **suggested observation** that would best distinguish the surviving rivals. It consumes the
+checker's ghost traces directly (`from_ghost`). Pipeline: counterexample → symptoms → candidate causes
+(consistency by simulation) → ranking → ghost report.
+
+**`confidence` is a ranking weight, not a probability.** It is a transparent, normalized score
+(parsimony of faults × parsimony of effects) used to *allocate investigation*. It does **not** estimate
+the probability that a hypothesis is true. `consistency ≠ causation`; `minimal ≠ correct`;
+`weight ≠ P(true)`. Competing explanations are preserved (`underdetermined`), never collapsed.
+
+Fault model = **entity loss** only (not damage amounts, captures, or timing). Minimal-cardinality search
+(singles, then pairs). Consistency is judged over observed entities only — which is why *partial*
+observation produces genuine, honestly-reported ambiguity. `unobserved ≠ ok`; `not-explained ≠ no-cause`.
 
 ## Honest grading of a result (the epistemic states)
 
@@ -51,13 +71,18 @@ combinatorial bound, which is the project's sparsity thesis showing up in verifi
 cd "weltwerk\verify"; python kernel_check.py; python test_kernel_check.py
 ```
 
-`kernel_check.py` prints a CLOSED proof over the demo world, then demonstrates a **ghost**: it checks a
-deliberately-false invariant ("nothing is ever destroyed"), finds the one-event counterexample, and shows
-the trace replays faithfully on a fresh world (`trace ≠ truth until it replays`). `test_kernel_check.py`
-should report **8/8**.
+```powershell
+cd "weltwerk\verify"; python diagnose.py; python test_diagnose.py
+```
 
-> Note: tests were authored but not executed in-session — the sandbox mount served a truncated view of an
-> unrelated authoring file, so verification is deferred to the PowerShell run above.
+`kernel_check.py` prints a CLOSED proof over the demo world, then demonstrates a **ghost** (verified
+8/8). `diagnose.py` pins a single cause from a full observation, then shows an *underdetermined* case
+under partial observation and the observation that would discriminate. `test_diagnose.py` should report
+**8/8**.
+
+> Note: the `diagnose` tests were authored but not executed in-session — the sandbox mount served a
+> truncated view of an unrelated authoring file, so verification is deferred to the PowerShell run above.
+> `kernel_check` is confirmed 8/8 from the prior run.
 
 ## Why this was the first merge chosen
 
@@ -67,9 +92,12 @@ stays own-copyright and preserves the dual-license option (no NOSA exposure, no 
 and (c) **raises the central claim**: it lets Weltwerk *prove* invariants it previously only spot-tested.
 The differentiating IP is the mapping to `Potential ⊇ Actual`, not the textbook search.
 
-## Next candidates (same folder)
+## Roadmap (each stage consumes the previous one's artifacts)
 
-- An **IKOS-style abstract-interpretation** pass: a sound over-approximation that scales past the explicit
-  bound (complements this exact-but-bounded checker). Reimplement from Cousot & Cousot — NOSA, no source.
-- **Livingstone-style diagnosis**: turn a ghost trace into "which mediator/SPOF is responsible," reusing
-  the existing divergence classifier.
+1. ✅ Transition system (`../sim/world_sim.py`)
+2. ✅ Explicit-state model checker (`kernel_check.py`) — produces ghosts + traces
+3. ✅ Diagnosis engine (`diagnose.py`) — turns ghosts into ranked fault hypotheses + a probe to run next
+4. **IKOS-style abstract interpretation** (next) — a sound over-approximation that scales past the
+   bounded checker; feeds `world_lint`. Reimplement from Cousot & Cousot — NOSA, no source.
+5. **Counterfactual explanations** — "if event X had not occurred…" over the trace.
+6. **Automated repair suggestions** — from a diagnosis, the minimal edit that restores invariants.

@@ -49,8 +49,8 @@ from the cited paper/spec, recorded here with a date.
 |---|---|---|---|
 | Abstract-interpretation lint for `world_lint` | IKOS (**NOSA 1.3**) | PLANNED | Cousot & Cousot, "Abstract Interpretation" (POPL 1977). Reimplement theory; **do not read IKOS source for implementation**. |
 | Coupling-driven AMR / LOD | PARAMESH (**NOSA 1.1+**) | PLANNED | AMR literature (Berger & Oliger 1984; Berger & Colella 1989). Idea only. |
-| Model-based causal diagnosis | Livingstone 2 (unverified, treat NOSA) | PLANNED | Model-based-diagnosis literature (de Kleer & Williams 1987). Idea only. |
-| State-space / bounded model checking of the kernel | Java Pathfinder (**Apache-2.0**) | PLANNED | Explicit-state model-checking literature. Apache ⇒ source *could* be read, but it targets Java; we reimplement for the Python kernel regardless. |
+| Model-based causal diagnosis | Livingstone 2 (unverified, treat NOSA) | **IMPLEMENTED 2026-06** — `weltwerk/verify/diagnose.py`, clean-room | de Kleer & Williams, "Diagnosing Multiple Faults" (AI 1987); Reiter 1987. Consistency-based diagnosis reimplemented from theory; **no Livingstone source consulted**. |
+| State-space / bounded model checking of the kernel | Java Pathfinder (**Apache-2.0**) | **IMPLEMENTED 2026-06** — `weltwerk/verify/kernel_check.py`, clean-room | Explicit-state model-checking literature. Apache ⇒ source *could* be read, but it targets Java; reimplemented for the Python kernel regardless. No JPF source consulted. |
 | Multi-fidelity selection | MFSim (unverified, treat NOSA) | PLANNED | Multi-fidelity modeling literature (e.g. Peherstorfer, Willcox, Gunzburger 2018). Idea only. |
 
 ### Clean-room procedure for NOSA-derived ideas
