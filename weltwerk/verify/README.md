@@ -91,6 +91,7 @@ far smaller than the combinatorial bound, the project's sparsity thesis showing 
 | `diagnose.py` | model-based diagnosis (the inverse): observed state → ranked fault hypotheses + a discriminating observation; consumes ghosts | MEASURED — `test_diagnose` 8/8 |
 | `differential.py` | **first-class verification tool**: explicit vs symbolic equivalence over a model suite | MEASURED — `test_differential` 5/5 (with z3) |
 | `conformance.py` | the **engine-conformance gate**: `check_conformance(engine)` — the universal contract every backend must satisfy (status set, replayable Trace on violation, determinism, label, frontier consistency) | MEASURED — `test_engine_conformance` |
+| `counterfactual.py` | Phase C: **critical events in a ghost trace** by single-event ablation (trace-level; engine-agnostic; pure-stdlib) | MEASURED — `test_counterfactual` 8/8 |
 
 ## Engines and the differential harness
 
@@ -145,7 +146,7 @@ ambiguity. `unobserved ≠ ok`; `not-explained ≠ no-cause`.
 Core (pure-stdlib, no dependencies):
 
 ```powershell
-cd "weltwerk\verify"; python test_interfaces.py; python test_transition.py; python test_engine.py; python test_artifacts.py; python test_kernel_check.py; python test_diagnose.py; python test_engine_conformance.py
+cd "weltwerk\verify"; python test_interfaces.py; python test_transition.py; python test_engine.py; python test_artifacts.py; python test_kernel_check.py; python test_diagnose.py; python test_engine_conformance.py; python test_counterfactual.py
 ```
 
 Symbolic backend (optional — needs z3; the suites SKIP cleanly if it is absent):
@@ -189,14 +190,17 @@ The Phase A.2 **architecture spine is complete**: contract → semantics → eng
 **Phase C — Assistance (understand and respond to results)**
 
 5. ✅ Diagnosis engine (`diagnose.py`) — ghost trace → ranked fault hypotheses + a probe to run next
-6. ⏳ Counterfactual explanations — *"if event X had not occurred…"* over the trace; explicit (remove event,
-   re-run) and symbolic (`assert NOT(event_i)`, solve) — where the SMT work starts paying back.
+6. ✅ Counterfactual explanations (`counterfactual.py`) — trace-level ablation: which events are critical to
+   *this* ghost. Stronger forms (forbid an action from the alphabet + re-verify; symbolic `assert NOT(event_i)`)
+   are documented follow-ups. `prevents-this-ghost ≠ makes-world-safe`.
 7. ⏳ Automated repair suggestions — from a diagnosis, the minimal edit that restores invariants.
 
 **Immediate next (recommended order):** (a) ✅ **engine-conformance harness** (`conformance.py` +
 `test_engine_conformance.py`) — gates every engine (returns a `VerificationResult`, emits a replayable
 `Trace` on violation, no new status, deterministic, frontier-consistent); future backends must pass it.
-(b) **counterfactual explanations** (next); (c) only later, symbolic **approach B** if scaling demands it.
+(b) ✅ **counterfactual explanations** (`counterfactual.py`, trace-level). Next: **automated repair**
+(minimal edit that restores invariants) and the stronger counterfactual forms (alphabet-forbid re-verify;
+symbolic `assert NOT`). (c) only later, symbolic **approach B** if scaling demands it.
 
 (Build-order numbers and phase grouping are orthogonal: the numbers say what was built when; the phases say
 what kind of question each stage answers.)
