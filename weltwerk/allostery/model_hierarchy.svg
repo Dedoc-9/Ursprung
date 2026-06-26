@@ -1,0 +1,64 @@
+<svg viewBox="0 0 880 600" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif" role="img" aria-label="A hierarchy of allosteric models organized by the question each answers, and where this repository's method sits.">
+<title>Allostery — a hierarchy of models</title>
+<desc>Four tiers from macro binding behaviour to micro mechanism: binding kinetics (MWC, KNF), pharmacology (Hall two-state, Extended Operational Model), mechanism and dynamics (Ensemble/EAM, Elastic Network Models), and AI prediction (PASSerRank, DeepAllo). A bottom band marks where this repository's residue-interaction-network method and evaluation harness sit.</desc>
+<rect x="0" y="0" width="880" height="600" fill="#ffffff"/>
+<style>
+ .ttl{fill:#0f172a;font-size:18px;font-weight:700}
+ .sub{fill:#475569;font-size:12.5px}
+ .pill{fill:#0f172a;font-size:12.5px;font-weight:700}
+ .pn{fill:#475569;font-size:10px;font-weight:700;letter-spacing:.5px}
+ .chip{fill:#0f172a;font-size:13.5px;font-weight:700}
+ .tag{fill:#64748b;font-size:10px}
+ .note{fill:#475569;font-size:11px}
+ .axis{fill:#64748b;font-size:10.5px;font-weight:700;letter-spacing:1px}
+ .box{stroke:#d1d5db;fill:#f6f7f9}
+</style>
+<text x="28" y="30" class="ttl">Allostery &#8212; a hierarchy of models</text>
+<text x="28" y="50" class="sub">No single &#8220;most accurate&#8221; model. The right one depends on the question &#8212; from macro binding behaviour to micro mechanism.</text>
+
+<text x="20" y="320" class="axis" transform="rotate(-90 20 320)">MACRO  behaviour  &#8594;  MICRO  mechanism</text>
+<line x1="40" y1="74" x2="40" y2="486" stroke="#cbd5e1" stroke-width="1"/>
+
+<!-- Tier 1 -->
+<rect x="52" y="78" width="150" height="64" rx="9" fill="#e8f0fe" stroke="#3b82f6"/>
+<text x="64" y="104" class="pn">1 &#183; KINETICS</text><text x="64" y="124" class="pill">Binding behaviour</text>
+<rect x="216" y="78" width="150" height="64" rx="9" class="box"/><text x="230" y="104" class="chip">MWC</text><text x="230" y="124" class="tag">concerted &#183; cooperativity</text>
+<rect x="378" y="78" width="150" height="64" rx="9" class="box"/><text x="392" y="104" class="chip">KNF</text><text x="392" y="124" class="tag">sequential &#183; neg. coop.</text>
+<text x="546" y="104" class="note">Best for: cooperativity (e.g. hemoglobin).</text>
+<text x="546" y="122" class="note">Blind to: atomic mechanism.</text>
+
+<!-- Tier 2 -->
+<rect x="52" y="158" width="150" height="64" rx="9" fill="#e2f7f4" stroke="#14b8a6"/>
+<text x="64" y="184" class="pn">2 &#183; PHARMACOLOGY</text><text x="64" y="204" class="pill">Drug action</text>
+<rect x="216" y="158" width="150" height="64" rx="9" class="box"/><text x="230" y="184" class="chip">Hall 2-state</text><text x="230" y="204" class="tag">orthosteric + allosteric</text>
+<rect x="378" y="158" width="150" height="64" rx="9" class="box"/><text x="392" y="184" class="chip">EOM</text><text x="392" y="204" class="tag">operational &#183; efficacy</text>
+<text x="546" y="184" class="note">Best for: modulator efficacy at equilibrium.</text>
+<text x="546" y="202" class="note">Blind to: structure &amp; dynamics.</text>
+
+<!-- Tier 3 -->
+<rect x="52" y="238" width="150" height="64" rx="9" fill="#fef3e2" stroke="#f59e0b"/>
+<text x="64" y="264" class="pn">3 &#183; MECHANISM</text><text x="64" y="284" class="pill">Structure / dynamics</text>
+<rect x="216" y="238" width="150" height="64" rx="9" class="box"/><text x="230" y="264" class="chip">EAM</text><text x="230" y="284" class="tag">ensemble &#183; pop. shift</text>
+<rect x="378" y="238" width="150" height="64" rx="9" class="box"/><text x="392" y="264" class="chip">ENM</text><text x="392" y="284" class="tag">elastic net &#183; pathways</text>
+<text x="546" y="264" class="note">Most physically accurate (landscape view).</text>
+<text x="546" y="282" class="note">Cost: needs structure + heavy compute.</text>
+
+<!-- Tier 4 -->
+<rect x="52" y="318" width="150" height="64" rx="9" fill="#f1ebfe" stroke="#8b5cf6"/>
+<text x="64" y="344" class="pn">4 &#183; PREDICTION</text><text x="64" y="364" class="pill">AI / ML</text>
+<rect x="216" y="318" width="150" height="64" rx="9" class="box"/><text x="230" y="344" class="chip">PASSerRank</text><text x="230" y="364" class="tag">cryptic sites</text>
+<rect x="378" y="318" width="150" height="64" rx="9" class="box"/><text x="392" y="344" class="chip">DeepAllo</text><text x="392" y="364" class="tag">graph + dynamics</text>
+<text x="546" y="344" class="note">Best for: locating sites, no wet-lab/MD.</text>
+<text x="546" y="362" class="note">Predicts WHERE, not WHY.</text>
+
+<!-- where this repo sits -->
+<rect x="52" y="406" width="796" height="78" rx="11" fill="#eef2f7" stroke="#2563eb" stroke-width="1.5"/>
+<text x="68" y="432" class="pn" fill="#2563eb">&#9733; WHERE THIS REPO SITS</text>
+<text x="68" y="453" class="note">Residue-Interaction-Network (structural, ENM-adjacent): reach = pathway, criticality = essential mediators. &#160;+&#160; an <tspan font-weight="700" fill="#0f172a">evaluation harness</tspan> that scores ANY model above against experimental gold (precision/recall vs random + degree baselines).</text>
+<text x="68" y="472" class="note">Not MWC/KNF, not ensemble/MD, not ML prediction. &#160;&#160;<tspan font-style="italic">contact &#8800; coupling &#160;&#183;&#160; graph-reach &#8800; free-energy &#160;&#183;&#160; good-score &#8800; mechanism.</tspan></text>
+
+<text x="28" y="516" class="sub" font-weight="700">Picking one:</text>
+<text x="110" y="516" class="note">cooperativity curve &#8594; tier 1 &#160;&#183;&#160; a drug/modulator &#8594; tier 2 &#160;&#183;&#160; mechanism/pathway &#8594; tier 3 &#160;&#183;&#160; &#8220;is there a hidden site?&#8221; &#8594; tier 4.</text>
+<text x="28" y="540" class="sub" font-weight="700">This repo&#8217;s role:</text>
+<text x="110" y="540" class="note">a tier-3-adjacent structural hypothesis generator, plus the cross-cutting scorer that keeps any tier honest against evidence.</text>
+</svg>

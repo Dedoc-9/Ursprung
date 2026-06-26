@@ -28,6 +28,16 @@ The field's vocabulary maps onto the project's verified primitives:
 | `eval_harness.py` | **the framework: score any predictor vs experimental gold** (precision/recall/F1/AUC + null & degree baselines) | MEASURED |
 | `test_rin_pipeline.py` | 8 proofs across parse → analyses → evaluation | MEASURED (8/8) |
 
+## The model landscape (where this sits)
+
+![Allostery: a hierarchy of models, and where this repository's residue-interaction-network method and evaluation harness sit](model_hierarchy.svg)
+
+There is no single "most accurate" allosteric model — the field is a **hierarchy sorted by the question**:
+binding kinetics (MWC/KNF), pharmacology (Hall/EOM), mechanism & dynamics (Ensemble/EAM, ENM), and AI site
+prediction (PASSerRank/DeepAllo). This repo is a **tier-3-adjacent structural method** (a residue interaction
+network) **plus** a cross-cutting **evaluation harness** that scores *any* of those against evidence. It is
+not MWC/KNF, not ensemble/MD, not an ML predictor.
+
 ## Phase 17 — a reproducible framework for *evaluating* allostery hypotheses (not improving prediction)
 
 This is the honest, research-grade step, and the framing matters: **it is a reproducible framework for
@@ -57,6 +67,40 @@ positions from deep mutational scans, double-mutant cycles, or the literature). 
 machinery — applies to infrastructure, software-dependency, social, or simulated-world graphs. Proteins are
 one demonstration that this is a **domain-general framework for scoring causal-structure hypotheses against
 ground truth**, not a theory of allostery.
+
+## The process: how a researcher reaches a *pioneering* result with this
+
+The pioneering result on offer here is **not** "a better allostery predictor" — that lane is crowded
+(tier 4 of the diagram). It is a **transparent, baseline-aware benchmark that reveals which structural graph
+methods actually beat trivial baselines on real allosteric data, and where they fail.** Most graph-allostery
+papers report a pretty pathway and omit the "does it beat picking the most-connected residue?" check. A
+rigorous, reusable answer to *that* is a genuine, lasting contribution. The protocol:
+
+1. **Assemble a real gold standard (the hard, essential step).** Curate experimentally-validated
+   allosterically-important residues — allosteric-site and uncoupling-mutation positions — from sources like
+   the Allosteric Database (ASD), deep mutational scans, and double-mutant-cycle studies. *Garbage gold →
+   garbage conclusions;* this step is most of the real work and the part the repo cannot do for you.
+2. **Pre-register the model choices.** Fix the RIN construction (residue representation, contact cutoff,
+   sequence-separation) and the candidate scores *before* looking at performance. Write down the null and
+   degree baselines you will beat. (Avoids the garden-of-forking-paths.)
+3. **Build RINs from real structures.** `pdb_rin.build_rin(open('X.pdb').read())` for each protein in the set.
+4. **Compute candidate hypothesis scores.** `rin_analysis` (betweenness, reach, Potential-vs-Actual flow),
+   plus any external method (current-flow, ML scores) — the harness is method-agnostic.
+5. **Score against gold *with baselines*.** `eval_harness.evaluate(scores, gold, adj)` → precision/recall/F1/
+   AUC, **lift over random null, and lift over the degree baseline.** The degree baseline is the bar that
+   matters: a method that only ties it has added nothing.
+6. **Cross-validate and report the failures (the "ghost").** Hold out proteins / protein families; report
+   where methods beat baselines and where they don't (e.g. "works on enzymes, not GPCRs"). Publish the
+   negative results — they are the contribution. `beats-null ≠ proven`; `good-score ≠ mechanism`.
+7. **State the boundary.** This is a *structural* benchmark. It cannot adjudicate energetics or dynamics
+   (`contact ≠ coupling`, `graph-reach ≠ free-energy`). Wet-lab or MD validation of any *new* prediction is a
+   separate, downstream step — out of scope here, and not to be claimed.
+
+What the repo supplies (steps 3–5) is verified and reusable; what *you* must supply is the gold data, the
+structures, the cross-validation design, and the domain judgement (steps 1–2, 6–7). The honest pioneering
+output is the **benchmark + its findings**, not a new predictor — and the same protocol (build graph → score
+hypotheses → beat baselines → report failures) transfers verbatim to infrastructure, software-dependency, or
+social graphs, which is the project's domain-general claim.
 
 ## Run
 
