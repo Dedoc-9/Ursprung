@@ -73,7 +73,7 @@ far smaller than the combinatorial bound, the project's sparsity thesis showing 
 |---|---|---|
 | `interfaces.py` | the stable contract: frozen `ReachabilityResult` / `VerificationResult` (status, witness, trace, certificate, explored/frontier, engine, violations) + `verify()` | MEASURED — `test_interfaces` 8/8 |
 | `transition.py` | the relation `T(s,a,s')`: frozen `Action` / `State` / `Transition` + `TransitionRelation` (successors/step/actions/materialize) | MEASURED — `test_transition` 8/8 |
-| `artifacts.py` | durable outputs: `Trace`, `Invariant`, `Violation`, `ReachabilityCertificate` (with `verify()`) | MEASURED — `test_artifacts` 8/8 |
+| `artifacts.py` | durable outputs: `Trace`, `Invariant`, `Violation`, `ReachabilityCertificate` (with `verify()`); **and the shared honesty contract** `AnalysisResult` / `Finding` / `Limitation` (required scope + ≥1 limitation) | MEASURED — `test_artifacts` 8/8, `test_analysis_contract` 8/8 |
 
 **Engines (behind the contract)**
 
@@ -146,7 +146,7 @@ ambiguity. `unobserved ≠ ok`; `not-explained ≠ no-cause`.
 Core (pure-stdlib, no dependencies):
 
 ```powershell
-cd "weltwerk\verify"; python test_interfaces.py; python test_transition.py; python test_engine.py; python test_artifacts.py; python test_kernel_check.py; python test_diagnose.py; python test_engine_conformance.py; python test_counterfactual.py
+cd "weltwerk\verify"; python test_interfaces.py; python test_transition.py; python test_engine.py; python test_artifacts.py; python test_kernel_check.py; python test_diagnose.py; python test_engine_conformance.py; python test_counterfactual.py; python test_analysis_contract.py
 ```
 
 Symbolic backend (optional — needs z3; the suites SKIP cleanly if it is absent):
@@ -193,7 +193,11 @@ The Phase A.2 **architecture spine is complete**: contract → semantics → eng
 6. ✅ Counterfactual explanations (`counterfactual.py`) — trace-level ablation: which events are critical to
    *this* ghost. Stronger forms (forbid an action from the alphabet + re-verify; symbolic `assert NOT(event_i)`)
    are documented follow-ups. `prevents-this-ghost ≠ makes-world-safe`.
-7. ⏳ Automated repair suggestions — from a diagnosis, the minimal edit that restores invariants.
+7. ⏳ Automated repair suggestions — from a diagnosis/critical-set, the minimal edit that restores
+   invariants. Substrate ready: `AnalysisResult` / `Finding` / `Limitation` (in `artifacts.py`) is the shared
+   honesty contract every consumer projects into via `as_analysis()` — so diagnosis, counterfactual, and
+   repair all carry the same scope + limitations. `RepairCandidate` will tie `restores_world` to an explicit
+   `(model, engine, bound)`, never claim a bare "fixed". `restores-under-M-E-K ≠ fixed`.
 
 **Immediate next (recommended order):** (a) ✅ **engine-conformance harness** (`conformance.py` +
 `test_engine_conformance.py`) — gates every engine (returns a `VerificationResult`, emits a replayable

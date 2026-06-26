@@ -115,3 +115,42 @@ class ReachabilityCertificate:
                 and c.explored_state_sigs == self.explored_state_sigs
                 and c.transition_count == self.transition_count
                 and c.invariant_names == self.invariant_names)
+
+
+# ---- the analysis reporting boundary (the shared honesty contract) ------------------------------
+# AnalysisResult is a REPORTING boundary, not a domain supertype: GhostReport / CounterfactualReport /
+# (future) RepairCandidate are NOT subclasses of it — each computes its own thing and *projects* into an
+# AnalysisResult via an `as_analysis()` adapter. The common thing is the honesty contract, not the
+# computation. `reporting-boundary ≠ domain-supertype`.
+
+@dataclass(frozen=True)
+class Finding:
+    """One result item. Metadata DESCRIBES the result; it never decides it (no confidence/severity/
+    recommendation fields — those become hidden control paths). `finding-metadata ≠ control`."""
+    type: str                    # e.g. "CRITICAL_EVENT", "FAULT_HYPOTHESIS", "OVERDETERMINED"
+    scope: str                   # the domain this finding is about, e.g. "trace", "observed-entities"
+    detail: str
+
+
+@dataclass(frozen=True)
+class Limitation:
+    """A structured honesty boundary (not a freeform string, so it composes as consumers multiply)."""
+    scope: str                   # e.g. "trace", "observed-entities", "bounded-world"
+    claim: str                   # e.g. "does not prove global safety"
+
+
+@dataclass(frozen=True)
+class AnalysisResult:
+    """What every artifact consumer (diagnosis, counterfactual, repair, …) emits. The honesty travels WITH
+    the result: a non-empty `scope` and at least one `Limitation` are REQUIRED — an analysis that claims no
+    limitation is a smell, not a default. `analysis ≠ proof`."""
+    source_trace: Tuple          # the trace/events analyzed (may be empty for observation-based analyses)
+    scope: str                   # the analysis domain — REQUIRED (e.g. observed-entities / trace / bounded-world)
+    findings: Tuple              # tuple[Finding]
+    limitations: Tuple           # tuple[Limitation] — REQUIRED, ≥1
+
+    def __post_init__(self):
+        if not self.scope:
+            raise ValueError("AnalysisResult requires a non-empty scope")
+        if not self.limitations:
+            raise ValueError("AnalysisResult requires ≥1 Limitation — honesty travels with the result")

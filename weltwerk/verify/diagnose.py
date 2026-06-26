@@ -38,6 +38,7 @@ from itertools import combinations
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "sim"))
 from world_sim import WorldSim, DEMO_WORLD   # noqa: E402
+from artifacts import AnalysisResult, Finding, Limitation   # noqa: E402  (the shared honesty contract)
 
 NOMINAL = (True, "ok")     # an entity's healthy observable state: alive and ok
 
@@ -80,6 +81,20 @@ class GhostReport:
         if self.underdetermined:
             L.append("  [rivals tie — explanation is UNDERDETERMINED; observe the above to discriminate]")
         return "\n".join(L)
+
+    def as_analysis(self) -> AnalysisResult:
+        """Project into the shared honesty contract (a reporting boundary, not a supertype). Diagnosis is
+        observation-based, so `source_trace` is empty; the scope is the observed entities."""
+        findings = tuple(Finding("FAULT_HYPOTHESIS", "observed-entities", d.hypothesis) for d in self.diagnoses)
+        if not findings:
+            findings = (Finding("NO_HYPOTHESIS", "observed-entities",
+                                "no explanation within the entity-loss fault model"),)
+        limitations = (
+            Limitation("observed-entities", "unobserved entities are not assumed healthy"),
+            Limitation("model", "consistency ≠ causation; confidence is a ranking weight, not a probability"),
+        )
+        return AnalysisResult(source_trace=(), scope="observed-entities",
+                              findings=findings, limitations=limitations)
 
 
 # ---- kernel helpers -----------------------------------------------------------------------------

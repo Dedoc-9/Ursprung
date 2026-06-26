@@ -29,7 +29,7 @@ from typing import Optional, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "sim"))
 from world_sim import WorldSim                       # noqa: E402  (replay only)
-from artifacts import normalize_invariants           # noqa: E402
+from artifacts import normalize_invariants, AnalysisResult, Finding, Limitation   # noqa: E402
 from kernel_check import DEFAULT_INVARIANTS, DEMO_WORLD   # noqa: E402
 
 
@@ -64,6 +64,22 @@ class CounterfactualReport:
                          "(multiple sufficient causes). no-single-cause ≠ no-cause.")
         lines.append("  trace-level only: prevents-this-ghost ≠ makes-world-safe.")
         return "\n".join(lines)
+
+    def as_analysis(self) -> AnalysisResult:
+        """Project into the shared honesty contract (a reporting boundary, not a supertype)."""
+        if not self.input_violates:
+            findings = (Finding("NO_VIOLATION", "trace", "supplied trace reaches no violation"),)
+        elif self.critical:
+            findings = tuple(Finding("CRITICAL_EVENT", "trace", str(e)) for e in self.critical)
+        else:
+            findings = (Finding("OVERDETERMINED", "trace",
+                                "no single event is critical (multiple sufficient causes)"),)
+        limitations = (
+            Limitation("trace", "prevents this ghost; does not prove global safety"),
+            Limitation("trace", "ablation only — events are not reordered or substituted"),
+        )
+        return AnalysisResult(source_trace=self.ghost_trace, scope="trace",
+                              findings=findings, limitations=limitations)
 
 
 def _any_violation(sim, invariants) -> bool:
