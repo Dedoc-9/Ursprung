@@ -93,6 +93,7 @@ far smaller than the combinatorial bound, the project's sparsity thesis showing 
 | `conformance.py` | the **engine-conformance gate**: `check_conformance(engine)` — the universal contract every backend must satisfy (status set, replayable Trace on violation, determinism, label, frontier consistency) | MEASURED — `test_engine_conformance` |
 | `counterfactual.py` | Phase C: **critical events in a ghost trace** by single-event ablation (trace-level; engine-agnostic; pure-stdlib) | MEASURED — `test_counterfactual` 8/8 |
 | `repair.py` | Phase C.2: **repair candidates** — `REMOVE_EVENT` seeded from the counterfactual critical set; `restores_trace` (replay) + `restores_world` (forbid the action, re-verify; enum carrying `engine`+`bound`, never a bare bool) | MEASURED — `test_repair` 8/8 |
+| `rsi_bench.py` | the **runnable RSI benchmark**: a restore-search task over a generated TRAIN/HELD-OUT world distribution, judged only by the frozen engine; baseline / learned / memorizer policies; REG, transfer, verdict-invariance, recall, fixed-budget, acceleration. Honest, NULL-capable | MEASURED — `test_rsi_bench` (apparatus validity) |
 
 ## Engines and the differential harness
 
@@ -147,7 +148,13 @@ ambiguity. `unobserved ≠ ok`; `not-explained ≠ no-cause`.
 Core (pure-stdlib, no dependencies):
 
 ```powershell
-cd "weltwerk\verify"; python test_interfaces.py; python test_transition.py; python test_engine.py; python test_artifacts.py; python test_kernel_check.py; python test_diagnose.py; python test_engine_conformance.py; python test_counterfactual.py; python test_analysis_contract.py; python test_repair.py
+cd "weltwerk\verify"; python test_interfaces.py; python test_transition.py; python test_engine.py; python test_artifacts.py; python test_kernel_check.py; python test_diagnose.py; python test_engine_conformance.py; python test_counterfactual.py; python test_analysis_contract.py; python test_repair.py; python test_rsi_bench.py
+```
+
+The full RSI benchmark report (honest, NULL-capable) prints from:
+
+```powershell
+cd "weltwerk\verify"; python rsi_bench.py
 ```
 
 Symbolic backend (optional — needs z3; the suites SKIP cleanly if it is absent):
@@ -188,7 +195,8 @@ Beyond the code, three documents reason *about* this kernel (design intent, then
   (verdict-invariance, held-out transfer, compute-equalization), five measurements each with a falsifying
   experiment, an RSI metric suite computed only by frozen instruments, and the strongest defensible claim —
   *improves the ability to discover verified improvements, not the authority to define them.* Status: design,
-  no results.
+  no results — but now with a **runnable instrument**, `rsi_bench.py` (+ `test_rsi_bench.py`), which executes
+  the program end-to-end and is built to be able to report NULL.
 
 These are *analysis*, not roadmap: no future engine is claimed as fact, and the agentic loop in the next
 section is bounded by exactly these results.
