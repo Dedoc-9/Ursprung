@@ -6,11 +6,13 @@ verify stages (symbolic checking → abstract interpretation → counterfactuals
 of shipped code. Where a principle is already realized in `kernel_check.py` / `diagnose.py` /
 `interfaces.py`, the map below says so honestly. `designed ≠ implemented`; `interface-sketch ≠ guarantee`.
 
-**Phase A.2 progress:** Step 1 (stable `ReachabilityResult` / `VerificationResult` contract) is done —
-`interfaces.py`, `test_interfaces.py` (8/8), `kernel_check.py` untouched. Remaining: Step 2 transition
-relation, Step 3 engine abstraction (`ExplicitStateEngine`), Step 4 stable artifacts (fills `certificate`,
-predecessor relation), Step 5 prototype symbolic backend (gated on the z3-vs-pure-Python decision), Step 6
-differential testing (explicit vs symbolic agree on every world).
+**Phase A.2 progress:** Steps 1–2 done. Step 1 — stable `ReachabilityResult` / `VerificationResult`
+contract (`interfaces.py`, 8/8). Step 2 — transition relation `T(s,a,s')` (`transition.py`,
+`test_transition.py` 8/8), differential-tested to match the reference engine; `kernel_check.py` still
+untouched. Remaining: Step 3 engine abstraction (`ExplicitStateEngine` consumes `T`; `check()` rewired
+behind it), Step 4 stable artifacts (fills `certificate`, predecessor relation), Step 5 prototype symbolic
+backend (gated on the z3-vs-pure-Python decision), Step 6 differential testing (explicit vs symbolic agree
+on every world).
 
 ## The one idea
 
@@ -33,13 +35,13 @@ ReachabilityResult
 
 | # | Principle | Why it pays off later | Current state |
 |---|---|---|---|
-| 1 | **Explicit transition relation** `T(s, a, s')` instead of baking transitions into the search | one relation reused by symbolic reachability, abstract interpretation, counterfactual search, repair planning | PARTIAL — semantics live in `WorldSim.apply_event` (mutation + save/restore); not yet a standalone `T(s,a,s')` object |
+| 1 | **Explicit transition relation** `T(s, a, s')` instead of baking transitions into the search | one relation reused by symbolic reachability, abstract interpretation, counterfactual search, repair planning | **DONE (Step 2)** — `transition.py`: `TransitionRelation.successors/step/actions` over frozen `State`/`Transition`; differential-tested to match the reference engine exactly. `check()` rewired to consume it in Step 3 |
 | 2 | **Stable state IDs**: every discovered witness carries `StateID, ParentID, GeneratingAction, Depth` | replay, diagnosis, repair, visualization all get easier | PARTIAL — `_sig(state)` is a canonical id; `parent[sig] = (parent_sig, action)` gives ParentID+action; depth tracked in BFS but not stored on the state |
 | 3 | **Predecessor information** (`predecessors(state)`, or computable) not just a single `parent` | enables minimal repair, causal slicing, "what could have led here?", reverse reachability | NOT YET — only a single BFS `parent` is stored |
 | 4 | **Invariants as first-class objects**: `Invariant(name, predicate, explanation, severity)` | every phase reuses them — diagnosis reports `violated: <name>`, repair asks "restore `<name>`", counterfactuals ask "when did `<name>` first break?" | PARTIAL — invariants are a `name -> predicate` dict; no `explanation` / `severity` yet |
 | 5 | **Preserve symbolic witnesses** (don't immediately flatten a BDD/SAT model); keep both the symbolic witness *and* a concrete replay trace | concrete replay is for humans; symbolic witness is for repair optimization | PLANNED — explicit-state only produces concrete traces today |
 | 6 | **Unsat-core support early** (for SMT): report "impossible because constraints A, D, F conflict", not just "impossible" | diagnosis ranks the conflicting constraints; repair targets only them; counterfactuals ask which to change | PLANNED — no SMT engine yet |
-| 7 | **Actions as symbolic objects**: `Action(name, preconditions, effects, category)` | supports abstraction, planning, repair synthesis, explanation without redesign | NOT YET — actions are arg tuples (`("destroy", target)`) |
+| 7 | **Actions as symbolic objects**: `Action(name, preconditions, effects, category)` | supports abstraction, planning, repair synthesis, explanation without redesign | **PARTIAL (Step 2)** — `transition.Action` is a frozen value type (kind/target/amount/faction/dtype); preconditions/effects/category are the documented next extension; `kernel_check` still uses tuples until Step 3 |
 | 8 | **Immutable traces** — no phase may mutate a trace | diagnosis, counterfactuals, repair, visualization all reference the same permanent artifact safely | NOT YET — traces are plain `list`s; should become a frozen `Trace` |
 | 9 | **Separate search from policy**: `SearchEngine` + `StoppingPolicy` + `Property`, not "BFS knows when to stop" | bounded / complete / symbolic / heuristic search all reuse one engine | NOT YET — `check()` hardcodes BFS + depth bound + `stop_on_first` |
 | 10 | **Proof objects, not `PASS`** — return a `VerificationResult` every phase consumes | diagnosis/counterfactuals/repair consume the witness; abstract interpretation compares its approximation to the exact result; visualization renders it | **DONE (Step 1)** — `interfaces.py` defines frozen `ReachabilityResult` + `VerificationResult` (status, witness, explored_states, frontier_exhausted, engine, violations) with a `verify()` entry point over the reference engine; `certificate` is a deliberate placeholder for Step 4 |
