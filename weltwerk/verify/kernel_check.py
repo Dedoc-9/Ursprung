@@ -48,6 +48,7 @@ from dataclasses import dataclass, field
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "sim"))
 from world_sim import WorldSim, DEMO_WORLD   # noqa: E402
+from artifacts import Violation, Invariant   # noqa: E402  (Step 4: Violation lives in artifacts now)
 
 # A state = ({entity: {alive,status,health,max}}, {entity: faction}). Hashable signature excludes events.
 State = tuple
@@ -101,19 +102,18 @@ def _inv_controller_total(sim: WorldSim) -> bool:
     return all(sim.controller(e) in valid for e in sim.cg.nodes)
 
 
+# Promoted to first-class Invariant objects (Step 4): descriptive metadata; engine uses .predicate only.
 DEFAULT_INVARIANTS = {
-    "health_in_bounds": _inv_health_in_bounds,
-    "dead_implies_destroyed": _inv_dead_implies_destroyed,
-    "controller_total": _inv_controller_total,
+    "health_in_bounds": Invariant(
+        "health_in_bounds", _inv_health_in_bounds,
+        "Every entity's health stays within [0, max].", "critical"),
+    "dead_implies_destroyed": Invariant(
+        "dead_implies_destroyed", _inv_dead_implies_destroyed,
+        "A not-alive entity has zero health and 'destroyed' status.", "critical"),
+    "controller_total": Invariant(
+        "controller_total", _inv_controller_total,
+        "controller(e) is always a valid faction id, 'contested', or 'neutral'.", "warning"),
 }
-
-
-@dataclass
-class Violation:
-    invariant: str
-    sig: tuple
-    path: list                       # the shortest event path (ghost) to the violating state
-    kind: str                        # "state" or "transition"
 
 
 @dataclass
@@ -126,6 +126,8 @@ class CheckResult:
     potential_bound: int             # sum_{i=0..D} |A|^i  (|Potential| upper bound at search level)
     alphabet_size: int
     violations: list = field(default_factory=list)
+    certificate: object = None       # ReachabilityCertificate on CLOSED, else None (Step 4 — additive)
+    trace: object = None             # Trace of the ghost on VIOLATED, else None (Step 4 — additive)
 
     @property
     def ghost(self):

@@ -27,7 +27,8 @@ from dataclasses import dataclass, field
 from typing import Dict, Protocol, Tuple
 
 from transition import TransitionRelation, State
-from kernel_check import CheckResult, Violation, DEFAULT_INVARIANTS
+from kernel_check import CheckResult, DEFAULT_INVARIANTS
+from artifacts import Violation, Trace, ReachabilityCertificate, normalize_invariants
 
 
 @dataclass(frozen=True)
@@ -74,7 +75,7 @@ class ExplicitStateBFSEngine:
 
     def run(self, model: WorldModel, options: VerificationOptions) -> CheckResult:
         relation = model.transition_relation
-        invariants = model.invariants
+        invariants = normalize_invariants(model.invariants)   # {name: Invariant}; engine uses .predicate only
         alphabet = model.action_alphabet
         a = len(alphabet)
         max_depth = options.depth_bound
@@ -99,18 +100,27 @@ class ExplicitStateBFSEngine:
             return list(reversed(out))
 
         def result(status):
+            # CLOSED ⇒ an independently-checkable certificate; VIOLATED ⇒ a first-class ghost Trace.
+            cert = None
+            if status == "CLOSED":
+                cert = ReachabilityCertificate(explored_state_sigs=frozenset(states),
+                                               transition_count=transitions,
+                                               invariant_names=tuple(sorted(invariants)),
+                                               status="CLOSED")
+            trace = Trace.build(relation.world_text, violations[0].path) if violations else None
             return CheckResult(status, len(states), transitions, reached_depth, truncated,
-                               potential_bound, a, violations)
+                               potential_bound, a, violations, certificate=cert, trace=trace)
 
         def check_state(state):
             sim = relation.materialize(state)      # a WorldSim positioned at `state`
-            for name, pred in invariants.items():
+            for name, inv in invariants.items():
                 try:
-                    ok = pred(sim)
+                    ok = inv.predicate(sim)
                 except Exception:                  # an invariant that throws is a violation, not a crash
                     ok = False
                 if not ok:
-                    violations.append(Violation(name, state.sig, path_to(state.sig), "state"))
+                    violations.append(Violation(name, state.sig, path_to(state.sig), "state",
+                                                explanation=inv.explanation, severity=inv.severity))
                     return False
             return True
 
@@ -134,7 +144,9 @@ class ExplicitStateBFSEngine:
                     if t.target.sig not in parent:
                         parent[t.target.sig] = (state.sig, t.action)
                     violations.append(Violation("potential_superset_actual", t.target.sig,
-                                                path_to(t.target.sig), "transition"))
+                                                path_to(t.target.sig), "transition",
+                                                explanation="actual ⊆ potential must hold for every transition.",
+                                                severity="critical"))
                     if stop_on_first:
                         return result("VIOLATED")
                 if t.target.sig not in states:

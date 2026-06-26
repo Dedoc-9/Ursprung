@@ -46,6 +46,7 @@ class VerificationResult:
     """
     reachability: ReachabilityResult
     violations: Tuple = ()                         # tuple of (invariant_name, kind) — minimal descriptors
+    trace: Optional[Any] = None                    # Trace of the ghost on VIOLATED, else None (Step 4, additive)
 
     # delegated convenience accessors (keep consumers off the nested object) -----------------------
     @property
@@ -87,10 +88,10 @@ def from_check_result(r) -> VerificationResult:
         explored_states=r.states_explored,
         frontier_exhausted=not r.truncated,
         witness=witness,
-        certificate=None,                         # PLACEHOLDER — Step 4 fills with the canonical reachable set
+        certificate=getattr(r, "certificate", None),   # Step 4: filled with a ReachabilityCertificate on CLOSED
     )
     violations = tuple((v.invariant, v.kind) for v in r.violations)
-    return VerificationResult(reachability=rr, violations=violations)
+    return VerificationResult(reachability=rr, violations=violations, trace=getattr(r, "trace", None))
 
 
 def verify(world_text: str, **kwargs) -> VerificationResult:

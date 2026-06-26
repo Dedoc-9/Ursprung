@@ -88,11 +88,12 @@ def test_results_are_frozen():
 
 
 def test_minimal_contract_present():
-    vr = verify(SMALL, max_depth=2)
+    # BOUNDED ⇒ no proof ⇒ no certificate (Step 4: certificate fills only on CLOSED; non-CLOSED stays None)
+    vr = verify(SMALL, max_depth=1)
     needed = ["status", "witness", "certificate", "explored_states", "frontier_exhausted", "engine"]
-    ok = all(hasattr(vr, n) for n in needed) and vr.certificate is None
+    ok = all(hasattr(vr, n) for n in needed) and vr.status == "BOUNDED" and vr.certificate is None
     return chk("minimal_contract_present", ok,
-               f"fields {needed} present; certificate placeholder None = {vr.certificate is None}")
+               f"fields present; non-CLOSED ⇒ certificate None = {vr.certificate is None}")
 
 
 def test_determinism():
