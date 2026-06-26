@@ -1,21 +1,55 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-only -->
-# weltwerk/verify — bounded model checking of the causal kernel
+# weltwerk/verify — a verification kernel with interchangeable proof engines
 
-The first NASA-merge subsystem. It implements an **explicit-state bounded model checker** — *systematically
-explore the reachable states and return a shortest counterexample* — **inspired by techniques used in
-systems such as NASA's Java Pathfinder, adapted to `WorldSim`'s causal transition system.** This is an
-inspiration, not an equivalence: no feature parity with JPF is claimed and no JPF source is used (JPF
-checks Java bytecode; this checks an authored causal world). License + provenance: original AGPL-3.0 code,
-recorded in [`../../docs/LICENSE_DECISIONS.md`](../../docs/LICENSE_DECISIONS.md) and
-[`../../docs/PROVENANCE.md`](../../docs/PROVENANCE.md).
+This began as the first NASA-merge subsystem: an **explicit-state bounded model checker** *inspired by
+techniques used in systems such as NASA's Java Pathfinder, adapted to `WorldSim`'s causal transition
+system* (an inspiration, not an equivalence — no JPF source, no feature-parity claim; JPF checks Java
+bytecode, this checks an authored causal world). It is now more than that: a **verification kernel** in
+which the result *contract* is the architectural boundary and multiple engines plug in behind it.
+
+> The line the project crossed (Phase A.2): from *"Weltwerk has a model checker"* to *"Weltwerk has a
+> verification kernel with interchangeable proof engines producing auditable artifacts."* Symbolic BMC is
+> one engine; abstract interpretation will be another; diagnosis/counterfactuals/repair consume the
+> artifacts. `engine ≠ semantics`.
+
+License + provenance: original AGPL-3.0 code, recorded in
+[`../../docs/LICENSE_DECISIONS.md`](../../docs/LICENSE_DECISIONS.md) and
+[`../../docs/PROVENANCE.md`](../../docs/PROVENANCE.md). Architecture contract: [`DESIGN.md`](DESIGN.md).
+
+## Architecture
+
+```
+                         WorldModel
+                             |
+                             v
+                     TransitionRelation        ← the proven semantics boundary (T(s,a,s'))
+                             |
+              +--------------+---------------+
+              |                              |
+              v                              v
+     ExplicitStateBFSEngine          SymbolicBMCEngine (optional z3)
+              |                              |
+              +--------------+---------------+
+                             |
+                             v
+                     VerificationResult        ← the only thing consumers depend on
+                             |
+            +----------------+-----------------+
+            |                |                 |
+          Trace        Certificate        Violations
+            |
+            v
+   Diagnosis · Counterfactuals · Repair · Visualization (consumers)
+```
+
+The solver lives only inside `solver_adapter.py`. **The solver is an engine dependency, not an architecture
+dependency** — nothing else in Weltwerk imports z3, and the core stays pure-stdlib.
 
 ### Vocabulary (kept precise, theme preserved)
 
 - **ghost** — a *state* that violates an invariant.
 - **ghost trace** — the *shortest, replayable* event sequence that reaches a ghost (the counterexample).
 - **ghost report** — `diagnose`'s ranked *explanation* of a ghost trace (hypotheses + next observation).
-
-These are distinct objects; the README uses each term in exactly that sense.
 
 ## The idea, in Weltwerk's own terms
 
@@ -26,130 +60,142 @@ These are distinct objects; the README uses each term in exactly that sense.
 | a reachable state that violates an invariant | a **ghost** (with its shortest, replayable **ghost trace**) |
 | exhaustive (frontier emptied) search | a **proof** of the invariants over the reachable state graph |
 
-The checker does **not** enumerate `Potential` itself (it never visits impossible states): it explores
-`Reachable(actual)` *inside* `Potential(action sequences)`. So `Actual ⊆ Potential` is both the law the
-checker *tests* on every transition (`actual ⊆ potential`) and the shape of the search — the reachable
-set is almost always far smaller than the combinatorial bound, which is the project's sparsity thesis
-showing up in verification.
+An engine does **not** enumerate `Potential` itself (it never visits impossible states): it explores
+`Reachable(actual)` *inside* `Potential(action sequences)`. So `Actual ⊆ Potential` is both the law checked
+on every transition (`actual ⊆ potential`) and the shape of the search — the reachable set is almost always
+far smaller than the combinatorial bound, the project's sparsity thesis showing up in verification.
 
 ## Files
 
+**Contract & semantics**
+
 | File | Role | Grade |
 |---|---|---|
-| `kernel_check.py` | BFS explicit-state checker over `WorldSim`; invariants + transition law; shortest ghost trace; `replay_path` witness check | MEASURED (8/8) |
-| `test_kernel_check.py` | 8 validity-not-outcome proofs | MEASURED (8/8) |
-| `diagnose.py` | model-based diagnosis (the inverse): observed state → ranked fault hypotheses, with a discriminating observation; consumes `kernel_check` ghosts | MEASURED (8/8) |
-| `test_diagnose.py` | 8 validity-not-outcome proofs | MEASURED (8/8) |
+| `interfaces.py` | the stable contract: frozen `ReachabilityResult` / `VerificationResult` (status, witness, trace, certificate, explored/frontier, engine, violations) + `verify()` | MEASURED — `test_interfaces` 8/8 |
+| `transition.py` | the relation `T(s,a,s')`: frozen `Action` / `State` / `Transition` + `TransitionRelation` (successors/step/actions/materialize) | MEASURED — `test_transition` 8/8 |
+| `artifacts.py` | durable outputs: `Trace`, `Invariant`, `Violation`, `ReachabilityCertificate` (with `verify()`) | MEASURED — `test_artifacts` 8/8 |
+
+**Engines (behind the contract)**
+
+| File | Role | Grade |
+|---|---|---|
+| `engine.py` | `VerificationEngine` protocol + `ExplicitStateBFSEngine` + `WorldModel` + `VerificationOptions` | MEASURED — `test_engine` 8/8 |
+| `solver_adapter.py` | the ONLY module importing z3; bounded model checking over the extracted relation (**optional** — `pip install z3-solver`) | exercised via the symbolic suite |
+| `symbolic_engine.py` | `SymbolicEngine` — second engine, SMT/BMC over the *extracted* relation (approach A); never imports z3 | MEASURED — `test_symbolic_engine` 8/8 (with z3) |
+| `kernel_check.py` | compatibility layer: `check()` shim, `CheckResult`/`replay_path`, kernel helpers, `DEFAULT_INVARIANTS` — **no search algorithm remains here** | MEASURED — `test_kernel_check` 8/8 |
+
+**Consumers & cross-engine**
+
+| File | Role | Grade |
+|---|---|---|
+| `diagnose.py` | model-based diagnosis (the inverse): observed state → ranked fault hypotheses + a discriminating observation; consumes ghosts | MEASURED — `test_diagnose` 8/8 |
+| `differential.py` | **first-class verification tool**: explicit vs symbolic equivalence over a model suite | MEASURED — `test_differential` 5/5 (with z3) |
+
+## Engines and the differential harness
+
+`ExplicitStateBFSEngine` is the reference. `SymbolicEngine` (approach A) reasons with SMT but **reuses the
+same `TransitionRelation`** — it never re-encodes `apply_event`, so there is no second semantic definition.
+It decodes the solver model to a concrete action sequence and **replays it through the relation** to build
+the `Trace`: *symbolic proposes, semantics confirm*. Both engines share the exact same epistemic model
+(CLOSED / BOUNDED / VIOLATED — there is no `UNSAT` status); `unsat-at-depth-k ≠ unreachable`.
+
+`differential.py` is the proof that the contract hosts more than one engine: for every model both must reach
+the same status; on VIOLATED, the same shortest witness *length* and a symbolic witness that replays to a
+real violation (SMT models aren't canonical, so identical events are not required); otherwise the same
+explored-state count. **Future engines should have to pass the differential harness before becoming a
+supported backend.**
 
 ## Diagnosis (the inverse of the checker)
 
-`kernel_check` answers *"this invariant failed / these states diverge"* (forward). `diagnose` answers the
-human's next question — *"why?"* (inverse). Given an **observed** world state, it returns **fault
-hypotheses** (entity losses) whose simulated cascade reproduces the observation, ranked, each with a
-single **suggested observation** that would best distinguish the surviving rivals. It consumes the
-checker's ghost traces directly (`from_ghost`). Pipeline: ghost trace → symptoms → candidate causes
-(consistency by simulation) → ranking → ghost report.
+`kernel_check`/engines answer *"this invariant failed"* (forward). `diagnose` answers *"why?"* (inverse):
+given an **observed** world state it returns **fault hypotheses** (entity losses) whose simulated cascade
+reproduces the observation, ranked, each with the single **suggested observation** that best distinguishes
+the surviving rivals. Pipeline: ghost trace → symptoms → candidate causes (consistency by simulation) →
+ranking → ghost report.
 
-**`confidence` is a ranking weight, not a probability.** It is a transparent, normalized score
-(parsimony of faults × parsimony of effects) used to *allocate investigation*. **No probabilistic model
-is assumed; scores are ordinal ranking weights only** — they do not estimate the probability that a
-hypothesis is true. `consistency ≠ causation`; `minimal ≠ correct`; `weight ≠ P(true)`. Competing
-explanations are preserved (`underdetermined`), never collapsed.
-
-The hypotheses are **minimal with respect to the implemented search strategy** — currently
-*minimum-cardinality entity-loss* hypotheses (singles, then pairs) — **not** globally minimal over every
-conceivable fault model. Fault model = **entity loss** only (not damage amounts, captures, or timing).
-Consistency is judged over observed entities only — which is why *partial* observation produces genuine,
-honestly-reported ambiguity. `unobserved ≠ ok`; `not-explained ≠ no-cause`; `minimal-here ≠ globally-minimal`.
+**`confidence` is a ranking weight, not a probability.** No probabilistic model is assumed; scores are
+ordinal allocation weights (parsimony of faults × parsimony of effects). `consistency ≠ causation`;
+`minimal ≠ correct`; `weight ≠ P(true)`. Competing explanations are preserved (`underdetermined`).
+Hypotheses are minimal **with respect to the implemented search** (minimum-cardinality entity-loss), not
+globally minimal; consistency is judged over observed entities only, so partial observation yields honest
+ambiguity. `unobserved ≠ ok`; `not-explained ≠ no-cause`.
 
 ## Honest grading of a result (the epistemic states)
 
-- **CLOSED** — the frontier emptied before the depth bound: the explored set is the *complete* reachable
-  set for this alphabet, so the invariants are **PROVEN over the finite reachable state graph induced by
-  the selected action alphabet and transition function** — and nothing beyond it. `state-space-closed = proof`.
+- **CLOSED** — the frontier emptied before the depth bound: invariants are **PROVEN over the finite
+  reachable state graph induced by the selected action alphabet and transition function** — and nothing
+  beyond it. CLOSED carries a re-derivable `ReachabilityCertificate`. `state-space-closed = proof`.
 - **BOUNDED** — the depth bound cut off real frontier: invariants hold on what was explored; the rest is
   **UNDERDETERMINED**. `depth-limited ≠ proof`.
 - **VIOLATED** — an invariant fails; the shortest ghost trace is attached and is verified replayable.
 
 ## What it does NOT claim (Arbitrary-Boundary Law)
 
-- It proves invariants only over its **action alphabet** (default `{destroy, repair}`; `damage(amount)`
-  is excluded because unbounded amounts make the space infinite). `alphabet ≠ all-edits`.
-- State identity excludes the event log, so `path ≠ state` (this is what makes closure finite).
+- Invariants are proven only over the **action alphabet** (default `{destroy, repair}`; `damage(amount)`
+  excluded — unbounded amounts make the space infinite). `alphabet ≠ all-edits`.
+- State identity excludes the event log, so `path ≠ state` (what makes closure finite).
 - Passing the chosen invariants is `consistent-with-our-invariants`, not `correct`. `holds-here ≠ true`.
+- The symbolic engine (approach A) extracts the relation by enumeration, so it is an **architectural** proof
+  + witness extraction — **no scaling benefit yet**. `recompute ≠ cheaper-check`; `unsat-at-k ≠ unreachable`.
 - It says nothing about gameplay, performance, or continuous dynamics. `event ≠ measured-dynamics`.
 
 ## Run (PowerShell, folder-directed)
 
-```powershell
-cd "weltwerk\verify"; python kernel_check.py; python test_kernel_check.py
-```
+Core (pure-stdlib, no dependencies):
 
 ```powershell
-cd "weltwerk\verify"; python diagnose.py; python test_diagnose.py
+cd "weltwerk\verify"; python test_interfaces.py; python test_transition.py; python test_engine.py; python test_artifacts.py; python test_kernel_check.py; python test_diagnose.py
 ```
 
-`kernel_check.py` prints a CLOSED proof over the demo world, then demonstrates a **ghost** (verified
-8/8). `diagnose.py` pins a single cause from a full observation, then shows an *underdetermined* case
-under partial observation and the observation that would discriminate. `test_diagnose.py` should report
-**8/8**.
+Symbolic backend (optional — needs z3; the suites SKIP cleanly if it is absent):
 
-Both suites are confirmed **8/8** from local PowerShell runs.
+```powershell
+cd "weltwerk\verify"; pip install z3-solver; python test_symbolic_engine.py; python test_differential.py
+```
 
-## Why this was the first merge chosen
+Confirmed from local runs: core suites **8/8** each; with z3, `test_symbolic_engine` **8/8** and
+`test_differential` **5/5**.
 
-Of the NASA-derived candidates, this one (a) has the **most novel use** — model-checking authored causal
-worlds is not a thing that exists; (b) is **legally cleanest** — reimplemented from the literature, so it
-stays own-copyright and preserves the dual-license option (no NOSA exposure, no Java↔Python vendoring);
-and (c) **raises the central claim**: it lets Weltwerk *prove* invariants it previously only spot-tested.
-The differentiating IP is the mapping to `Potential ⊇ Actual`, not the textbook search.
+## Why this was the first NASA-merge chosen
+
+(a) **Most novel use** — model-checking authored causal worlds is not a thing that exists; (b) **legally
+cleanest** — reimplemented from the literature, own-copyright, dual-license-safe (no NOSA exposure, no
+Java↔Python vendoring); (c) it **raises the central claim** — Weltwerk can now *prove* invariants it
+previously only spot-tested. The differentiating IP is the mapping to `Potential ⊇ Actual`, not the
+textbook search.
 
 ## Roadmap
 
-Each stage consumes the previous one's artifacts while broadening what the system can do. The stages fall
-into three phases — all asking questions about *the same transition system*:
+The Phase A.2 **architecture spine is complete**: contract → semantics → engine → artifacts → second engine
+→ differential harness (see [`DESIGN.md`](DESIGN.md)). The remaining work is capability, organized by the
+*question* each stage answers — all over *the same transition system*.
 
-```
-Transition system
-      ↓
-Exact explicit-state verification
-      ↓
-Diagnosis
-      ↓
-Exact symbolic verification
-      ↓
-Sound approximation
-      ↓
-Explanation
-      ↓
-Repair
-```
+**Phase A — Verification (exact reachability)**
 
-**Phase A — Verification (exact reachability).**
+1. ✅ Transition system (`../sim/world_sim.py` → `transition.py`)
+2. ✅ Explicit-state model checker (`engine.ExplicitStateBFSEngine`) — ghosts + ghost traces
+3. ✅ Symbolic checking (`symbolic_engine`, approach A: SMT/BMC over the extracted relation) + differential
+   equivalence (`differential.py`). *Approach B* (SMT re-encoding of `apply_event` for real scale) is a
+   later, separately-gated step — now safe, because the differential harness will catch encoding drift.
 
-1. ✅ Transition system (`../sim/world_sim.py`)
-2. ✅ Explicit-state model checker (`kernel_check.py`) — produces ghosts + ghost traces
-4. **Symbolic checking (BDD / SAT / SMT)** — preserve the exact reachability question while representing
-   *sets* of states symbolically instead of enumerating them. In addition to scaling exact verification,
-   expose reusable **proof artifacts** (witnesses, predecessor relations, proof certificates, and
-   unsatisfiable cores where applicable) so later phases — diagnosis, abstract interpretation,
-   counterfactual reasoning, and automated repair — consume a **common verification interface** rather
-   than depending on a specific search algorithm. For authored worlds, explicit-state BFS may remain
-   practical for quite large models, so this is a scalability + artifact-richness step, not merely an
-   optimization or an immediate replacement. Target interface: [`DESIGN.md`](DESIGN.md).
+**Phase B — Analysis (sound approximation)**
 
-**Phase B — Analysis (sound approximation, when exact exploration becomes impractical).**
+4. ⏳ Abstract-interpretation pass — a *sound over-approximation* that scales past exact methods; feeds
+   `world_lint`. A general framework from the literature (Patrick & Radhia Cousot), *not* NASA-specific;
+   NASA's IKOS is one implementation — clean-room from the **published theory**, not IKOS source (treated as
+   NOSA). `over-approx ≠ exact`.
 
-5. **Abstract-interpretation pass** — a *sound over-approximation* that scales past exact methods; feeds
-   `world_lint`. Abstract interpretation is a general verification framework from the academic literature
-   (Patrick & Radhia Cousot), *not* a NASA-specific technique; NASA's IKOS is one implementation of it.
-   Our pass would be a clean-room implementation from the **published theory**, not from IKOS source
-   (whose license is treated as NOSA — see `../../docs/PROVENANCE.md`). `over-approx ≠ exact`.
+**Phase C — Assistance (understand and respond to results)**
 
-**Phase C — Assistance (help users understand and respond to results).**
+5. ✅ Diagnosis engine (`diagnose.py`) — ghost trace → ranked fault hypotheses + a probe to run next
+6. ⏳ Counterfactual explanations — *"if event X had not occurred…"* over the trace; explicit (remove event,
+   re-run) and symbolic (`assert NOT(event_i)`, solve) — where the SMT work starts paying back.
+7. ⏳ Automated repair suggestions — from a diagnosis, the minimal edit that restores invariants.
 
-3. ✅ Diagnosis engine (`diagnose.py`) — turns a ghost trace into ranked fault hypotheses + a probe to run next
-6. **Counterfactual explanations** — "if event X had not occurred…" over the trace.
-7. **Automated repair suggestions** — from a diagnosis, the minimal edit that restores invariants.
+**Immediate next (recommended order):** (a) a tiny **engine-conformance harness** (`test_engine_conformance.py`)
+that gates every engine — returns a `VerificationResult`, emits a `Trace` on violation, no new status,
+witness replays, deterministic — so future backends must pass it; (b) **counterfactual explanations**;
+(c) only later, symbolic **approach B** if scaling demands it.
 
-(The numbers mark build order; the phase grouping shows what kind of question each stage answers.)
+(Build-order numbers and phase grouping are orthogonal: the numbers say what was built when; the phases say
+what kind of question each stage answers.)

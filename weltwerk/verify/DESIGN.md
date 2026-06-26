@@ -17,6 +17,12 @@ with unsat cores (#5/#6) — "bounded contradiction explanation", never "proof o
 (approach B: SMT re-encoding of `apply_event`) is a later, separately-gated step, now safe because the
 differential harness will catch encoding drift.
 
+**Milestone reached.** The project crossed a line: from *"Weltwerk has a model checker"* to *"Weltwerk has
+a verification kernel with interchangeable proof engines producing auditable artifacts."* Symbolic BMC is
+one engine; abstract interpretation will be another; diagnosis/counterfactuals/repair consume the artifacts.
+A new engine must pass `differential.py` (equivalence with the explicit reference) before becoming a
+supported backend — that harness, not any single algorithm, is now the load-bearing verification tool.
+
 ## The one idea
 
 Make the **symbolic checker produce artifacts every later phase can reuse**, rather than treating it as
