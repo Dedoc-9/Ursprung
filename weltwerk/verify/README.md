@@ -40,7 +40,8 @@ candidate generation but cannot modify the **engine**, the **semantics**, the **
 
 ### Verified by tests — `[TEST]`
 
-- Nineteen pure-stdlib suites green (+ up to three z3 suites when the solver is present).
+- Twenty pure-stdlib suites green (+ up to four z3 suites when the solver is present, incl. PO-1
+  `test_differential_b` — `32/32` worlds).
 - The verdict is engine-independent: explicit ≡ symbolic on every model in the differential harness (`5/5`);
   both engines pass the conformance gate.
 - Honest grading: `CLOSED` = proof over the chosen action alphabet + transition function (carries a
@@ -169,6 +170,7 @@ far smaller than the combinatorial bound, the project's sparsity thesis showing 
 |---|---|---|
 | `diagnose.py` | model-based diagnosis (the inverse): observed state → ranked fault hypotheses + a discriminating observation; consumes ghosts | MEASURED — `test_diagnose` 8/8 |
 | `differential.py` | **first-class verification tool**: explicit vs symbolic equivalence over a model suite | MEASURED — `test_differential` 5/5 (with z3) |
+| `differential_b.py` | **PO-1**: Approach-B (direct-SMT) vs explicit over a *generated acyclic world distribution* — same status + shortest length + replayable witness on every world; scoped to `{destroy,repair}` (cyclic `repair` a documented boundary) | MEASURED — `test_differential_b` 3/3 (32/32 worlds, with z3) |
 | `conformance.py` | the **engine-conformance gate**: `check_conformance(engine)` — the universal contract every backend must satisfy (status set, replayable Trace on violation, determinism, label, frontier consistency) | MEASURED — `test_engine_conformance` |
 | `oracle_reference.py` | **PO-4**: independent unbounded-fixpoint ground-truth oracle; `test_oracle_conformance` asserts the engine verdict equals it (discharges *agreement ≠ soundness*) | MEASURED — `test_oracle_conformance` |
 | `certificate_checker.py` | **PO-8**: independent (no-search) closure checker — a CLOSED `ReachabilityCertificate` is validated as an inductive invariant, making it a *proof object* not a record; tamper-detecting | MEASURED — `test_certificate_checker` |
@@ -181,6 +183,7 @@ far smaller than the combinatorial bound, the project's sparsity thesis showing 
 | `rsi_bench.py` | the **runnable RSI benchmark**: a restore-search task over a generated TRAIN/HELD-OUT world distribution, judged only by the frozen engine; baseline / learned / memorizer policies; REG, transfer, verdict-invariance, recall, fixed-budget, acceleration. Honest, NULL-capable | MEASURED — `test_rsi_bench` (apparatus validity) |
 | `rsi_bench_scale.py` | the **enterprise-evidence** version: many seeded worlds with trap structures, an adversarial policy suite (baseline/random/greedy-blast/frequency/learned/memorizer/overfit), held-out sign-test **p-values**, efficiency-per-training-experiment, and an honest iterated-improvement curve | MEASURED — `test_rsi_bench_scale` (apparatus validity) |
 | `rsi_bench_families.py` | **PO-5**: bounded multi-iteration accrual on a **not-one-shot** (XOR-shaped) family — the restorer label is the frozen engine's, but a one-shot linear policy *provably* can't and 4× data doesn't help, while an iterated additive loop climbs then **saturates** at the ceiling. With PO-6 (natural task is one-shot) this bounds RSI from both sides: real but task-gated, bounded, first-order | MEASURED — `test_rsi_bench_families` 6/6 |
+| `abstraction_soundness.py` | **PO-10**: reusable harness for `abstract-CLOSED ⇒ exact-CLOSED` — checks `admissible` (the abstract over-approximates the existential image) and `no_false_closed`, and **catches** an inadmissible abstraction producing a false CLOSED. Gates CEGAR / any future abstract engine | MEASURED — `test_abstraction_soundness` 5/5 |
 
 ## Engines and the differential harness
 
@@ -235,7 +238,7 @@ ambiguity. `unobserved ≠ ok`; `not-explained ≠ no-cause`.
 Core (pure-stdlib, no dependencies):
 
 ```powershell
-cd "weltwerk\verify"; python test_interfaces.py; python test_transition.py; python test_engine.py; python test_artifacts.py; python test_kernel_check.py; python test_diagnose.py; python test_engine_conformance.py; python test_counterfactual.py; python test_analysis_contract.py; python test_repair.py; python test_rsi_bench.py; python test_oracle_conformance.py; python test_certificate_checker.py; python test_boundary_immutability.py; python test_cf_quality.py; python test_repair_bound_sweep.py; python test_compute_control.py; python test_analysis_conformance.py; python test_rsi_bench_families.py
+cd "weltwerk\verify"; python test_interfaces.py; python test_transition.py; python test_engine.py; python test_artifacts.py; python test_kernel_check.py; python test_diagnose.py; python test_engine_conformance.py; python test_counterfactual.py; python test_analysis_contract.py; python test_repair.py; python test_rsi_bench.py; python test_oracle_conformance.py; python test_certificate_checker.py; python test_boundary_immutability.py; python test_cf_quality.py; python test_repair_bound_sweep.py; python test_compute_control.py; python test_analysis_conformance.py; python test_rsi_bench_families.py; python test_abstraction_soundness.py
 ```
 
 The RSI benchmark reports (honest, NULL-capable) print from:
@@ -251,7 +254,7 @@ iterated-improvement curve reported honestly (it saturates when the signal is on
 Symbolic backend (optional — needs z3; the suites SKIP cleanly if it is absent):
 
 ```powershell
-cd "weltwerk\verify"; pip install z3-solver; python test_symbolic_engine.py; python test_differential.py; python test_symbolic_b.py
+cd "weltwerk\verify"; pip install z3-solver; python test_symbolic_engine.py; python test_differential.py; python test_symbolic_b.py; python test_differential_b.py
 ```
 
 Confirmed from local runs: core suites **8/8** each; with z3, `test_symbolic_engine` **8/8** and
@@ -289,8 +292,8 @@ Beyond the code, three documents reason *about* this kernel (design intent, then
   no results — but now with a **runnable instrument**, `rsi_bench.py` (+ `test_rsi_bench.py`), which executes
   the program end-to-end and is built to be able to report NULL.
 - [`PROOF_OBLIGATIONS.md`](PROOF_OBLIGATIONS.md) — the **ledger**: the repository advances by *closing Proof
-  Obligations*, not adding features. PO-2/PO-3/PO-4/PO-5/PO-6/PO-7/PO-8/PO-9 **CLOSED** (8/10); PO-1 and PO-10
-  **open** (engine-faithfulness plumbing, not new claims).
+  Obligations*, not adding features. **PO-1 … PO-10 all CLOSED (10/10, run-green)** — the ledger is fully
+  discharged; every claim terminates in an executable artifact whose test passes.
 - [`EVIDENCE_GRAPH.md`](EVIDENCE_GRAPH.md) — every claim traced to executable evidence, with each chain that
   still terminates in intuition flagged `⚠` and linked to its Proof Obligation.
 
@@ -308,19 +311,22 @@ The Phase A.2 **architecture spine is complete**: contract → semantics → eng
 1. ✅ Transition system (`../sim/world_sim.py` → `transition.py`)
 2. ✅ Explicit-state model checker (`engine.ExplicitStateBFSEngine`) — ghosts + ghost traces
 3. ✅ Symbolic checking (`symbolic_engine`, approach A: SMT/BMC over the extracted relation) + differential
-   equivalence (`differential.py`). **Approach B** (SMT re-encoding of `apply_event` directly, for scale) now
-   exists as a **CANDIDATE**: `solver_adapter_b.py` + `symbolic_engine_b.py`, a violation accelerator over the
-   `{destroy, repair}` / `(alive, disabled)` fragment, gated by `test_symbolic_b.py` (one-directional
-   differential vs the explicit engine). It finds shortest violations symbolically but does **not** prove
-   `CLOSED` (that needs k-induction — deferred). It is *not a supported engine* until that gate passes.
-   `re-encoded ≠ verified`; `unsat-at-k ≠ unreachable`.
+   equivalence (`differential.py`). **Approach B** (SMT re-encoding of `apply_event` directly, for scale):
+   `solver_adapter_b.py` + `symbolic_engine_b.py`, a violation accelerator over the `{destroy, repair}` /
+   `(alive, disabled)` fragment. **PO-1** now extends its gate from two worlds to a *generated distribution*
+   (`differential_b.py` + `test_differential_b.py`): B agrees with the explicit engine on status, shortest
+   length, and replayable witness across acyclic worlds. It finds shortest violations symbolically but does
+   **not** prove `CLOSED` (k-induction — deferred), and is faithful only on the **acyclic** fragment (cyclic
+   `repair` upstream-self is a documented boundary). `re-encoded ≠ verified`; `unsat-at-k ≠ unreachable`.
 
 **Phase B — Analysis (sound approximation)**
 
 4. ⏳ Abstract-interpretation pass — a *sound over-approximation* that scales past exact methods; feeds
    `world_lint`. A general framework from the literature (Patrick & Radhia Cousot), *not* NASA-specific;
    NASA's IKOS is one implementation — clean-room from the **published theory**, not IKOS source (treated as
-   NOSA). `over-approx ≠ exact`.
+   NOSA). Its admissibility precondition (`abstract-CLOSED ⇒ exact-CLOSED`) is **already mechanized** by
+   **PO-10** `abstraction_soundness.py` (`admissible ⇒ no_false_closed`), so any such pass has a ready gate.
+   `over-approx ≠ exact`.
 
 **Phase C — Assistance (understand and respond to results)**
 

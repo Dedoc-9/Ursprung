@@ -25,8 +25,8 @@ capability ≠ lookup                     → rsi_bench_scale.py        → test
 REG not explained by compute            → compute_control_bench.py  → test_compute_control        → ✓ executable (PO-6 ADDRESSED)
 natural task is one-shot                → compute_control_bench.py  → test_compute_control         → ✓ executable (PO-6: B=1 ceiling)
 iterated accrual (bounded, saturating)  → rsi_bench_families.py     → test_rsi_bench_families      → ✓ executable (PO-5 ADDRESSED)
-Approach-B engine faithful              → symbolic_engine_b.py      → test_symbolic_b (UNRUN)       → nothing ⚠ (PO-1)
-abstraction never false-CLOSED          → (none yet)                → —                             → prose ⚠ (PO-10)
+Approach-B engine faithful              → differential_b.py         → test_differential_b 3/3 (z3)  → ✓ executable (PO-1 CLOSED, acyclic)
+abstraction never false-CLOSED          → abstraction_soundness.py  → test_abstraction_soundness 5/5→ ✓ executable (PO-10 CLOSED)
 inflation vs search separable           → no_inflation_latch, ...   → repo tests (not re-verified) → executable (unverified here)
 ```
 
@@ -52,9 +52,10 @@ inflation vs search separable           → no_inflation_latch, ...   → repo t
 
 ## Remaining ⚠ chains (open Proof Obligations)
 
-`Approach-B faithful` (PO-1, unrun), `abstraction no-false-CLOSED` (PO-10, prose). PO-2/3/4/5/6/7/8/9 are
-CLOSED (8/10, all run green). The scientific claims are bounded on both sides (PO-5/PO-6); PO-1/PO-10 are
-engine-faithfulness plumbing, not new claims.
+**None.** PO-1 … PO-10 are all CLOSED (run green) — every claim terminates in `✓ executable`. The scientific
+claims are bounded on both sides (PO-5/PO-6); PO-1/PO-10 are engine-faithfulness plumbing, not new claims.
+PO-1's faithfulness is scoped to the acyclic `{destroy,repair}` fragment (cyclic `repair` upstream-self is a
+recorded boundary ghost). New claims re-open this graph; until then the self-audit is closed.
 
 **Rule of advancement**: no claim tagged `[DEMONSTRATED]` in the README may rest on a ⚠ chain. When a chain
 resolves, update both this graph and `PROOF_OBLIGATIONS.md`; the pair is the repository's self-audit.

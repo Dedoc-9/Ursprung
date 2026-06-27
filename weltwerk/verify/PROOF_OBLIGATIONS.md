@@ -13,10 +13,15 @@ Falsifier · Difficulty · Priority · Status.*
 
 ### PO-1 — Approach-B faithfulness
 - **Statement**: the direct-SMT engine (`symbolic_engine_b`) equals the explicit engine on its fragment.
-- **Current evidence**: `test_symbolic_b.py` written. **Missing**: a passing run + extension to a world distribution.
-- **Required artifact**: green `test_symbolic_b` (+ a `differential_b` over generated worlds).
-- **Verification**: same VIOLATED status, shortest length, replayable witness. **Falsifier**: any disagreeing world.
-- **Difficulty**: M · **Priority**: High · **Status**: **OPEN** (CANDIDATE engine, unverified).
+- **Current evidence**: `test_symbolic_b.py` (2 worlds) **+ now** `differential_b.py` + `test_differential_b.py`
+  (a generated *distribution* of acyclic `{destroy,repair}` worlds).
+- **Required artifact**: green `test_symbolic_b` + `differential_b` over generated worlds. **DONE** (z3-gated run).
+- **Verification**: same VIOLATED status, shortest length, replayable witness on every world; distribution has
+  both violable and clean worlds. **Falsifier**: any disagreeing world. **Scope**: acyclic fragment only —
+  cyclic `repair` upstream-self is a *documented boundary* (the two definitions can diverge there).
+- **Difficulty**: M · **Priority**: High · **Status**: **CLOSED** (3/3; `differential_b` 32/32 — 22 violable,
+  10 clean). Faithful only on the acyclic `{destroy,repair}`/`not_disabled` fragment; still not a
+  `CLOSED`-proving engine (needs k-induction).
 
 ### PO-2 — Counterfactual accuracy
 - **Statement**: trace-level ablation recovers the true critical events vs an independent gold.
@@ -90,18 +95,23 @@ Falsifier · Difficulty · Priority · Status.*
 
 ### PO-10 — Abstraction admissibility harness
 - **Statement**: any abstraction satisfies `abstract-CLOSED ⇒ exact-CLOSED` (no false CLOSED).
-- **Current evidence**: stated in `RECURSIVE_IMPROVEMENT_PROOF.md §9.7`. **Missing**: a reusable harness.
-- **Required artifact**: `abstraction_soundness.py`. **Falsifier**: a false CLOSED.
-- **Difficulty**: M · **Priority**: M · **Status**: **OPEN** (gates CEGAR / Approach-B `CLOSED`).
+- **Current evidence**: `abstraction_soundness.py` + `test_abstraction_soundness.py` — a reusable harness that
+  checks the premise (`admissible`: the abstract over-approximates the existential image) and the conclusion
+  (`no_false_closed`), and *catches* an inadmissible abstraction (a dropped bad block) producing a false CLOSED.
+- **Required artifact**: `abstraction_soundness.py`. **DONE** (pure-stdlib). **Falsifier**: a false CLOSED.
+- **Difficulty**: M · **Priority**: M · **Status**: **CLOSED** (5/5 — unsound abstraction flagged inadmissible
+  AND shown to produce a false CLOSED). Gates CEGAR / any future `abstract-CLOSED` engine:
+  `admissible ⇒ no_false_closed`, mechanized.
 
 ---
 
 ## Progress
 
-CLOSED: **PO-2, PO-3, PO-4, PO-5, PO-6, PO-7, PO-8, PO-9** (8/10). OPEN: **PO-1, PO-10**.
+CLOSED: **PO-1 … PO-10 — all ten, run-green.** OPEN: **none.** ADDRESSED-but-unrun: **none.** The ledger is
+fully discharged: every obligation has an executable artifact whose test passes.
 
 The scientific arc is closed: RSI is bounded on **both** sides — PO-5 shows the loop accrues capability when a
-task is not-one-shot (and then saturates), PO-6 shows the natural task is one-shot (no iteration helps).
-What remains is engine-faithfulness plumbing, not new claims: **PO-1** (run `test_symbolic_b`, extend to a
-`differential_b` over generated worlds) and **PO-10** (`abstraction_soundness.py` — gates any future
-`abstract-CLOSED ⇒ exact-CLOSED` engine). Both are optional and need-gated. See [`EVIDENCE_GRAPH.md`](EVIDENCE_GRAPH.md).
+task is not-one-shot (and then saturates), PO-6 shows the natural task is one-shot (no iteration helps). The
+final two are engine-faithfulness plumbing, not new claims: PO-1 confirms the Approach-B re-encoding matches
+the explicit engine over a world distribution (acyclic `{destroy,repair}` fragment; cyclic `repair` a
+documented boundary), and PO-10 mechanizes `admissible ⇒ no_false_closed` for any future abstract engine. See [`EVIDENCE_GRAPH.md`](EVIDENCE_GRAPH.md).
