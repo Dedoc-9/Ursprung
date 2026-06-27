@@ -33,9 +33,9 @@ Falsifier · Difficulty · Priority · Status.*
 - **Required artifact**: `repair_bound_sweep.py` + `test_repair_bound_sweep.py`. **Verification**: re-verify
   each candidate at 2K; PROVEN must stay restored (bound-monotone), WITHIN_BOUND is measured.
 - **Falsifier**: a candidate restored@K but VIOLATED@2K (a *valuable* negative: `restores-(M,E,K) ≠ safe`).
-- **Difficulty**: L · **Priority**: M · **Status**: **ADDRESSED** (built; pending run). The falsifier FIRES by
-  construction (fanout/flip): RESTORED_WITHIN_BOUND@2 → VIOLATED@4, while RESTORED_PROVEN stays restored.
-  The negative is the result — it shows the two grades are not interchangeable.
+- **Difficulty**: L · **Priority**: M · **Status**: **CLOSED** (5/5). The falsifier FIRES by construction
+  (fanout/flip): RESTORED_WITHIN_BOUND@2 → VIOLATED@4, while RESTORED_PROVEN stays restored. The negative is
+  the result — it shows the two grades are not interchangeable.
 
 ### PO-4 — Engine soundness (not just agreement)
 - **Statement**: the engine's verdict equals an independent ground-truth oracle, not only another engine.
@@ -56,15 +56,16 @@ Falsifier · Difficulty · Priority · Status.*
 - **Reading (sharpened by PO-6)**: PO-6 showed the *natural* restore task is one-shot (no iteration helps);
   PO-5 shows that *when a task demands it*, the loop delivers bounded, saturating, first-order accrual. Together
   they bound RSI from both sides: real but task-gated and bounded, never open-ended or second-order.
-- **Difficulty**: M · **Priority**: High · **Status**: **ADDRESSED** (built; pending run).
+- **Difficulty**: M · **Priority**: High · **Status**: **CLOSED** (6/6 — curve `3.95 → 2.60 → 1.00 → 1.00`
+  saturated; one-shot linear and 4×-data pinned at `4.00`, chance ≈ `4.5`).
 
 ### PO-6 — Gain is not compute
 - **Statement**: REG survives equal search budget.
 - **Current evidence**: budget-3 hit-rate in `rsi_bench_scale`. **Missing**: explicit equal-budget A/B + statistic.
 - **Required artifact**: `compute_control_bench.py` + `test_compute_control.py` (anytime hit-rate sweep over
   equal budgets B). **Falsifier**: gain vanishes at equal budget (no anytime dominance / no cheap-end gain).
-- **Difficulty**: L · **Priority**: M · **Status**: **ADDRESSED** (built; pending run). Claims only equal-budget
-  ordering gain on this world family; not generalization (PO-5), not unbounded (saturates).
+- **Difficulty**: L · **Priority**: M · **Status**: **CLOSED** (5/5 — anytime dominance; 40/40 vs 0 at B=1).
+  Claims only equal-budget ordering gain on this world family; not generalization (PO-5), not unbounded (saturates).
 
 ### PO-7 — Boundary immutability (mechanize BRIP P4)
 - **Statement**: the map cannot alter the judge (engine/semantics/invariant/metric/split).
@@ -84,7 +85,7 @@ Falsifier · Difficulty · Priority · Status.*
 - **Statement**: every consumer's `as_analysis()` is honest (scope + ≥1 limitation).
 - **Current evidence**: diagnose/counterfactual tested. **Missing**: parametrized conformance incl. repair.
 - **Required artifact**: `test_analysis_conformance.py`. **Falsifier**: a consumer emits a limitation-free result.
-- **Difficulty**: trivial · **Priority**: M · **Status**: **ADDRESSED** (built; pending run). Parametrized over
+- **Difficulty**: trivial · **Priority**: M · **Status**: **CLOSED** (6/6). Parametrized over
   diagnose/counterfactual/repair `as_analysis()` + the construction guard (no bypass).
 
 ### PO-10 — Abstraction admissibility harness
@@ -97,10 +98,10 @@ Falsifier · Difficulty · Priority · Status.*
 
 ## Progress
 
-CLOSED: **PO-2, PO-4, PO-7, PO-8** (4/10). ADDRESSED (built, pending run): **PO-3, PO-5, PO-6, PO-9**.
-OPEN: PO-1, PO-10.
+CLOSED: **PO-2, PO-3, PO-4, PO-5, PO-6, PO-7, PO-8, PO-9** (8/10). OPEN: **PO-1, PO-10**.
 
-Closing order recommended next: run **PO-5** (the saturation-ceiling experiment) → then **PO-1/PO-10** (gate
-the symbolic/abstraction path: run `test_symbolic_b`, then build `abstraction_soundness.py`). After PO-5 the
-scientific arc is essentially closed — RSI is bounded on both sides (PO-5/PO-6) — and what remains (PO-1,
-PO-10) is engine-faithfulness plumbing, not new claims. See [`EVIDENCE_GRAPH.md`](EVIDENCE_GRAPH.md).
+The scientific arc is closed: RSI is bounded on **both** sides — PO-5 shows the loop accrues capability when a
+task is not-one-shot (and then saturates), PO-6 shows the natural task is one-shot (no iteration helps).
+What remains is engine-faithfulness plumbing, not new claims: **PO-1** (run `test_symbolic_b`, extend to a
+`differential_b` over generated worlds) and **PO-10** (`abstraction_soundness.py` — gates any future
+`abstract-CLOSED ⇒ exact-CLOSED` engine). Both are optional and need-gated. See [`EVIDENCE_GRAPH.md`](EVIDENCE_GRAPH.md).

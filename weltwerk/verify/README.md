@@ -40,7 +40,7 @@ candidate generation but cannot modify the **engine**, the **semantics**, the **
 
 ### Verified by tests — `[TEST]`
 
-- Twelve pure-stdlib suites green (+ two z3 suites when the solver is present).
+- Nineteen pure-stdlib suites green (+ up to three z3 suites when the solver is present).
 - The verdict is engine-independent: explicit ≡ symbolic on every model in the differential harness (`5/5`);
   both engines pass the conformance gate.
 - Honest grading: `CLOSED` = proof over the chosen action alphabet + transition function (carries a
@@ -67,17 +67,32 @@ candidate generation but cannot modify the **engine**, the **semantics**, the **
   search efficiency and **cannot arise from criterion modification**. The theorem says nothing about
   learning: it says that *if* improvement is observed, it cannot have come from moving the goalposts.
 
-### Observed boundary (what is NOT claimed)
+### Bounds on recursive improvement — `[MEASURED]` (PO-5 + PO-6)
 
-- **Observed:** the learned policy converges; no continued acceleration was observed (the iterated-improvement
-  curve saturates — the signal is one-shot-learnable).
-- **Therefore:** these experiments demonstrate **transferable recursive capability improvement** but do
-  **not** demonstrate **open-ended RSI**. Open-ended RSI would require a task that is not one-shot-learnable
-  (stated future work).
+Two complementary experiments bound the recursive-improvement claim **from both sides**, over the *same*
+frozen criterion (engine + semantics + invariant + label):
 
-**Strongest defensible contribution.** Not "recursive self-improvement," but *a benchmark and proof-oriented
-architecture that experimentally distinguishes recursive capability improvement from metric inflation* —
-separating "better search" from "better scoring," a separation most self-improvement claims cannot make.
+- **The natural task is one-shot (PO-6, `compute_control_bench.py`).** At every equal search budget `B` the
+  learned ranking dominates the baseline (*anytime dominance*), winning already at `B = 1` (`40/40` vs `0`;
+  mean search cost `1.00` vs `6.60`). The gain is *ordering*, not compute — and because one round already
+  reaches the ceiling, there is nothing for further iterations to add on this task. `more-budget ≠ better-policy`.
+- **A not-one-shot task yields bounded, saturating accrual (PO-5, `rsi_bench_families.py`).** On a family
+  whose engine restorer label is XOR-shaped in two observable tags, a one-shot linear policy *provably* cannot
+  rank the cause (zero linear signal) and `4×` data does not help, while an iterated additive loop climbs
+  across rounds and then **saturates** at the representable ceiling. The criterion is frozen across iterations;
+  only the policy changes. Measured held-out curve: `3.95 → 2.60 → 1.00 → 1.00` (saturated); one-shot linear
+  `4.00` and 4×-data `4.00` stay pinned near chance (`≈ 4.5`).
+
+**Therefore (the bound, both sides).** Recursive capability improvement in this architecture is **real but
+bounded and task-gated**: the loop accrues capability *only* when the task structure demands more than one
+round, and when it does, the accrual *saturates* at a representable ceiling. It is **first-order** (the policy
+improves; the improvement operator does not improve itself) and never **open-ended** or **second-order**.
+`iteration ≠ open-ended`; `bounded-accrual ≠ self-improving-improver`.
+
+**Strongest defensible contribution.** Not "recursive self-improvement," but *a benchmark-and-proof
+architecture that experimentally separates recursive capability improvement from metric inflation and bounds
+it on both sides* — distinguishing "better search" from "better scoring," and "task-gated bounded accrual"
+from "open-ended RSI." Most self-improvement claims make neither separation.
 
 ## Architecture
 
@@ -165,7 +180,7 @@ far smaller than the combinatorial bound, the project's sparsity thesis showing 
 | `test_analysis_conformance.py` | **PO-9**: the honesty contract is **universal** — diagnose/counterfactual/repair `as_analysis()` all carry scope + ≥1 limitation; the contract cannot be bypassed | MEASURED — `test_analysis_conformance` |
 | `rsi_bench.py` | the **runnable RSI benchmark**: a restore-search task over a generated TRAIN/HELD-OUT world distribution, judged only by the frozen engine; baseline / learned / memorizer policies; REG, transfer, verdict-invariance, recall, fixed-budget, acceleration. Honest, NULL-capable | MEASURED — `test_rsi_bench` (apparatus validity) |
 | `rsi_bench_scale.py` | the **enterprise-evidence** version: many seeded worlds with trap structures, an adversarial policy suite (baseline/random/greedy-blast/frequency/learned/memorizer/overfit), held-out sign-test **p-values**, efficiency-per-training-experiment, and an honest iterated-improvement curve | MEASURED — `test_rsi_bench_scale` (apparatus validity) |
-| `rsi_bench_families.py` | **PO-5**: bounded multi-iteration accrual on a **not-one-shot** (XOR-shaped) family — the restorer label is the frozen engine's, but a one-shot linear policy *provably* can't and 4× data doesn't help, while an iterated additive loop climbs then **saturates** at the ceiling. With PO-6 (natural task is one-shot) this bounds RSI from both sides: real but task-gated, bounded, first-order | MEASURED — `test_rsi_bench_families` |
+| `rsi_bench_families.py` | **PO-5**: bounded multi-iteration accrual on a **not-one-shot** (XOR-shaped) family — the restorer label is the frozen engine's, but a one-shot linear policy *provably* can't and 4× data doesn't help, while an iterated additive loop climbs then **saturates** at the ceiling. With PO-6 (natural task is one-shot) this bounds RSI from both sides: real but task-gated, bounded, first-order | MEASURED — `test_rsi_bench_families` 6/6 |
 
 ## Engines and the differential harness
 
@@ -259,8 +274,8 @@ Beyond the code, three documents reason *about* this kernel (design intent, then
   self-improvement using only existing artifacts? Finding: ~80% wiring; the hard part (improvement vs
   inflation) is already solved elsewhere in the repo; build only an `ExperimentLog` + a proposal-ranking loop.
 - [`RECURSIVE_IMPROVEMENT_PROOF.md`](RECURSIVE_IMPROVEMENT_PROOF.md) — a proof-oriented analysis with every
-  claim tagged ARCH / TEST / THM-C / OPEN. Establishes the **Bounded Recursive Improvement Principle** and
-  the **Recursive Improvement Preservation Theorem**: a recursive system preserves validity iff each
+  claim tagged ARCH / TEST / THM-C / OPEN. Establishes the **Bounded Recursive Improvement Principle (BRIP)**
+  and the **Recursive Capability Preservation Theorem (RCPT)**: a recursive system preserves validity iff each
   modification is judged by a criterion independent of the modification process. The contribution is a
   boundary condition — **recursive capability improvement without recursive authority creation**:
   `improved_map ≠ changed_criterion`, `search_acceleration ≠ semantic_acceleration`, `experience ≠ authority`.
@@ -274,7 +289,8 @@ Beyond the code, three documents reason *about* this kernel (design intent, then
   no results — but now with a **runnable instrument**, `rsi_bench.py` (+ `test_rsi_bench.py`), which executes
   the program end-to-end and is built to be able to report NULL.
 - [`PROOF_OBLIGATIONS.md`](PROOF_OBLIGATIONS.md) — the **ledger**: the repository advances by *closing Proof
-  Obligations*, not adding features. PO-4/PO-7/PO-8 CLOSED; PO-2 addressed; the rest open.
+  Obligations*, not adding features. PO-2/PO-3/PO-4/PO-5/PO-6/PO-7/PO-8/PO-9 **CLOSED** (8/10); PO-1 and PO-10
+  **open** (engine-faithfulness plumbing, not new claims).
 - [`EVIDENCE_GRAPH.md`](EVIDENCE_GRAPH.md) — every claim traced to executable evidence, with each chain that
   still terminates in intuition flagged `⚠` and linked to its Proof Obligation.
 
@@ -377,3 +393,28 @@ is built on not overclaiming:
 In short: the AI proposes, the spine tests, the harness guards the meaning, the counterfactual says what to
 change — and the *committed trajectory* records what actually occurred. `integrity ≠ truth`; the system may
 rank, allocate, verify, and propose, but only the commit records what happened.
+
+## Regulatory alignment — EU AI Act (design properties, **not** a conformity claim)
+
+This kernel is a research artifact. The table below is **not** a compliance statement, conformity assessment,
+CE marking, or legal opinion — those obligations attach to the *provider/deployer of a specific high-risk
+system in its operational context* under Regulation (EU) 2024/1689, not to a library. What the kernel does
+provide is a set of *technical properties that map onto, and are intended to support*, the high-risk system
+requirement categories (Arts 9–15). `supports-compliance-work ≠ compliant`; `alignment ≠ certification`.
+
+| EU AI Act requirement (high-risk, Arts 9–15) | Property this kernel provides | Evidence |
+|---|---|---|
+| **Art 12 — Record-keeping / logging / traceability** | The committed trajectory (*Weltlinie*) is the sole record of what occurred; every `VIOLATED` result ships a **replayable** witness `Trace`; every `CLOSED` result ships a re-derivable `ReachabilityCertificate`. Deterministic ⇒ reproducible logs. | `artifacts.py`, `certificate_checker.py` (PO-8), `kernel_check.replay_path` |
+| **Art 14 — Human oversight** | The system is an **explanation/proposal engine, never an autonomous modifier**: AI proposes → spine tests → *human/system decides* → small, reversible, audited change. | "Self-upgrading rules" loop above; `repair.py` (`candidate ≠ repair`) |
+| **Art 13 — Transparency & provision of information** | Honest epistemic grading (`CLOSED`/`BOUNDED`/`VIOLATED`, no false proof); the `AnalysisResult` honesty contract **requires** scope + ≥1 limitation on *every* consumer; claims traced to evidence. | `test_analysis_conformance` (PO-9), [`EVIDENCE_GRAPH.md`](EVIDENCE_GRAPH.md) |
+| **Art 15 — Accuracy, robustness, cybersecurity** | Cross-engine **differential** agreement; an **independent ground-truth oracle**; tamper-detecting certificate checker; verdict-invariance under policy permutation; determinism; `BOUNDED ≠ proof` prevents accuracy overstatement. | `differential.py`, `oracle_reference.py` (PO-4), `test_boundary_immutability` (PO-7) |
+| **Art 11 + Annex IV — Technical documentation** | Versioned design contract, an obligation ledger, and a claim→evidence graph kept current with the code. | [`DESIGN.md`](DESIGN.md), [`PROOF_OBLIGATIONS.md`](PROOF_OBLIGATIONS.md), [`EVIDENCE_GRAPH.md`](EVIDENCE_GRAPH.md) |
+| **Art 9 — Risk management (continuous)** | The Proof-Obligations / ghost / falsifier discipline is a documented, ongoing identify-mitigate-record loop; obligations close only on executable evidence. | [`PROOF_OBLIGATIONS.md`](PROOF_OBLIGATIONS.md) (8/10 closed) |
+| **Art 10 — Data & governance** (learning components) | Train/held-out **disjointness**, instance-leakage detection (the harness caught its own leak before any claim), seed provenance. | `rsi_bench_scale.py`, `rsi_bench_families.py` (PO-5) |
+
+Scope notes (stated, not hidden): this concerns the *high-risk* technical requirements only — it says nothing
+about provider/importer/deployer obligations, post-market monitoring, registration, fundamental-rights impact
+assessment, or General-Purpose-AI-model duties (this is not a GPAI model). Soundness of every property remains
+relative to the model, alphabet, and invariants supplied (`holds-here ≠ true`). Anyone pursuing actual
+conformity should treat this as *engineering substrate for the documentation and oversight obligations*, and
+consult qualified counsel for the legal assessment.

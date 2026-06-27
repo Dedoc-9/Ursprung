@@ -52,9 +52,9 @@ inflation vs search separable           → no_inflation_latch, ...   → repo t
 
 ## Remaining ⚠ chains (open Proof Obligations)
 
-`Approach-B faithful` (PO-1, unrun), `abstraction no-false-CLOSED` (PO-10, prose). PO-3/PO-5/PO-6/PO-9 are
-ADDRESSED pending a green run; PO-2/PO-4/PO-7/PO-8 are CLOSED. The scientific claims are bounded; PO-1/PO-10
-are engine-faithfulness plumbing.
+`Approach-B faithful` (PO-1, unrun), `abstraction no-false-CLOSED` (PO-10, prose). PO-2/3/4/5/6/7/8/9 are
+CLOSED (8/10, all run green). The scientific claims are bounded on both sides (PO-5/PO-6); PO-1/PO-10 are
+engine-faithfulness plumbing, not new claims.
 
 **Rule of advancement**: no claim tagged `[DEMONSTRATED]` in the README may rest on a ⚠ chain. When a chain
 resolves, update both this graph and `PROOF_OBLIGATIONS.md`; the pair is the repository's self-audit.
