@@ -145,6 +145,7 @@ far smaller than the combinatorial bound, the project's sparsity thesis showing 
 | `engine.py` | `VerificationEngine` protocol + `ExplicitStateBFSEngine` + `WorldModel` + `VerificationOptions` | MEASURED — `test_engine` 8/8 |
 | `solver_adapter.py` | the ONLY module importing z3; bounded model checking over the extracted relation (**optional** — `pip install z3-solver`) | exercised via the symbolic suite |
 | `symbolic_engine.py` | `SymbolicEngine` — second engine, SMT/BMC over the *extracted* relation (approach A); never imports z3 | MEASURED — `test_symbolic_engine` 8/8 (with z3) |
+| `solver_adapter_b.py` / `symbolic_engine_b.py` | **CANDIDATE** approach B: `apply_event` re-encoded *directly* in SMT ({destroy,repair}/(alive,disabled) fragment); violation accelerator, no `CLOSED` proof | [OPEN] — gated by `test_symbolic_b` (with z3); not yet a supported engine |
 | `kernel_check.py` | compatibility layer: `check()` shim, `CheckResult`/`replay_path`, kernel helpers, `DEFAULT_INVARIANTS` — **no search algorithm remains here** | MEASURED — `test_kernel_check` 8/8 |
 
 **Consumers & cross-engine**
@@ -228,7 +229,7 @@ iterated-improvement curve reported honestly (it saturates when the signal is on
 Symbolic backend (optional — needs z3; the suites SKIP cleanly if it is absent):
 
 ```powershell
-cd "weltwerk\verify"; pip install z3-solver; python test_symbolic_engine.py; python test_differential.py
+cd "weltwerk\verify"; pip install z3-solver; python test_symbolic_engine.py; python test_differential.py; python test_symbolic_b.py
 ```
 
 Confirmed from local runs: core suites **8/8** each; with z3, `test_symbolic_engine` **8/8** and
@@ -280,8 +281,12 @@ The Phase A.2 **architecture spine is complete**: contract → semantics → eng
 1. ✅ Transition system (`../sim/world_sim.py` → `transition.py`)
 2. ✅ Explicit-state model checker (`engine.ExplicitStateBFSEngine`) — ghosts + ghost traces
 3. ✅ Symbolic checking (`symbolic_engine`, approach A: SMT/BMC over the extracted relation) + differential
-   equivalence (`differential.py`). *Approach B* (SMT re-encoding of `apply_event` for real scale) is a
-   later, separately-gated step — now safe, because the differential harness will catch encoding drift.
+   equivalence (`differential.py`). **Approach B** (SMT re-encoding of `apply_event` directly, for scale) now
+   exists as a **CANDIDATE**: `solver_adapter_b.py` + `symbolic_engine_b.py`, a violation accelerator over the
+   `{destroy, repair}` / `(alive, disabled)` fragment, gated by `test_symbolic_b.py` (one-directional
+   differential vs the explicit engine). It finds shortest violations symbolically but does **not** prove
+   `CLOSED` (that needs k-induction — deferred). It is *not a supported engine* until that gate passes.
+   `re-encoded ≠ verified`; `unsat-at-k ≠ unreachable`.
 
 **Phase B — Analysis (sound approximation)**
 
