@@ -16,6 +16,33 @@ License + provenance: original AGPL-3.0 code, recorded in
 [`../../docs/LICENSE_DECISIONS.md`](../../docs/LICENSE_DECISIONS.md) and
 [`../../docs/PROVENANCE.md`](../../docs/PROVENANCE.md). Architecture contract: [`DESIGN.md`](DESIGN.md).
 
+## Current guarantees (measured at this commit)
+
+Tags: **[TEST]** executing suite · **[MEASURED]** observed in a repo run (seed/param-dependent) ·
+**[THM-C]** conditional theorem (see `RECURSIVE_IMPROVEMENT_PROOF.md`).
+
+- **Verification spine** — twelve pure-stdlib suites green, plus two z3 suites when the solver is present.
+  The verdict is engine-independent: explicit ≡ symbolic on every model in the differential harness (`5/5`),
+  and both engines pass the conformance gate. **[TEST]**
+- **Honest grading** — `CLOSED` = proof over the chosen action alphabet + transition function (and carries a
+  re-derivable `ReachabilityCertificate`); `BOUNDED` ≠ proof; `VIOLATED` ships a replayable witness `Trace`.
+  Deterministic. **[TEST]**
+- **Search efficiency (the "efficiency" figure)** — under a *frozen* engine, semantics, and invariant, a
+  learned candidate-ranking reaches **identical verified results with less search on held-out worlds**:
+  recursive-efficiency-gain **REG ≈ 5–11×** (task-dependent; `rsi_bench` ≈ 11×, `rsi_bench_scale` ≈ 5–6× at
+  scale with two-sided sign-test **p ≈ 0**), budget-3 hit-rate ≈ `40/40` vs baseline ≈ `2/40`, and
+  efficiency-per-training-experiment ≈ `0.11–0.15`. Live numbers print from `python rsi_bench_scale.py`.
+  **[MEASURED]**
+- **It is capability, not lookup** — the gain transfers to instance-disjoint held-out worlds, while a
+  memorizer and an overfit policy collapse to REG ≈ 1 (no transfer) and trap structures defeat a
+  rank-by-blast heuristic. The harness *caught its own instance-leakage bug* before any claim was made.
+  **[MEASURED]**
+- **The verdict never moves** — every gain above holds with `verdict_invariance = True` and recall
+  preserved: the map improved, the judge did not. `improved_map ≠ changed_criterion`. **[THM-C]+[TEST]**
+- **Honest ceiling** — the iterated-improvement curve *saturates* (the signal is one-shot-learnable). This is
+  a transferable heuristic distinguishable from lookup under a frozen judge — **not** open-ended recursive
+  self-improvement, which would require a task that is not one-shot-learnable (stated future work). **[MEASURED]**
+
 ## Architecture
 
 ```
