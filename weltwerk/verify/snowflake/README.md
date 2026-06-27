@@ -39,10 +39,26 @@ it does **not** show, and a falsifier; each projects into the honesty contract (
 The legitimate quantum link is **molecular and bounded** (C1/C3/C4/C6). The popular "snowflakes are quantum
 designs" reading (C5) is graded SPECULATIVE — and a test asserts the ledger never launders it into "settled".
 
+## The language-hypothesis audit (does morphology encode information beyond physics?)
+
+A separate, falsification-first investigation — full write-up in [`LANGUAGE_AUDIT.md`](LANGUAGE_AUDIT.md):
+
+- `snow_grammar.py` — defines a snowflake **context-free grammar** (alphabet F/B/T, production rules, parse
+  tree, decoder) and then **reduces every symbol to a physical mechanism** + shows **no MDL gain** over the
+  physical field encoding. The grammar is a re-encoding, not a new theory. `representation ≠ explanation`.
+- `snow_infotheory.py` — the decisive tests: **conditional** mutual information between branches *given the
+  shared field* (the only quantity that could be a "language channel"); compression-gain `== I(X;Y|field)`;
+  and the **semantic-manifold dimension == number of physical controls**. Under standard physics the channel
+  is ≈ 0; an injected channel is detected — so the hypothesis is falsifiable, and falsified for the null model.
+
+**Verdict:** conventional crystal-growth physics is sufficient; the smallest surviving claim is representational
+(a CFG whose rules = mechanisms). The only thing that would make it a real language is a measured
+`I(branch_i;branch_j | local field) > 0` — standard physics predicts 0. `confounded-MI ≠ channel`.
+
 ## Run
 
 ```powershell
-cd "weltwerk\verify\snowflake"; python snow_lattice.py; python quantum_ledger.py; python test_snow_lattice.py; python test_quantum_ledger.py
+cd "weltwerk\verify\snowflake"; python snow_lattice.py; python quantum_ledger.py; python snow_grammar.py; python snow_infotheory.py; python test_snow_lattice.py; python test_quantum_ledger.py; python test_snow_grammar.py; python test_snow_infotheory.py
 ```
 
 Pure-stdlib; reuses `artifacts.Invariant` and `artifacts.AnalysisResult/Finding/Limitation` from the verify
