@@ -64,12 +64,26 @@ by the local growth field:
 
 > `I(branch_i ; branch_j | local field) > 0`
 
-i.e. statistical dependence between branches *after conditioning on the complete local physical environment*.
+i.e. statistically significant dependence between branches *after conditioning on the complete **modeled**
+local physical environment*.
+
 The repository does **not** establish that such a channel exists. It establishes something narrower and
-stronger: an **executable falsification framework** that distinguishes the null (all dependence explained by
-the local field) from the alternative (residual inter-branch information) — demonstrated, on its modeled
-systems, to be **detectable if present** (`H2` CMI ≫ null) and **absent under the null** (`H0` CMI ≈ null ≈ 0),
-with a concrete diffusion-chamber experiment that would discriminate the two on real crystals.
+scientifically stronger: an **executable falsification framework** that distinguishes the null hypothesis (all
+observed dependence is explained by the modeled local field) from the alternative (a residual inter-branch
+information channel). **On its modeled systems, the framework correctly separates the two planted cases** — the
+null produces conditional mutual information statistically consistent with zero (`H0: CMI ≈ 0 ≈ null`), while
+*injected* residual dependence is recovered as a significantly positive signal (`H2: CMI ≫ null`). This is a
+property of the **decision procedure** on planted alternatives, not a claim of detectability in general: the
+contribution is a reproducible decision procedure with a specified operating envelope and an explicit
+experimental prediction, **not** evidence for hidden physics. `proves-the-procedure ≠ proves-the-phenomenon`.
+
+The repository further derives a concrete **diffusion-chamber protocol** whose outcome would discriminate the
+hypotheses on physical crystals. A statistically significant residual conditional MI measured under
+sufficiently controlled conditions would be evidence that existing local-field models are *incomplete*; failure
+to detect one would strengthen the null that morphology is fully accounted for by established crystal-growth
+dynamics. **Either outcome is informative**, because the framework is built to produce a falsifiable result, not
+to confirm a preferred hypothesis. If a physical experiment later measures
+`I(branch_i;branch_j | local field) > 0`, the repository already provides the formal framework to interpret it.
 
 Three caveats this framework keeps explicit, because they are load-bearing:
 
@@ -80,8 +94,9 @@ Three caveats this framework keeps explicit, because they are load-bearing:
    mis-specification** stress: a real channel is mis-specification-stable; leakage is not.
    `residual-CMI ≠ channel` until it survives those checks. `integrity ≠ truth`.
 2. **"Absent under the null" is a statement about the modeled system, not a measurement of nature.** No real
-   snowflakes were analyzed here; the contribution is the *discriminator and its demonstrated power /
-   specificity*, not a physical result. The negative must not be over-read as "proven no channel in nature."
+   snowflakes were analyzed here; the contribution is the *discriminator and its demonstrated separation of the
+   planted H0/H2 cases*, not a physical result or a general detectability guarantee. The negative must not be
+   over-read as "proven no channel in nature." `proves-the-procedure ≠ proves-the-phenomenon`.
 3. **Stronger because narrower, and reusable.** The confounder-conditioned-MI + shuffle-null +
    mis-specification protocol generalizes to any "hidden coordination" claim where a shared driver masquerades
    as communication (biological patterning, market co-movement, neural assemblies). The snowflake case is the
