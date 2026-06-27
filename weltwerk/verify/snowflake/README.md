@@ -51,9 +51,47 @@ A separate, falsification-first investigation — full write-up in [`LANGUAGE_AU
   and the **semantic-manifold dimension == number of physical controls**. Under standard physics the channel
   is ≈ 0; an injected channel is detected — so the hypothesis is falsifiable, and falsified for the null model.
 
-**Verdict:** conventional crystal-growth physics is sufficient; the smallest surviving claim is representational
-(a CFG whose rules = mechanisms). The only thing that would make it a real language is a measured
-`I(branch_i;branch_j | local field) > 0` — standard physics predicts 0. `confounded-MI ≠ channel`.
+### Verdict (hardened)
+
+Snowflake morphology admits multiple information-theoretic representations — a grammar, a graph language, a
+low-dimensional manifold, compressible symbolic descriptions — but **every one reduces to the established
+field-driven crystal-growth dynamics**. They improve description and compression; they do **not**, by
+themselves, yield predictions beyond conventional physics. Within the evidence here, every proposed "hidden
+language" collapses to an alternative representation of known dynamics. `representation ≠ explanation`.
+
+The single hypothesis that would be genuinely new physics is an **inter-branch information channel** unexplained
+by the local growth field:
+
+> `I(branch_i ; branch_j | local field) > 0`
+
+i.e. statistical dependence between branches *after conditioning on the complete local physical environment*.
+The repository does **not** establish that such a channel exists. It establishes something narrower and
+stronger: an **executable falsification framework** that distinguishes the null (all dependence explained by
+the local field) from the alternative (residual inter-branch information) — demonstrated, on its modeled
+systems, to be **detectable if present** (`H2` CMI ≫ null) and **absent under the null** (`H0` CMI ≈ null ≈ 0),
+with a concrete diffusion-chamber experiment that would discriminate the two on real crystals.
+
+Three caveats this framework keeps explicit, because they are load-bearing:
+
+1. **"Complete local field" is never fully measurable.** Empirically you condition on the *best-observed*
+   field, so a positive `I(branch_i;branch_j | field_observed)` is evidence of *residual dependence* — either a
+   genuine channel **or** unobserved-confounder leakage (field mis-specification). That is exactly why the
+   protocol pairs the conditional-MI estimate with a **within-field shuffle null** *and* deliberate **field
+   mis-specification** stress: a real channel is mis-specification-stable; leakage is not.
+   `residual-CMI ≠ channel` until it survives those checks. `integrity ≠ truth`.
+2. **"Absent under the null" is a statement about the modeled system, not a measurement of nature.** No real
+   snowflakes were analyzed here; the contribution is the *discriminator and its demonstrated power /
+   specificity*, not a physical result. The negative must not be over-read as "proven no channel in nature."
+3. **Stronger because narrower, and reusable.** The confounder-conditioned-MI + shuffle-null +
+   mis-specification protocol generalizes to any "hidden coordination" claim where a shared driver masquerades
+   as communication (biological patterning, market co-movement, neural assemblies). The snowflake case is the
+   clean worked example. `shared-cause ≠ signal`.
+
+**Smallest surviving claim (Demonstrated):** growth histories are exactly a context-free grammar whose every
+production corresponds to a physical mechanism, with no description-length gain over the field encoding —
+representational parsimony, not a hidden language. **Only remaining route to a stronger claim is empirical:**
+detect a statistically significant residual inter-branch channel in real crystal-growth experiments that
+survives conditioning on the complete local field. `confounded-MI ≠ channel`.
 
 ## Run
 
