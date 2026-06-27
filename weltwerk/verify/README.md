@@ -155,6 +155,8 @@ far smaller than the combinatorial bound, the project's sparsity thesis showing 
 | `diagnose.py` | model-based diagnosis (the inverse): observed state → ranked fault hypotheses + a discriminating observation; consumes ghosts | MEASURED — `test_diagnose` 8/8 |
 | `differential.py` | **first-class verification tool**: explicit vs symbolic equivalence over a model suite | MEASURED — `test_differential` 5/5 (with z3) |
 | `conformance.py` | the **engine-conformance gate**: `check_conformance(engine)` — the universal contract every backend must satisfy (status set, replayable Trace on violation, determinism, label, frontier consistency) | MEASURED — `test_engine_conformance` |
+| `oracle_reference.py` | **PO-4**: independent unbounded-fixpoint ground-truth oracle; `test_oracle_conformance` asserts the engine verdict equals it (discharges *agreement ≠ soundness*) | MEASURED — `test_oracle_conformance` |
+| `certificate_checker.py` | **PO-8**: independent (no-search) closure checker — a CLOSED `ReachabilityCertificate` is validated as an inductive invariant, making it a *proof object* not a record; tamper-detecting | MEASURED — `test_certificate_checker` |
 | `counterfactual.py` | Phase C: **critical events in a ghost trace** by single-event ablation (trace-level; engine-agnostic; pure-stdlib) | MEASURED — `test_counterfactual` 8/8 |
 | `repair.py` | Phase C.2: **repair candidates** — `REMOVE_EVENT` seeded from the counterfactual critical set; `restores_trace` (replay) + `restores_world` (forbid the action, re-verify; enum carrying `engine`+`bound`, never a bare bool) | MEASURED — `test_repair` 8/8 |
 | `rsi_bench.py` | the **runnable RSI benchmark**: a restore-search task over a generated TRAIN/HELD-OUT world distribution, judged only by the frozen engine; baseline / learned / memorizer policies; REG, transfer, verdict-invariance, recall, fixed-budget, acceleration. Honest, NULL-capable | MEASURED — `test_rsi_bench` (apparatus validity) |
@@ -213,7 +215,7 @@ ambiguity. `unobserved ≠ ok`; `not-explained ≠ no-cause`.
 Core (pure-stdlib, no dependencies):
 
 ```powershell
-cd "weltwerk\verify"; python test_interfaces.py; python test_transition.py; python test_engine.py; python test_artifacts.py; python test_kernel_check.py; python test_diagnose.py; python test_engine_conformance.py; python test_counterfactual.py; python test_analysis_contract.py; python test_repair.py; python test_rsi_bench.py
+cd "weltwerk\verify"; python test_interfaces.py; python test_transition.py; python test_engine.py; python test_artifacts.py; python test_kernel_check.py; python test_diagnose.py; python test_engine_conformance.py; python test_counterfactual.py; python test_analysis_contract.py; python test_repair.py; python test_rsi_bench.py; python test_oracle_conformance.py; python test_certificate_checker.py; python test_boundary_immutability.py
 ```
 
 The RSI benchmark reports (honest, NULL-capable) print from:
