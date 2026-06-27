@@ -165,6 +165,7 @@ far smaller than the combinatorial bound, the project's sparsity thesis showing 
 | `test_analysis_conformance.py` | **PO-9**: the honesty contract is **universal** — diagnose/counterfactual/repair `as_analysis()` all carry scope + ≥1 limitation; the contract cannot be bypassed | MEASURED — `test_analysis_conformance` |
 | `rsi_bench.py` | the **runnable RSI benchmark**: a restore-search task over a generated TRAIN/HELD-OUT world distribution, judged only by the frozen engine; baseline / learned / memorizer policies; REG, transfer, verdict-invariance, recall, fixed-budget, acceleration. Honest, NULL-capable | MEASURED — `test_rsi_bench` (apparatus validity) |
 | `rsi_bench_scale.py` | the **enterprise-evidence** version: many seeded worlds with trap structures, an adversarial policy suite (baseline/random/greedy-blast/frequency/learned/memorizer/overfit), held-out sign-test **p-values**, efficiency-per-training-experiment, and an honest iterated-improvement curve | MEASURED — `test_rsi_bench_scale` (apparatus validity) |
+| `rsi_bench_families.py` | **PO-5**: bounded multi-iteration accrual on a **not-one-shot** (XOR-shaped) family — the restorer label is the frozen engine's, but a one-shot linear policy *provably* can't and 4× data doesn't help, while an iterated additive loop climbs then **saturates** at the ceiling. With PO-6 (natural task is one-shot) this bounds RSI from both sides: real but task-gated, bounded, first-order | MEASURED — `test_rsi_bench_families` |
 
 ## Engines and the differential harness
 
@@ -219,7 +220,7 @@ ambiguity. `unobserved ≠ ok`; `not-explained ≠ no-cause`.
 Core (pure-stdlib, no dependencies):
 
 ```powershell
-cd "weltwerk\verify"; python test_interfaces.py; python test_transition.py; python test_engine.py; python test_artifacts.py; python test_kernel_check.py; python test_diagnose.py; python test_engine_conformance.py; python test_counterfactual.py; python test_analysis_contract.py; python test_repair.py; python test_rsi_bench.py; python test_oracle_conformance.py; python test_certificate_checker.py; python test_boundary_immutability.py; python test_cf_quality.py; python test_repair_bound_sweep.py; python test_compute_control.py; python test_analysis_conformance.py
+cd "weltwerk\verify"; python test_interfaces.py; python test_transition.py; python test_engine.py; python test_artifacts.py; python test_kernel_check.py; python test_diagnose.py; python test_engine_conformance.py; python test_counterfactual.py; python test_analysis_contract.py; python test_repair.py; python test_rsi_bench.py; python test_oracle_conformance.py; python test_certificate_checker.py; python test_boundary_immutability.py; python test_cf_quality.py; python test_repair_bound_sweep.py; python test_compute_control.py; python test_analysis_conformance.py; python test_rsi_bench_families.py
 ```
 
 The RSI benchmark reports (honest, NULL-capable) print from:

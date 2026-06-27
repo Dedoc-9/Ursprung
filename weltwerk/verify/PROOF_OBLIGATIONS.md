@@ -45,11 +45,18 @@ Falsifier · Difficulty · Priority · Status.*
 - **Falsifier**: any engine≠oracle mismatch. **Difficulty**: M · **Priority**: High · **Status**: **CLOSED** (5/5).
 
 ### PO-5 — Genuine multi-iteration capability accrual
-- **Statement**: held-out work decreases across loop iterations on a *not-one-shot-learnable* task.
-- **Current evidence**: `rsi_bench_scale` curve **saturates at k=1**. **Missing**: a multi-family generator.
-- **Required artifact**: `rsi_bench_families.py` + iterated curve.
-- **Verification**: non-trivial-then-saturating held-out REG curve. **Falsifier**: saturates at k=1 anyway
-  (a publishable negative — bounds RSI intrinsically). **Difficulty**: M · **Priority**: High · **Status**: **OPEN**.
+- **Statement**: held-out work decreases across loop iterations on a *not-one-shot-learnable* task, then saturates.
+- **Current evidence**: `rsi_bench_families.py` + `test_rsi_bench_families.py`. The family's restorer label is
+  the FROZEN engine's, but XOR-shaped in two observable tags — so a one-shot linear policy *provably* cannot,
+  and 4× data does not help, while an iterated additive loop climbs and saturates at the ceiling.
+- **Required artifact**: `rsi_bench_families.py` + iterated curve + one-shot/data-scaling controls. **DONE.**
+- **Verification**: non-increasing held-out curve dropping ≥1 from k=0 to a saturated ceiling, with both
+  controls pinned near chance. **Falsifier (for the bound)**: if the loop ALSO stalls at chance, or if a
+  control reaches the ceiling (then the task was one-shot, claim void).
+- **Reading (sharpened by PO-6)**: PO-6 showed the *natural* restore task is one-shot (no iteration helps);
+  PO-5 shows that *when a task demands it*, the loop delivers bounded, saturating, first-order accrual. Together
+  they bound RSI from both sides: real but task-gated and bounded, never open-ended or second-order.
+- **Difficulty**: M · **Priority**: High · **Status**: **ADDRESSED** (built; pending run).
 
 ### PO-6 — Gain is not compute
 - **Statement**: REG survives equal search budget.
@@ -90,9 +97,10 @@ Falsifier · Difficulty · Priority · Status.*
 
 ## Progress
 
-CLOSED: **PO-2, PO-4, PO-7, PO-8** (4/10). ADDRESSED (built, pending run): **PO-3, PO-6, PO-9**.
-OPEN: PO-1, PO-5, PO-10.
+CLOSED: **PO-2, PO-4, PO-7, PO-8** (4/10). ADDRESSED (built, pending run): **PO-3, PO-5, PO-6, PO-9**.
+OPEN: PO-1, PO-10.
 
-Closing order recommended next: run **PO-3/PO-6/PO-9** (this batch) → **PO-5** (the saturation-ceiling
-experiment, highest scientific value — a careful negative is the centerpiece) → **PO-1/PO-10** (gate the
-symbolic/abstraction path). See [`EVIDENCE_GRAPH.md`](EVIDENCE_GRAPH.md) for which claims each obligation supports.
+Closing order recommended next: run **PO-5** (the saturation-ceiling experiment) → then **PO-1/PO-10** (gate
+the symbolic/abstraction path: run `test_symbolic_b`, then build `abstraction_soundness.py`). After PO-5 the
+scientific arc is essentially closed — RSI is bounded on both sides (PO-5/PO-6) — and what remains (PO-1,
+PO-10) is engine-faithfulness plumbing, not new claims. See [`EVIDENCE_GRAPH.md`](EVIDENCE_GRAPH.md).

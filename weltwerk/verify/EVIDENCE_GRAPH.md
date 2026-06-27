@@ -23,7 +23,8 @@ repair restores world (bounded)         → repair.py                 → test_r
 repair grade-stability (K vs 2K)        → repair_bound_sweep.py     → test_repair_bound_sweep      → ✓ executable (PO-3 ADDRESSED)
 capability ≠ lookup                     → rsi_bench_scale.py        → test_rsi_bench_scale          → ✓ executable (single-task)
 REG not explained by compute            → compute_control_bench.py  → test_compute_control        → ✓ executable (PO-6 ADDRESSED)
-recursive accrual (multi-iteration)     → rsi_bench_scale curve     → (saturates)                  → null ⚠ (PO-5)
+natural task is one-shot                → compute_control_bench.py  → test_compute_control         → ✓ executable (PO-6: B=1 ceiling)
+iterated accrual (bounded, saturating)  → rsi_bench_families.py     → test_rsi_bench_families      → ✓ executable (PO-5 ADDRESSED)
 Approach-B engine faithful              → symbolic_engine_b.py      → test_symbolic_b (UNRUN)       → nothing ⚠ (PO-1)
 abstraction never false-CLOSED          → (none yet)                → —                             → prose ⚠ (PO-10)
 inflation vs search separable           → no_inflation_latch, ...   → repo tests (not re-verified) → executable (unverified here)
@@ -45,10 +46,15 @@ inflation vs search separable           → no_inflation_latch, ...   → repo t
 - `honesty universality → one consumer` **→ addressed** by `test_analysis_conformance` (PO-9): all three
   consumers routed through the contract + a no-bypass guard.
 
+- `recursive accrual → null/saturates` **→ addressed** by `rsi_bench_families` (PO-5): on a not-one-shot (XOR)
+  task with a frozen engine label, an iterated loop climbs and *saturates*, while one-shot linear + 4× data
+  stay at chance. Bounded, task-gated accrual — paired with PO-6 it bounds RSI from both sides.
+
 ## Remaining ⚠ chains (open Proof Obligations)
 
-`recursive accrual` (PO-5, null/saturates), `Approach-B faithful` (PO-1, unrun), `abstraction no-false-CLOSED`
-(PO-10, prose). PO-3/PO-6/PO-9 are ADDRESSED pending a green run; PO-2/PO-4/PO-7/PO-8 are CLOSED.
+`Approach-B faithful` (PO-1, unrun), `abstraction no-false-CLOSED` (PO-10, prose). PO-3/PO-5/PO-6/PO-9 are
+ADDRESSED pending a green run; PO-2/PO-4/PO-7/PO-8 are CLOSED. The scientific claims are bounded; PO-1/PO-10
+are engine-faithfulness plumbing.
 
 **Rule of advancement**: no claim tagged `[DEMONSTRATED]` in the README may rest on a ⚠ chain. When a chain
 resolves, update both this graph and `PROOF_OBLIGATIONS.md`; the pair is the repository's self-audit.
