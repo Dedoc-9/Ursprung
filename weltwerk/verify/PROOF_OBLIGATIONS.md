@@ -105,13 +105,44 @@ Falsifier · Difficulty · Priority · Status.*
 
 ---
 
+### PO-11 — Hot-swap stream preservation (a NEW domain behind the frozen contracts)
+- **Statement**: a live program hot-swap (Alpha→Beta) is successful iff the frozen checker returns `CLOSED`
+  (no `continuity`/`no_race` violation reachable) with the migration reachable, AND the migration map μ is
+  stream-preserving (`π∘μ = π`). `integrity ≠ truth`.
+- **Current evidence**: `hotswap/swap_relation.py` (`SwapRelation` + `SwapModelChecker` + independent
+  `swap_oracle` + `swap_check_certificate`) + `hotswap/swap_translate.py` (π, μ, the commute check) +
+  `test_swap_relation.py` + `test_swap_translate.py`. Reuses `Invariant`/`Trace`/`ReachabilityCertificate`
+  and the PO-4/PO-8 patterns unchanged; faithfulness asserted against the independent oracle.
+- **Required artifact**: swap domain + oracle agreement + inductive certificate + `π∘μ=π`. **DONE.**
+- **Verification**: checker≡oracle (status + shortest + reachable); certificate tamper-rejecting; μ preserves
+  π or is caught with a witness. **Falsifier**: a false `CLOSED` swap, or a stream-corrupting μ that passes.
+- **Difficulty**: M · **Priority**: M · **Status**: **ADDRESSED** (built; pending run). Bounded: `CLOSED@K`
+  is over the swap alphabet + bound; stream discretized to {intact,broken} (Arbitrary-Boundary Law).
+
+### PO-12 — Hot-swap ordering as bounded search-acceleration
+- **Statement**: a candidate-ranking policy over swap plans reaches a *successful* plan with less verified
+  work at EQUAL budget, where success is the frozen `CLOSED ∧ migrated` verdict — never the policy's claim.
+  `improved_map ≠ changed_criterion`; `candidate ≠ deployed-swap`.
+- **Current evidence**: `hotswap/swap_rank.py` (useful-guard features measured by the frozen evaluator;
+  canonical vs learned ordering; `work()`; equal-budget curve; `as_analysis()` honesty projection) +
+  `hotswap/swap_falsifier.py` (deferred-race flip@2K + race@1 + overdetermined) + `test_swap_rank.py` +
+  `test_swap_falsifier.py`.
+- **Required artifact**: equal-budget anytime dominance + overdetermined safe plan + flip@2K falsifier. **DONE.**
+- **Verification**: learned work < canonical, anytime dominance; greedy VIOLATED@2K (flip) and @1 (race);
+  only `{MBB,ALIGN}` succeeds; no false restore. **Falsifier**: gain vanishes at equal budget, or a greedy
+  shortcut is *not* punished.
+- **Difficulty**: M · **Priority**: M · **Status**: **ADDRESSED** (built; pending run). One-shot signal ⇒
+  bounded gain (the PO-5/PO-6 pattern), not open-ended.
+
+---
+
 ## Progress
 
-CLOSED: **PO-1 … PO-10 — all ten, run-green.** OPEN: **none.** ADDRESSED-but-unrun: **none.** The ledger is
-fully discharged: every obligation has an executable artifact whose test passes.
+CLOSED: **PO-1 … PO-10 — all ten, run-green.** ADDRESSED (built, pending run): **PO-11, PO-12** (the hot-swap
+extension). OPEN: **none.**
 
-The scientific arc is closed: RSI is bounded on **both** sides — PO-5 shows the loop accrues capability when a
-task is not-one-shot (and then saturates), PO-6 shows the natural task is one-shot (no iteration helps). The
-final two are engine-faithfulness plumbing, not new claims: PO-1 confirms the Approach-B re-encoding matches
-the explicit engine over a world distribution (acyclic `{destroy,repair}` fragment; cyclic `repair` a
-documented boundary), and PO-10 mechanizes `admissible ⇒ no_false_closed` for any future abstract engine. See [`EVIDENCE_GRAPH.md`](EVIDENCE_GRAPH.md).
+The core scientific arc stays closed (RSI bounded both sides, PO-5/PO-6). The hot-swap work is a NEW domain
+that **re-opens the evidence graph** (per the standing rule): it plugs in behind the frozen engine, grading,
+certificate, oracle pattern, and honesty contract — adding semantics, not authority — and carries its own
+built-in falsifier (deferred-race flip@2K, race@1, overdetermined safe plan). `engine ≠ semantics`. See
+[`EVIDENCE_GRAPH.md`](EVIDENCE_GRAPH.md) and [`hotswap/README.md`](hotswap/README.md).

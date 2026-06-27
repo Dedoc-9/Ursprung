@@ -27,6 +27,10 @@ natural task is one-shot                → compute_control_bench.py  → test_c
 iterated accrual (bounded, saturating)  → rsi_bench_families.py     → test_rsi_bench_families      → ✓ executable (PO-5 ADDRESSED)
 Approach-B engine faithful              → differential_b.py         → test_differential_b 3/3 (z3)  → ✓ executable (PO-1 CLOSED, acyclic)
 abstraction never false-CLOSED          → abstraction_soundness.py  → test_abstraction_soundness 5/5→ ✓ executable (PO-10 CLOSED)
+hot-swap preserves the stream           → hotswap/swap_relation.py  → test_swap_relation           → ✓ executable (PO-11 ADDRESSED)
+swap migration μ stream-preserving      → hotswap/swap_translate.py → test_swap_translate          → ✓ executable (PO-11: π∘μ=π)
+swap ordering = bounded search-accel    → hotswap/swap_rank.py      → test_swap_rank               → ✓ executable (PO-12 ADDRESSED)
+swap falsifier punishes shortcuts       → hotswap/swap_falsifier.py → test_swap_falsifier          → ✓ executable (PO-12: flip@2K, race@1)
 inflation vs search separable           → no_inflation_latch, ...   → repo tests (not re-verified) → executable (unverified here)
 ```
 
@@ -52,10 +56,12 @@ inflation vs search separable           → no_inflation_latch, ...   → repo t
 
 ## Remaining ⚠ chains (open Proof Obligations)
 
-**None.** PO-1 … PO-10 are all CLOSED (run green) — every claim terminates in `✓ executable`. The scientific
-claims are bounded on both sides (PO-5/PO-6); PO-1/PO-10 are engine-faithfulness plumbing, not new claims.
-PO-1's faithfulness is scoped to the acyclic `{destroy,repair}` fragment (cyclic `repair` upstream-self is a
-recorded boundary ghost). New claims re-open this graph; until then the self-audit is closed.
+PO-1 … PO-10 are all CLOSED (run green). The hot-swap extension (**PO-11, PO-12**) **re-opened this graph**
+with a new domain — its five chains above are `✓ executable` but **ADDRESSED pending run** until the
+`hotswap/` suites are executed green. The swap domain plugs in behind the frozen engine/grading/certificate/
+oracle/honesty contract (`engine ≠ semantics`) and carries its own falsifier (deferred-race flip@2K, race@1,
+overdetermined safe plan). Scope ghosts (recorded): PO-1 acyclic-only; PO-11 stream discretized to
+{intact,broken} and `CLOSED@K ≠ globally-safe`.
 
 **Rule of advancement**: no claim tagged `[DEMONSTRATED]` in the README may rest on a ⚠ chain. When a chain
 resolves, update both this graph and `PROOF_OBLIGATIONS.md`; the pair is the repository's self-audit.

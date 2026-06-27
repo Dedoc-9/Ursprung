@@ -296,6 +296,10 @@ Beyond the code, three documents reason *about* this kernel (design intent, then
   discharged; every claim terminates in an executable artifact whose test passes.
 - [`EVIDENCE_GRAPH.md`](EVIDENCE_GRAPH.md) — every claim traced to executable evidence, with each chain that
   still terminates in intuition flagged `⚠` and linked to its Proof Obligation.
+- [`hotswap/`](hotswap/README.md) — **PO-11/PO-12**: live program hot-swapping (Alpha→Beta) modeled as a new
+  domain behind the frozen contracts — stream-preservation invariant + certificate (`π∘μ=π`), candidate-ranking
+  swap planning as bounded search-acceleration, and a built-in falsifier (deferred-race flip@2K, race@1,
+  overdetermined safe plan). `engine ≠ semantics`; adds semantics, not authority. (ADDRESSED, pending run.)
 
 These are *analysis*, not roadmap: no future engine is claimed as fact, and the agentic loop in the next
 section is bounded by exactly these results.
