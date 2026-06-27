@@ -16,32 +16,68 @@ License + provenance: original AGPL-3.0 code, recorded in
 [`../../docs/LICENSE_DECISIONS.md`](../../docs/LICENSE_DECISIONS.md) and
 [`../../docs/PROVENANCE.md`](../../docs/PROVENANCE.md). Architecture contract: [`DESIGN.md`](DESIGN.md).
 
-## Current guarantees (measured at this commit)
+## Current verified results
 
-Tags: **[TEST]** executing suite · **[MEASURED]** observed in a repo run (seed/param-dependent) ·
-**[THM-C]** conditional theorem (see `RECURSIVE_IMPROVEMENT_PROOF.md`).
+This section separates **what was proved** (conditional theorems), **what was experimentally observed**
+(measured), and **what was exhaustively tested** (suites). "Guarantee" is reserved for logical consequences
+of assumptions; "measured" refers to observations on experiments.
 
-- **Verification spine** — twelve pure-stdlib suites green, plus two z3 suites when the solver is present.
-  The verdict is engine-independent: explicit ≡ symbolic on every model in the differential harness (`5/5`),
-  and both engines pass the conformance gate. **[TEST]**
-- **Honest grading** — `CLOSED` = proof over the chosen action alphabet + transition function (and carries a
+**Definitions.**
+
+- **Verified work** `w(π, W)` — the number of engine re-verifications a policy `π` performs to reach the
+  verified result on world `W`.
+- **Recursive-efficiency-gain** — `REG(π, W) = w(baseline, W) / w(π, W)`, reported as the geometric mean
+  over a held-out world set. `REG > 1` means the policy reaches the *same* verified result with less search.
+- **Recursive capability improvement** := *decreasing verified work under invariant semantics + invariant
+  correctness criterion + invariant evaluator.* The definition excludes inflation by construction: improvement
+  is only ever measured as less search for the same frozen verdict.
+- **Measured recursive improvement** := *repeated reduction in verified work under an invariant evaluation
+  criterion.*
+
+**The evaluation boundary the policy cannot alter** (the heart of the architecture). A policy may reorder
+candidate generation but cannot modify the **engine**, the **semantics**, the **invariant set**, the
+**evaluation metric**, or the **benchmark train/held-out split**. `improved_map ≠ changed_criterion`.
+
+### Verified by tests — `[TEST]`
+
+- Twelve pure-stdlib suites green (+ two z3 suites when the solver is present).
+- The verdict is engine-independent: explicit ≡ symbolic on every model in the differential harness (`5/5`);
+  both engines pass the conformance gate.
+- Honest grading: `CLOSED` = proof over the chosen action alphabet + transition function (carries a
   re-derivable `ReachabilityCertificate`); `BOUNDED` ≠ proof; `VIOLATED` ships a replayable witness `Trace`.
-  Deterministic. **[TEST]**
-- **Search efficiency (the "efficiency" figure)** — under a *frozen* engine, semantics, and invariant, a
-  learned candidate-ranking reaches **identical verified results with less search on held-out worlds**:
-  recursive-efficiency-gain **REG ≈ 5–11×** (task-dependent; `rsi_bench` ≈ 11×, `rsi_bench_scale` ≈ 5–6× at
-  scale with two-sided sign-test **p ≈ 0**), budget-3 hit-rate ≈ `40/40` vs baseline ≈ `2/40`, and
-  efficiency-per-training-experiment ≈ `0.11–0.15`. Live numbers print from `python rsi_bench_scale.py`.
-  **[MEASURED]**
-- **It is capability, not lookup** — the gain transfers to instance-disjoint held-out worlds, while a
-  memorizer and an overfit policy collapse to REG ≈ 1 (no transfer) and trap structures defeat a
-  rank-by-blast heuristic. The harness *caught its own instance-leakage bug* before any claim was made.
-  **[MEASURED]**
-- **The verdict never moves** — every gain above holds with `verdict_invariance = True` and recall
-  preserved: the map improved, the judge did not. `improved_map ≠ changed_criterion`. **[THM-C]+[TEST]**
-- **Honest ceiling** — the iterated-improvement curve *saturates* (the signal is one-shot-learnable). This is
-  a transferable heuristic distinguishable from lookup under a frozen judge — **not** open-ended recursive
-  self-improvement, which would require a task that is not one-shot-learnable (stated future work). **[MEASURED]**
+  Deterministic.
+
+### Empirically measured — `[MEASURED]` (seed/param-dependent; reproduce via `python rsi_bench_scale.py`)
+
+- Under a *frozen* engine, semantics, and invariant, a learned candidate-ranking reaches **identical
+  verified results with less held-out search**: `REG ≈ 5–11×` (task-dependent — `rsi_bench` ≈ 11×,
+  `rsi_bench_scale` ≈ 5–6× at scale with two-sided sign-test `p ≈ 0`), budget-3 hit-rate ≈ `40/40` vs
+  baseline ≈ `2/40`, efficiency-per-training-experiment ≈ `0.11–0.15`.
+- **Capability, not lookup**: the gain transfers to *instance-disjoint* held-out worlds, while a memorizer
+  and an overfit policy collapse to `REG ≈ 1` (no transfer) and trap structures defeat a rank-by-blast
+  heuristic. The harness *caught its own instance-leakage bug* before any claim was made.
+- Every measured gain holds with `verdict_invariance = True` and recall preserved.
+
+### Conditional theorems — `[THM-C]` (proofs in [`RECURSIVE_IMPROVEMENT_PROOF.md`](RECURSIVE_IMPROVEMENT_PROOF.md))
+
+- **Bounded Recursive Improvement Principle** — an admissible loop preserves the correctness predicate `Corr_T`.
+- **Recursive Capability Preservation Theorem (conditional).** If semantics, the verification engine, and
+  invariants are fixed, evaluation is performed solely by the frozen verifier, and the policy may reorder
+  candidate generation but cannot alter evaluation, then any observed improvement in `REG` reflects only
+  search efficiency and **cannot arise from criterion modification**. The theorem says nothing about
+  learning: it says that *if* improvement is observed, it cannot have come from moving the goalposts.
+
+### Observed boundary (what is NOT claimed)
+
+- **Observed:** the learned policy converges; no continued acceleration was observed (the iterated-improvement
+  curve saturates — the signal is one-shot-learnable).
+- **Therefore:** these experiments demonstrate **transferable recursive capability improvement** but do
+  **not** demonstrate **open-ended RSI**. Open-ended RSI would require a task that is not one-shot-learnable
+  (stated future work).
+
+**Strongest defensible contribution.** Not "recursive self-improvement," but *a benchmark and proof-oriented
+architecture that experimentally distinguishes recursive capability improvement from metric inflation* —
+separating "better search" from "better scoring," a separation most self-improvement claims cannot make.
 
 ## Architecture
 

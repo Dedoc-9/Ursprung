@@ -454,6 +454,27 @@ This is realized today by the `AnalysisResult` honesty contract (limitations tra
 `diagnose` / `counterfactual` / `repair`. The invariant is the monotone non-upgrade of epistemic status
 across layers.
 
+### 9.9 Recursive Capability Preservation Theorem — [THM-C]
+
+Let verified work `w(π, W)` be the number of frozen-verifier evaluations a policy `π` performs to reach the
+verified result on world `W`, and `REG(π, W) = w(baseline, W) / w(π, W)`.
+
+**Theorem.** Suppose (i) the semantics `R` are fixed, (ii) the verification engine `E` is fixed, (iii) the
+invariant set `I` is fixed, (iv) evaluation is performed *solely* by the frozen verifier, and (v) the policy
+may reorder candidate generation but cannot alter evaluation. Then for any observed `REG(π, W) > 1`, the
+improvement reflects **only search efficiency** and **cannot arise from criterion modification**.
+
+**Justification.** By Lemma 1.3, `w(π, W)` counts evaluations of `V`, and `V` is a function of `(W, O, T)`
+with `T = (R, I, E, D)` fixed by (i)–(iv); the policy enters only the *order* in which candidates are
+submitted to `V`, not `V` itself (v). The verified *result* for `W` is therefore identical under any policy
+(this is BRIP, §3); only the count `w` differs. Hence any change in `REG` is a change in search effort under
+an unchanged `Corr_T`. ∎
+
+The theorem is deliberately silent about *learning*: it does not assert that any policy improves. It asserts
+the **contrapositive guarantee** — *if* improvement is observed, it cannot have come from moving the
+goalposts. This is the load-bearing theoretical property behind every measured `REG`: it licenses reading a
+held-out efficiency gain as capability rather than inflation. `observed-REG-gain ⇒ search-only`.
+
 ---
 
 ## Conclusion
