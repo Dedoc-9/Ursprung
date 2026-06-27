@@ -158,6 +158,7 @@ far smaller than the combinatorial bound, the project's sparsity thesis showing 
 | `oracle_reference.py` | **PO-4**: independent unbounded-fixpoint ground-truth oracle; `test_oracle_conformance` asserts the engine verdict equals it (discharges *agreement ≠ soundness*) | MEASURED — `test_oracle_conformance` |
 | `certificate_checker.py` | **PO-8**: independent (no-search) closure checker — a CLOSED `ReachabilityCertificate` is validated as an inductive invariant, making it a *proof object* not a record; tamper-detecting | MEASURED — `test_certificate_checker` |
 | `counterfactual.py` | Phase C: **critical events in a ghost trace** by single-event ablation (trace-level; engine-agnostic; pure-stdlib) | MEASURED — `test_counterfactual` 8/8 |
+| `cf_quality_bench.py` | **PO-2**: counterfactual *accuracy* vs an exhaustive minimal-removal gold (single-cause recovered; overdetermined blind-spot quantified, not faked) | MEASURED — `test_cf_quality` |
 | `repair.py` | Phase C.2: **repair candidates** — `REMOVE_EVENT` seeded from the counterfactual critical set; `restores_trace` (replay) + `restores_world` (forbid the action, re-verify; enum carrying `engine`+`bound`, never a bare bool) | MEASURED — `test_repair` 8/8 |
 | `rsi_bench.py` | the **runnable RSI benchmark**: a restore-search task over a generated TRAIN/HELD-OUT world distribution, judged only by the frozen engine; baseline / learned / memorizer policies; REG, transfer, verdict-invariance, recall, fixed-budget, acceleration. Honest, NULL-capable | MEASURED — `test_rsi_bench` (apparatus validity) |
 | `rsi_bench_scale.py` | the **enterprise-evidence** version: many seeded worlds with trap structures, an adversarial policy suite (baseline/random/greedy-blast/frequency/learned/memorizer/overfit), held-out sign-test **p-values**, efficiency-per-training-experiment, and an honest iterated-improvement curve | MEASURED — `test_rsi_bench_scale` (apparatus validity) |
@@ -215,7 +216,7 @@ ambiguity. `unobserved ≠ ok`; `not-explained ≠ no-cause`.
 Core (pure-stdlib, no dependencies):
 
 ```powershell
-cd "weltwerk\verify"; python test_interfaces.py; python test_transition.py; python test_engine.py; python test_artifacts.py; python test_kernel_check.py; python test_diagnose.py; python test_engine_conformance.py; python test_counterfactual.py; python test_analysis_contract.py; python test_repair.py; python test_rsi_bench.py; python test_oracle_conformance.py; python test_certificate_checker.py; python test_boundary_immutability.py
+cd "weltwerk\verify"; python test_interfaces.py; python test_transition.py; python test_engine.py; python test_artifacts.py; python test_kernel_check.py; python test_diagnose.py; python test_engine_conformance.py; python test_counterfactual.py; python test_analysis_contract.py; python test_repair.py; python test_rsi_bench.py; python test_oracle_conformance.py; python test_certificate_checker.py; python test_boundary_immutability.py; python test_cf_quality.py
 ```
 
 The RSI benchmark reports (honest, NULL-capable) print from:
@@ -268,6 +269,10 @@ Beyond the code, three documents reason *about* this kernel (design intent, then
   *improves the ability to discover verified improvements, not the authority to define them.* Status: design,
   no results — but now with a **runnable instrument**, `rsi_bench.py` (+ `test_rsi_bench.py`), which executes
   the program end-to-end and is built to be able to report NULL.
+- [`PROOF_OBLIGATIONS.md`](PROOF_OBLIGATIONS.md) — the **ledger**: the repository advances by *closing Proof
+  Obligations*, not adding features. PO-4/PO-7/PO-8 CLOSED; PO-2 addressed; the rest open.
+- [`EVIDENCE_GRAPH.md`](EVIDENCE_GRAPH.md) — every claim traced to executable evidence, with each chain that
+  still terminates in intuition flagged `⚠` and linked to its Proof Obligation.
 
 These are *analysis*, not roadmap: no future engine is claimed as fact, and the agentic loop in the next
 section is bounded by exactly these results.
