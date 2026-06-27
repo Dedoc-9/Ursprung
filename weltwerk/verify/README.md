@@ -160,6 +160,9 @@ far smaller than the combinatorial bound, the project's sparsity thesis showing 
 | `counterfactual.py` | Phase C: **critical events in a ghost trace** by single-event ablation (trace-level; engine-agnostic; pure-stdlib) | MEASURED — `test_counterfactual` 8/8 |
 | `cf_quality_bench.py` | **PO-2**: counterfactual *accuracy* vs an exhaustive minimal-removal gold (single-cause recovered; overdetermined blind-spot quantified, not faked) | MEASURED — `test_cf_quality` |
 | `repair.py` | Phase C.2: **repair candidates** — `REMOVE_EVENT` seeded from the counterfactual critical set; `restores_trace` (replay) + `restores_world` (forbid the action, re-verify; enum carrying `engine`+`bound`, never a bare bool) | MEASURED — `test_repair` 8/8 |
+| `repair_bound_sweep.py` | **PO-3**: re-verifies each restored candidate at **2K** — `RESTORED_PROVEN` is shown bound-monotone; `RESTORED_WITHIN_BOUND` is shown to **flip to VIOLATED** (a valuable negative: `restores-(M,E,K) ≠ safe`) | MEASURED — `test_repair_bound_sweep` |
+| `compute_control_bench.py` | **PO-6**: equal-budget A/B — learned vs baseline hit-rate swept over budget B; **anytime dominance** + cheap-end gain ⇒ the improvement is ordering, not compute | MEASURED — `test_compute_control` |
+| `test_analysis_conformance.py` | **PO-9**: the honesty contract is **universal** — diagnose/counterfactual/repair `as_analysis()` all carry scope + ≥1 limitation; the contract cannot be bypassed | MEASURED — `test_analysis_conformance` |
 | `rsi_bench.py` | the **runnable RSI benchmark**: a restore-search task over a generated TRAIN/HELD-OUT world distribution, judged only by the frozen engine; baseline / learned / memorizer policies; REG, transfer, verdict-invariance, recall, fixed-budget, acceleration. Honest, NULL-capable | MEASURED — `test_rsi_bench` (apparatus validity) |
 | `rsi_bench_scale.py` | the **enterprise-evidence** version: many seeded worlds with trap structures, an adversarial policy suite (baseline/random/greedy-blast/frequency/learned/memorizer/overfit), held-out sign-test **p-values**, efficiency-per-training-experiment, and an honest iterated-improvement curve | MEASURED — `test_rsi_bench_scale` (apparatus validity) |
 
@@ -216,7 +219,7 @@ ambiguity. `unobserved ≠ ok`; `not-explained ≠ no-cause`.
 Core (pure-stdlib, no dependencies):
 
 ```powershell
-cd "weltwerk\verify"; python test_interfaces.py; python test_transition.py; python test_engine.py; python test_artifacts.py; python test_kernel_check.py; python test_diagnose.py; python test_engine_conformance.py; python test_counterfactual.py; python test_analysis_contract.py; python test_repair.py; python test_rsi_bench.py; python test_oracle_conformance.py; python test_certificate_checker.py; python test_boundary_immutability.py; python test_cf_quality.py
+cd "weltwerk\verify"; python test_interfaces.py; python test_transition.py; python test_engine.py; python test_artifacts.py; python test_kernel_check.py; python test_diagnose.py; python test_engine_conformance.py; python test_counterfactual.py; python test_analysis_contract.py; python test_repair.py; python test_rsi_bench.py; python test_oracle_conformance.py; python test_certificate_checker.py; python test_boundary_immutability.py; python test_cf_quality.py; python test_repair_bound_sweep.py; python test_compute_control.py; python test_analysis_conformance.py
 ```
 
 The RSI benchmark reports (honest, NULL-capable) print from:

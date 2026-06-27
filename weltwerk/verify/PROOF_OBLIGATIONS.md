@@ -24,14 +24,18 @@ Falsifier · Difficulty · Priority · Status.*
 - **Required artifact**: `cf_quality_bench.py` + `test_cf_quality.py` (exhaustive minimal-removal-set gold).
 - **Verification**: precision/recall on single-cause/mixed; honest overdetermined blind-spot; beats random.
 - **Falsifier**: a flagged "critical" event whose removal does not clear the violation; or accuracy ≤ random.
-- **Difficulty**: L · **Priority**: High · **Status**: **ADDRESSED** (built; pending run).
+- **Difficulty**: L · **Priority**: High · **Status**: **CLOSED** (6/6 — single-cause P=R=1, decoy excluded,
+  overdetermined ∅ with gold ≥2, beats expected-random 1.0 > 0.75).
 
 ### PO-3 — Repair restore-stability
 - **Statement**: `RESTORED_WITHIN_BOUND@K ⇒ restored@2K`.
 - **Current evidence**: none. **Missing**: a bound-sweep experiment.
-- **Required artifact**: `repair_bound_sweep.py`. **Verification**: re-verify each candidate at 2K.
+- **Required artifact**: `repair_bound_sweep.py` + `test_repair_bound_sweep.py`. **Verification**: re-verify
+  each candidate at 2K; PROVEN must stay restored (bound-monotone), WITHIN_BOUND is measured.
 - **Falsifier**: a candidate restored@K but VIOLATED@2K (a *valuable* negative: `restores-(M,E,K) ≠ safe`).
-- **Difficulty**: L · **Priority**: M · **Status**: **OPEN**.
+- **Difficulty**: L · **Priority**: M · **Status**: **ADDRESSED** (built; pending run). The falsifier FIRES by
+  construction (fanout/flip): RESTORED_WITHIN_BOUND@2 → VIOLATED@4, while RESTORED_PROVEN stays restored.
+  The negative is the result — it shows the two grades are not interchangeable.
 
 ### PO-4 — Engine soundness (not just agreement)
 - **Statement**: the engine's verdict equals an independent ground-truth oracle, not only another engine.
@@ -50,8 +54,10 @@ Falsifier · Difficulty · Priority · Status.*
 ### PO-6 — Gain is not compute
 - **Statement**: REG survives equal search budget.
 - **Current evidence**: budget-3 hit-rate in `rsi_bench_scale`. **Missing**: explicit equal-budget A/B + statistic.
-- **Required artifact**: `compute_control_bench.py`. **Falsifier**: gain vanishes at equal budget.
-- **Difficulty**: L · **Priority**: M · **Status**: **OPEN**.
+- **Required artifact**: `compute_control_bench.py` + `test_compute_control.py` (anytime hit-rate sweep over
+  equal budgets B). **Falsifier**: gain vanishes at equal budget (no anytime dominance / no cheap-end gain).
+- **Difficulty**: L · **Priority**: M · **Status**: **ADDRESSED** (built; pending run). Claims only equal-budget
+  ordering gain on this world family; not generalization (PO-5), not unbounded (saturates).
 
 ### PO-7 — Boundary immutability (mechanize BRIP P4)
 - **Statement**: the map cannot alter the judge (engine/semantics/invariant/metric/split).
@@ -71,7 +77,8 @@ Falsifier · Difficulty · Priority · Status.*
 - **Statement**: every consumer's `as_analysis()` is honest (scope + ≥1 limitation).
 - **Current evidence**: diagnose/counterfactual tested. **Missing**: parametrized conformance incl. repair.
 - **Required artifact**: `test_analysis_conformance.py`. **Falsifier**: a consumer emits a limitation-free result.
-- **Difficulty**: trivial · **Priority**: M · **Status**: **OPEN**.
+- **Difficulty**: trivial · **Priority**: M · **Status**: **ADDRESSED** (built; pending run). Parametrized over
+  diagnose/counterfactual/repair `as_analysis()` + the construction guard (no bypass).
 
 ### PO-10 — Abstraction admissibility harness
 - **Statement**: any abstraction satisfies `abstract-CLOSED ⇒ exact-CLOSED` (no false CLOSED).
@@ -83,8 +90,9 @@ Falsifier · Difficulty · Priority · Status.*
 
 ## Progress
 
-CLOSED: **PO-4, PO-7, PO-8** (3/10). ADDRESSED: **PO-2**. OPEN: PO-1, PO-3, PO-5, PO-6, PO-9, PO-10.
+CLOSED: **PO-2, PO-4, PO-7, PO-8** (4/10). ADDRESSED (built, pending run): **PO-3, PO-6, PO-9**.
+OPEN: PO-1, PO-5, PO-10.
 
-Closing order recommended next: **PO-2** (run) → **PO-6**, **PO-9** (low effort) → **PO-5** (the
-saturation-ceiling experiment, highest scientific value) → **PO-1/PO-10** (gate the symbolic/abstraction
-path). See [`EVIDENCE_GRAPH.md`](EVIDENCE_GRAPH.md) for which claims each obligation supports.
+Closing order recommended next: run **PO-3/PO-6/PO-9** (this batch) → **PO-5** (the saturation-ceiling
+experiment, highest scientific value — a careful negative is the centerpiece) → **PO-1/PO-10** (gate the
+symbolic/abstraction path). See [`EVIDENCE_GRAPH.md`](EVIDENCE_GRAPH.md) for which claims each obligation supports.

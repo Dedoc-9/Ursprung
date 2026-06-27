@@ -14,13 +14,15 @@ engine == ground truth (soundness)      → oracle_reference.py       → test_o
 verdict semantics CLOSED/BOUNDED/VIO    → engine.py / kernel_check  → test_kernel_check 8/8         → ✓ executable
 CLOSED is an auditable proof            → certificate_checker.py    → test_certificate_checker 6/6  → ✓ executable  (PO-8 CLOSED)
 witness is real                         → Trace + replay_path       → witness-replay tests          → ✓ executable
-analysis is honest                      → AnalysisResult contract   → test_analysis_contract 8/8    → ✓ executable  (universality ⚠ PO-9)
+analysis is honest (per consumer)       → AnalysisResult contract   → test_analysis_contract 8/8    → ✓ executable
+analysis honest (ALL consumers)         → diagnose/cf/repair        → test_analysis_conformance     → ✓ executable (PO-9 ADDRESSED)
 map cannot move the judge               → (no map→territory path)   → test_boundary_immutability 5/5→ ✓ executable  (PO-7 CLOSED)
-diagnosis identifies cause              → diagnose.py               → test_diagnose 8/8             → apparatus ⚠ (accuracy: PO-2 ADDRESSED)
-counterfactual critical set             → counterfactual.py         → test_counterfactual 8/8       → apparatus ⚠ (accuracy: PO-2 ADDRESSED)
-repair restores world (bounded)         → repair.py                 → test_repair 8/8               → bounded ⚠ (stability: PO-3)
+diagnosis identifies cause              → diagnose.py               → test_diagnose 8/8             → apparatus (accuracy: PO-2 CLOSED)
+counterfactual accuracy                 → cf_quality_bench.py       → test_cf_quality 6/6           → ✓ executable (PO-2 CLOSED)
+repair restores world (bounded)         → repair.py                 → test_repair 8/8               → bounded; grade-stability PO-3
+repair grade-stability (K vs 2K)        → repair_bound_sweep.py     → test_repair_bound_sweep      → ✓ executable (PO-3 ADDRESSED)
 capability ≠ lookup                     → rsi_bench_scale.py        → test_rsi_bench_scale          → ✓ executable (single-task)
-REG not explained by compute            → rsi_bench_scale budget    → (informal)                   → weak ⚠ (PO-6)
+REG not explained by compute            → compute_control_bench.py  → test_compute_control        → ✓ executable (PO-6 ADDRESSED)
 recursive accrual (multi-iteration)     → rsi_bench_scale curve     → (saturates)                  → null ⚠ (PO-5)
 Approach-B engine faithful              → symbolic_engine_b.py      → test_symbolic_b (UNRUN)       → nothing ⚠ (PO-1)
 abstraction never false-CLOSED          → (none yet)                → —                             → prose ⚠ (PO-10)
@@ -35,12 +37,18 @@ inflation vs search separable           → no_inflation_latch, ...   → repo t
   *independent, no-search closure check*.
 - `BRIP/RCPT premise → prose` **→ resolved** by `test_boundary_immutability` (PO-7): the premise is an
   executed invariant.
+- `counterfactual accuracy → apparatus` **→ resolved** by `cf_quality_bench` (PO-2): accuracy is now measured
+  against an *independent exhaustive gold*, not just shown well-formed.
+- `repair restored → bounded` **→ addressed** by `repair_bound_sweep` (PO-3): the chain now distinguishes a
+  bound-monotone PROVEN grade from a WITHIN_BOUND grade that is *shown to flip* — `restores-(M,E,K) ≠ safe`.
+- `REG-not-compute → informal` **→ addressed** by `compute_control_bench` (PO-6): equal-budget anytime dominance.
+- `honesty universality → one consumer` **→ addressed** by `test_analysis_conformance` (PO-9): all three
+  consumers routed through the contract + a no-bypass guard.
 
 ## Remaining ⚠ chains (open Proof Obligations)
 
-`diagnosis/counterfactual accuracy` (PO-2, addressed), `repair stability` (PO-3), `REG-not-compute` (PO-6),
-`recursive accrual` (PO-5), `Approach-B faithful` (PO-1), `abstraction no-false-CLOSED` (PO-10),
-`honesty universality` (PO-9).
+`recursive accrual` (PO-5, null/saturates), `Approach-B faithful` (PO-1, unrun), `abstraction no-false-CLOSED`
+(PO-10, prose). PO-3/PO-6/PO-9 are ADDRESSED pending a green run; PO-2/PO-4/PO-7/PO-8 are CLOSED.
 
 **Rule of advancement**: no claim tagged `[DEMONSTRATED]` in the README may rest on a ⚠ chain. When a chain
 resolves, update both this graph and `PROOF_OBLIGATIONS.md`; the pair is the repository's self-audit.
