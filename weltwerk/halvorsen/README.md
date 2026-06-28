@@ -98,6 +98,9 @@ control); `RESIDUAL_MISSPEC_STABLE` ⇒ a real unmodeled inter-coordinate channe
 **survives Z-coarsening**); `RESIDUAL_MISSPEC_FRAGILE` ⇒ likely mis-specification/noise.
 *Boundary:* `residual-CMI ≠ channel` until mis-spec-stable; requires the **complete modeled** `Z` (else
 confounder leakage); discretization is a model choice (Arbitrary-Boundary Law).
+*Built:* **`telemetry_audit.py`** — `diagnose(samples)` → `HEALTHY` / `SENSOR_MISSPEC` / `FAULT` by comparing
+`I(X;Y|Z)` to `I(X;Y|Z,W)` against the shuffle null (a fault must survive conditioning on the candidate
+confounder `W`; a missing confounder dissolves and is **not** called a fault). Tested in `test_telemetry_audit.py`.
 
 **4. Chaos-RNG / entropy-pool degeneracy monitor.** Watch a chaotic bitstream generator for periodic windows or
 precision collapse.
@@ -115,6 +118,10 @@ inside the certified region?" without running a 100-step look-ahead.
 ball is **REJECTED** (`certify_ball` returns `certified=False` with a witness) — so on this system you must
 **first obtain a valid certificate** (higher-degree V via SOS / interval arithmetic — **OPEN**). A rejected or
 unverified `V` gives **no** safety; never deploy on its strength. `unsound-certificate ≠ safety`.
+*Built (two-part):* **`safety_gate.py`** — *Part A (the mechanism)*: `SafetyGate.permit(next_state)` commits a
+move only if `Grounded` by `InsideCertifiedRegion` (O(1) membership, no simulation), via `require_grounded`;
+with the **rejected** Halvorsen certificate it is **fail-closed** (permits nothing). *Part B (a sound Halvorsen
+certificate)*: **OPEN**. Tested in `test_safety_gate.py` (incl. `unsound_refuses_all`).
 
 ### Wiring a new domain (the recipe)
 
