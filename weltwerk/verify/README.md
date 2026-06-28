@@ -399,6 +399,15 @@ Four general modules lifted out of the studies above; each reuses the honesty co
   plan's proof is not grounded, so the swap is refused and the running state stays pristine — an unsafe hot-swap
   physically cannot fire. The error raised is **`UngroundedError`** (canonical; there is no `EpistemicTypeError`).
 - **`certificate_compiler.py` — Leap 1 / Branch B (checker). [BUILT, tested]** see Branch B above.
+- **`frontier_gate.py` — Leap 3 (frontier sensor + pivot trigger). [BUILT, tested 7/7]** A `FrontierGate`
+  reads an `m_novel` estimate + CI (the frontier-expansion multiplier from
+  `experiments/live_world_kernel/generativity_estimator.py`) and emits a control decision: CI entirely above 1
+  → `EXPLOIT`; entirely below 1 → `PIVOT` (switch to an orthogonal dimension); crossing 1 → `HOLD`
+  (underdetermined). *Honest grading:* the **sensor + trigger are DEMONSTRATED**; "escape" is **PLAUSIBLE and
+  BOUNDED** — pivoting recovers `m_novel` above 1 but each basin re-depletes and dimensions are finite, so the
+  gate buys *bounded multi-basin* exploration that **saturates** (consistent with PO-5), not unbounded escape.
+  The planted model's numbers are illustrative; we do **not** claim an inevitable subcritical collapse or a
+  fixed `m_novel ≈ 0.53`. `estimate ≠ property`; `pivot ≠ guaranteed-escape`.
 
 ## Self-upgrading rules — the agentic realization layer (scoped)
 
