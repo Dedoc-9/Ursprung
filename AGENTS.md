@@ -447,6 +447,59 @@ overdetermined safe plan). It adds semantics, not authority (`engine ≠ semanti
 dependencies; z3 suites skip cleanly without it. The discipline is identical to the renderer's: `integrity ≠
 truth`, validity-not-outcome tests, every claim carries its grade and its boundary.
 
+### Building standalone products (how an LLM should use these tools commercially)
+
+The weltwerk tools are a **specification + reference implementation + measurement discipline**, not a turnkey
+product — exactly like the renderer (`Use cases` below). A product is an **adaptation**: the LLM wires its own
+domain behind the contracts, keeps the metrology, and ships each claim with its boundary. The *method* is fixed
+and binds the LLM the same way it binds the code: enter through `orchestrator.default_orchestrator()`; make every
+answer an `AnalysisResult`; gate every action through `enact`/`Grounded[T]`; grade every claim on the ladder;
+run **validity-not-outcome** tests (assert the apparatus is sound, never that a hoped result occurred); and
+**never collapse a panel of witnesses to a scalar**. The non-negotiable separators travel with the product:
+`integrity ≠ truth`, `residual-CMI ≠ channel`, `proves-the-procedure ≠ proves-the-phenomenon`, `grounded ≠ true`,
+`tested ≠ safe`, `measured ≠ guaranteed`. A product that drops them is the inflation this repo exists to detect.
+
+Concrete product patterns (tool · law/method · how the LLM builds it · the metrology it reports · its boundary):
+
+- **Signal-vs-confounder-leak SaaS** (`residual_channel`). *Method:* confounder-conditioned CMI + within-Z
+  shuffle null + mis-specification stress. *Build:* map the domain to `(X, Y, Z=confounder)` — predictive
+  maintenance (sensor X,Y / control Z), adtech attribution (exposure X / conversion Y / organic-intent Z),
+  fraud, quant strategy-validation. *Reports:* `I(X;Y)` vs `I(X;Y|Z)` vs the null, mis-spec stability, and the
+  enum `HEALTHY / RESIDUAL_MISSPEC_STABLE / FRAGILE` — never a bare "fraud" / "alpha". *Boundary:* the complete
+  `Z` is unattainable (a surviving residual is a *candidate*, not proof), and the result is window-relative
+  (nonstationarity). `weltwerk/halvorsen/telemetry_audit.py` is the worked template.
+- **Claims-integrity / compliance layer** (`claim_ledger` + `AnalysisResult`). *Method:* the no-inflation rule
+  (`evidence ≤ maturity`) made executable. *Build:* force every generated report / marketing or medical / ESG /
+  scientific claim through `Claim` (grade + mechanism + does-not-show + falsifier); `audit_ledger` refuses
+  ungraded / unfalsifiable / boundary-free claims. *Reports:* `honest`, the ladder counts, and the violation
+  list. *Boundary:* it checks the **form** of a claim (graded + falsifiable + bounded), not its truth.
+- **Grounded-action gate for autonomous agents / code-gen / RPA** (`epistemic_types` + `enforced_transition` +
+  `orchestrator.enact`). *Method:* judge → compiler — an action executes only if `Grounded` by a verifier proof.
+  *Build:* put `require_grounded` in front of the side-effecting applier (trade, deploy, write, actuate); the
+  generator must supply a proof or get `UngroundedError` before any effect. *Reports:* grounded/refused counts +
+  each proof's label, atomically. *Boundary:* **only as strong as its proof oracle** — it blocks what a verifier
+  can ground/refute, not arbitrary "bad" output.
+- **Verified-config / policy checker** (`certificate_compiler`, the kernel). *Method:* model checking with honest
+  grading. *Build:* encode a config / access-policy / feature-flag / rule-set as a transition system; `CLOSED` =
+  proof no bad state is reachable over the alphabet (+ a re-checkable certificate), `VIOLATED` = a replayable
+  counterexample. *Reports:* `CLOSED / BOUNDED / VIOLATED` + certificate or witness. *Boundary:* proof is over
+  the chosen alphabet, not the world (`BOUNDED ≠ proof`).
+- **Edge safety-gate library** (`safety_gate` / trapping certificate). *Method:* `verify ≠ simulate` — an O(1)
+  certified-region membership replaces forward simulation. *Build:* ship the gate fail-closed; it permits a move
+  only under a *sound* certificate. *Reports:* permit/refuse + the certificate's soundness. *Boundary:* the
+  guarantee needs a sound certificate (hard cases are OPEN — `unsound-certificate ≠ safety`).
+- **Frontier-health monitor** (`frontier_gate`). *Method:* `m_novel` depletion → PIVOT. *Build:* feed a coverage
+  / novelty / exploration multiplier + CI (fuzzing coverage, search, RNG health, A/B exploration). *Reports:*
+  the regime (SUPER/NEAR/SUB) + the pivot signal. *Boundary:* bounded, `estimate ≠ property`,
+  `pivot ≠ guaranteed-escape`.
+
+**The adoption gap (state it in every product).** None of these run for a stranger out of the box: the LLM must
+(a) supply its own domain adapter (its `(X,Y,Z)`, its transition system, its `Claim` set, its proof oracle);
+(b) lower a real backend where one is stubbed; (c) re-run the relevant validity tests on real data. Until then
+the constructed numbers are illustrative; the *discipline and the interfaces* are what transfer. The defensible
+one-line for any of them: *a verification/measurement product that reports what it found, by which estimator
+class, with what coverage boundary — and refuses to act, grade, or claim beyond it.*
+
 ## Performance work
 
 Prefer measurable experiments: **baseline → change → replay → benchmark → compare**. Preserve failed
