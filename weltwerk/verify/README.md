@@ -389,10 +389,15 @@ Four general modules lifted out of the studies above; each reuses the honesty co
   (ungrounded candidates never become `Grounded`). Proof adapters wrap existing verifier outputs **unchanged**:
   `EngineClosed` (`ReachabilityCertificate.status == "CLOSED"`), `SupportedClaim` (grade ∈ {ESTABLISHED,
   MEASURED}), `ChannelEstablished`/`NoHiddenChannel` (a `residual_channel` decision). *Accurate scope:* the
-  proof is a `Grounding` object, **not** an `AnalysisResult` (that is only the `as_analysis` projection); there
-  is **no p-value gate**; and the gate is a **standalone decorator — not yet wired into `TransitionRelation`**
-  (wiring appliers behind it is the next step). `grounded ≠ true`; the type forbids ungrounded synthesis, it
-  creates no authority.
+  proof is a `Grounding` object, **not** an `AnalysisResult` (that is only the `as_analysis` projection), and
+  there is **no p-value gate**. `grounded ≠ true`; the type forbids ungrounded synthesis, it creates no authority.
+- **`enforced_transition.py` — Leap 2 wired in. [BUILT, tested 6/6]** `EnforcedTransitionSystem` whose only
+  mutation path (`apply`) is guarded by `require_grounded("action")`: a raw primitive or an ungrounded value is
+  refused **before the body runs**, so `state` and `transition_count` are unchanged on refusal (atomic by
+  construction — the check precedes the effect, nothing to roll back). `propose()` is the synthesis→enforcement
+  pipe; `commit_log` is the committed trajectory. The demo wires the frozen swap checker: a `VIOLATED` hot-swap
+  plan's proof is not grounded, so the swap is refused and the running state stays pristine — an unsafe hot-swap
+  physically cannot fire. The error raised is **`UngroundedError`** (canonical; there is no `EpistemicTypeError`).
 - **`certificate_compiler.py` — Leap 1 / Branch B (checker). [BUILT, tested]** see Branch B above.
 
 ## Self-upgrading rules — the agentic realization layer (scoped)
