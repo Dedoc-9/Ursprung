@@ -428,6 +428,12 @@ o.panel([("frontier_gate", {"m_novel": m, "ci": ci}),  # → {name: AnalysisResu
 o.enact(action_value, proof, apply_fn)                 # runs only if Grounded; else UngroundedError
 ```
 
+**The reference backend client is `weltwerk/stream_auditor/`** (profile **C**, the Causal Stream Auditor): read
+it for how to consume the chokepoints on a live stream — `OrchestratedBackend` (the base profiles A/B inherit),
+per-window `AnalysisResult` witnesses reported side by side (no fused scalar), `ChannelEstablished`-gated
+`promote()` via `enact` (HEALTHY/MISSPEC refused atomically), and `frontier_gate` coverage-attrition → bounded
+PIVOT. Build a new backend by subclassing `OrchestratedBackend`, never by bypassing the gates.
+
 **Hot-swap (PO-11/12, `weltwerk/verify/hotswap/`).** Live program hot-swapping as a *verified bounded search*
 behind the frozen contracts: a stream-preservation invariant + certificate (`π∘μ=π`), candidate-ranking swap
 planning as equal-budget search-acceleration, and a built-in falsifier (deferred-race flip@2K, race@1,
@@ -439,6 +445,11 @@ overdetermined safe plan). It adds semantics, not authority (`engine ≠ semanti
   `determinism ≠ reproducibility` ghost; differential-on-measures-not-paths; a **telemetry anomaly engine** (fault
   vs sensor-misspec via `residual_channel`); and a **safety-gate mechanism** (fail-closed without a sound
   certificate — the sound certificate is OPEN).
+- `weltwerk/stream_auditor/` — the **first true backend client** of the orchestrator (profile C): a
+  domain-agnostic Causal Stream Auditor that windows a stream, audits each window via `residual_channel`
+  (HEALTHY / CHANNEL / MISSPEC), grades it on `claim_ledger`, tracks coverage attrition via `frontier_gate`, and
+  gates `promote()` behind the Grounded chokepoint — only a confirmed CHANNEL acts; HEALTHY/MISSPEC are refused
+  atomically. The scaffolding profiles A (SMT) and B (linter) inherit.
 - `weltwerk/verify/snowflake/` — the "does morphology encode a language?" audit: every information-theoretic
   representation reduces to the field-driven growth law; the decisive test is field-conditioned inter-branch CMI
   (predicted 0). The worked example that produced the reusable firewall.

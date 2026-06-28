@@ -147,8 +147,20 @@ def audit(samples_xyz, *, reps: int = 200, seed: int = 0, k_sigma: float = 4.0,
     decision = "RESIDUAL_DEPENDENCE" if detected else "CONSISTENT_WITH_NULL"
     misspec_cmis: Tuple = ()
     if detected and misspec_fns:
-        misspec_cmis = tuple(conditional_mutual_information(fn(samples_xyz)) for fn in misspec_fns)
-        stable = all(c > max(mean + k_sigma * std, abs_floor) for c in misspec_cmis)
+        cmis, stable = [], True
+        for fn in misspec_fns:
+            ms = fn(samples_xyz)
+            c = conditional_mutual_information(ms)
+            # Each re-conditioning has its OWN finite-sample MI bias floor (finer strata ⇒ larger bias), so it
+            # must be compared to ITS OWN shuffle null — not to the base null. Comparing a fine (Z,W) re-cond to
+            # the coarse base floor falsely reads STABLE on a missing-confounder artifact. `bias ≠ signal`.
+            mnull = shuffle_null_dist(ms, reps=max(20, reps // 2), seed=seed)
+            mmean = sum(mnull) / len(mnull)
+            mstd = (sum((v - mmean) ** 2 for v in mnull) / len(mnull)) ** 0.5
+            cmis.append(c)
+            if not (c > max(mmean + k_sigma * mstd, mmean + abs_floor)):
+                stable = False
+        misspec_cmis = tuple(cmis)
         decision = "RESIDUAL_MISSPEC_STABLE" if stable else "RESIDUAL_MISSPEC_FRAGILE"
     return ResidualChannelResult(len(samples_xyz), mi, cmi, mean, std, nmax, z, decision, misspec_cmis)
 
