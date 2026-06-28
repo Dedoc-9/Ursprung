@@ -64,3 +64,63 @@ cd "weltwerk\halvorsen"; python test_flow.py; python test_trapping_certificate.p
 Pure-stdlib (no numpy/z3). `invariant_audit` and `coverage_gate` run integration loops (tens of seconds).
 Numerical results are MEASURED with our own integrator and audited for integrator-robustness — never cited as
 truth. `integrator ≠ flow`; `trajectory ≠ attractor`; `integrity ≠ truth`.
+
+## Robust real-world adaptation patterns
+
+These are **adaptation patterns**, not turnkey features: the repo supplies *verified primitives* (exact
+invariants, the residual-channel firewall, the frontier gate, the epistemic gate, the trapping checker); wiring
+them to a live domain is the integrator's work, and **each pattern ships with its boundary**. API names below
+are exact. The Halvorsen world is the worked example; the recipe at the end generalizes to any flow `f`.
+
+**1. Validation testbed for high-throughput solvers.** Use the exact invariants as an un-fakable anchor for a
+new (GPU/ML) ODE/PDE integrator.
+*Use:* `flow.divergence(a)` is the exact target `-3a`; `invariant_audit.dissipation_numeric()`,
+`lyapunov_max()` (sign), and the bounding box are the candidate's **invariant measures** (never compare
+trajectories — chaos forbids it). Gate the deploy with `epistemic_types.require_grounded`: build a `Grounding`
+adapter that `is_grounded()` iff `|measured_dissipation − (−3a)| < tol` **and** the λ-sign matches; the deploy
+function raises `UngroundedError` otherwise.
+*Boundary:* **necessary, not sufficient** — a solver can match dissipation/symmetry and still distort the
+attractor. `agreement-on-measure ≠ correctness`.
+
+**2. Grounding generative-agent output.** Force a code/trajectory synthesizer through the epistemic gate so it
+cannot emit an ungrounded path.
+*Use:* `epistemic_types.Grounded.ground(trajectory, proof)` + `@require_grounded("trajectory")` on the applier;
+the proof is a verifier output (e.g. an `EngineClosed`-style adapter, or a custom `InTrappingRegion` adapter
+built on `trapping_certificate`). A blind guess never constructs `Grounded` → `UngroundedError` before runtime.
+*Boundary:* the strong "inside a certified region" proof needs a **valid** certificate (see #5); absent one, the
+honest proof is "inside the **measured** bounding box" (MEASURED, not certified). `grounded ≠ true`.
+
+**3. Telemetry anomaly / hardware-degradation detection — the best-fit reuse.** Distinguish genuine component
+wear from sensor noise.
+*Use:* `residual_channel.audit(samples_xyz, misspec_fns=(coarsen_Z, …))` with sensor streams as `X,Y` and the
+control/operating state as the confounder `Z`. `CONSISTENT_WITH_NULL` ⇒ healthy (dependence explained by the
+control); `RESIDUAL_MISSPEC_STABLE` ⇒ a real unmodeled inter-coordinate channel (a candidate fault, because it
+**survives Z-coarsening**); `RESIDUAL_MISSPEC_FRAGILE` ⇒ likely mis-specification/noise.
+*Boundary:* `residual-CMI ≠ channel` until mis-spec-stable; requires the **complete modeled** `Z` (else
+confounder leakage); discretization is a model choice (Arbitrary-Boundary Law).
+
+**4. Chaos-RNG / entropy-pool degeneracy monitor.** Watch a chaotic bitstream generator for periodic windows or
+precision collapse.
+*Use:* `coverage_gate.coverage_windows()` + `frontier_gate` — a premature drop of the box-discovery multiplier
+into `SUBCRITICAL` flags a collapse and emits a `PIVOT` (reseed/flush) signal.
+*Boundary:* this detects **gross degeneracy only**, and is **necessary-not-sufficient** for entropy — it is not
+a cryptographic guarantee and does not replace standard suites (e.g. NIST SP 800-22). Note also that chaotic-map
+RNGs are generally not recommended for cryptographic use; treat this purely as a degeneracy/health monitor.
+
+**5. Edge safety gate for nonlinear control.** A cheap boundary check instead of forward trajectory simulation.
+*Use:* `trapping_certificate.certify_ball(field, a, R)` — if a Lyapunov `V` gives `dV/dt < 0` outside radius R,
+membership is a single boundary evaluation (verify-cheaper-than-simulate), so an edge controller checks "am I
+inside the certified region?" without running a 100-step look-ahead.
+*Boundary (critical):* this guarantee holds **only with a sound certificate**. For Halvorsen the quadratic-V
+ball is **REJECTED** (`certify_ball` returns `certified=False` with a witness) — so on this system you must
+**first obtain a valid certificate** (higher-degree V via SOS / interval arithmetic — **OPEN**). A rejected or
+unverified `V` gives **no** safety; never deploy on its strength. `unsound-certificate ≠ safety`.
+
+### Wiring a new domain (the recipe)
+
+1. Implement the field `f` (and integrators). 2. Establish the **exact** invariants (divergence, symmetries) —
+the DEMONSTRATED floor. 3. Run `invariant_audit`-style measures (Lyapunov sign, dissipation, bbox) with
+integrator-robustness + the FP-ghost classification. 4. *Attempt* a `trapping_certificate` — and accept its
+rejection honestly. 5. Grade every claim with `claim_ledger`. 6. Gate any side-effecting applier with
+`require_grounded`; route "hidden structure" suspicions to `residual_channel`. Each step states what it does
+**not** show. `measure ≠ cite-authority`; `integrity ≠ truth`.
