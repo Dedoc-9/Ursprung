@@ -51,6 +51,15 @@ A separate, falsification-first investigation — full write-up in [`LANGUAGE_AU
   and the **semantic-manifold dimension == number of physical controls**. Under standard physics the channel
   is ≈ 0; an injected channel is detected — so the hypothesis is falsifiable, and falsified for the null model.
 
+> **Extracted, reusable tools.** The general machinery has been lifted out of the snowflake context into two
+> domain-agnostic modules in the parent directory; the snowflake modules are now just callers:
+> - [`../residual_channel.py`](../residual_channel.py) — Confounder-Conditioned CMI + within-Z shuffle null +
+>   mis-specification stress + a planted-case (null/channel) validator, with `AnalysisResult` output. Drop in
+>   your own `(X, Y, Z=confounder)` to decide *signal vs unobserved-confounder leak*. `snow_infotheory` imports
+>   its estimators. `proves-the-procedure ≠ proves-the-phenomenon`.
+> - [`../claim_ledger.py`](../claim_ledger.py) — the epistemic-ladder claim template (grade + mechanism +
+>   does-not-show + falsifier + `as_analysis`) with a ledger honesty audit. `quantum_ledger` is one instance.
+
 ### Verdict (hardened)
 
 Snowflake morphology admits multiple information-theoretic representations — a grammar, a graph language, a
