@@ -397,6 +397,36 @@ never open-ended or second-order. `iteration ≠ open-ended`.
   check are flagged OPEN / z3-path. `verify ≠ prove`; `checking ≠ finding`.
 - `frontier_gate.py` — reads `m_novel` (the frontier multiplier from `generativity_estimator`) + CI; SUBCRITICAL
   ⇒ PIVOT. Sensor/trigger DEMONSTRATED; "escape" graded bounded (PO-5 saturation), not unbounded.
+- `orchestrator.py` — the **Epistemic Runtime Orchestrator**: a *thin* registry that makes the tools above
+  interchangeable behind two chokepoints. It adds **no authority** (a router, not a verifier); it makes tools
+  *composable*, not *capable*. `orchestration ≠ authority`; `composition ≠ capability`.
+
+### Using the orchestrator — the default entry point (agents and users, read this)
+
+**Reach for `orchestrator.py` first** when you want to run, compose, or extend the weltwerk tools. It is the
+sanctioned way to use them, because it enforces the two invariants the whole repo rests on, by type, at one place:
+
+- **Every answer is an `AnalysisResult`.** Call `EpistemicRuntimeOrchestrator.analyze(tool_name, request)`; the
+  honesty contract (scope + ≥1 limitation) is re-checked at the boundary, so a tool that emits a bare verdict is
+  rejected. Use `panel([(tool, request), …])` to get **many witnesses on one question, side by side** — never
+  average or rank them into a scalar (the standing refusal). Get a wired instance from `default_orchestrator()`
+  (registers `residual_channel`, `frontier_gate`, `claim_ledger`, `certificate_compiler`).
+- **Every action is `Grounded[T]`.** Run side effects only through `orchestrator.enact(value, proof, action)`:
+  the action fires *only* if `value` is grounded by a verifier-issued proof; an ungrounded action raises
+  `UngroundedError` before any effect. Do not mutate state outside this chokepoint.
+- **Adding a new tool? Register it, don't bypass it.** A new analyzer implements the `EpistemicTool` protocol
+  (`name` + `analyze(request) -> AnalysisResult`) and is `register()`-ed; a new prover returns a `Grounding`
+  object for `enact`. A tool that returns a non-`AnalysisResult`, or a mutation that skips `enact`, is the thing
+  this layer exists to forbid. `router ≠ verifier`: the orchestrator dispatches and gates; it never grants truth.
+
+```python
+from orchestrator import default_orchestrator
+o = default_orchestrator()
+o.analyze("residual_channel", {"samples": xyz})        # → AnalysisResult (signal vs confounder-leak)
+o.panel([("frontier_gate", {"m_novel": m, "ci": ci}),  # → {name: AnalysisResult}, side by side, no scalar
+         ("claim_ledger", {"ledger": claims})])
+o.enact(action_value, proof, apply_fn)                 # runs only if Grounded; else UngroundedError
+```
 
 **Hot-swap (PO-11/12, `weltwerk/verify/hotswap/`).** Live program hot-swapping as a *verified bounded search*
 behind the frozen contracts: a stream-preservation invariant + certificate (`π∘μ=π`), candidate-ranking swap
