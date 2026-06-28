@@ -408,6 +408,13 @@ Four general modules lifted out of the studies above; each reuses the honesty co
   gate buys *bounded multi-basin* exploration that **saturates** (consistent with PO-5), not unbounded escape.
   The planted model's numbers are illustrative; we do **not** claim an inevitable subcritical collapse or a
   fixed `m_novel ≈ 0.53`. `estimate ≠ property`; `pivot ≠ guaranteed-escape`.
+- **`orchestrator.py` — the Epistemic Runtime Orchestrator. [BUILT, tested 7/7]** A *thin* registry that makes
+  the tools above interchangeable behind two chokepoints: `analyze(tool, request)` always returns an
+  `AnalysisResult` (the honesty contract, re-checked at the boundary) and `enact(value, proof, action)` runs a
+  side effect only if the value is `Grounded` by a verifier proof. `panel()` returns many witnesses on one
+  request **side by side — never an aggregate or scalar**. It adds **no new authority** (a router, not a
+  verifier) and makes the tools more *composable*, not more *capable*. `orchestration ≠ authority`;
+  `composition ≠ capability`.
 
 ## Self-upgrading rules — the agentic realization layer (scoped)
 
