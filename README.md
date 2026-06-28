@@ -3,7 +3,8 @@
 A deterministic high-fidelity renderer that treats rendering as a **perception layer over an authoritative
 world model** — and, underneath the renderer, a **provenance-centered runtime that refuses to let state outlive
 its explanation.** The renderer is the *first client* of that runtime, not the whole of it: a simulation, an
-agent, or a world generator are equally valid clients. Ursprung consumes the sealed `Reality_Engine`
+agent, or a world generator are equally valid clients — and the **`weltwerk/` verification kernel** (see
+*weltwerk* below) is the runtime's most developed client today, the repository's current center of gravity. Ursprung consumes the sealed `Reality_Engine`
 (Chronicle/Dentatus) workbench read-only as its verification substrate; the workbench supplies the deterministic
 kernel and the integrity discipline, and Ursprung is the renderer projected off the committed trajectory.
 
@@ -62,6 +63,53 @@ future failure cost, not present visual complexity.**
 > two measurable branching means — `m_offspring` (reproduction) and `m_novel` (frontier expansion) — estimated
 > under an external verification regime. Every instrument self-tests; the durable artifact is the apparatus, not a
 > verdict. **No claim here exceeds what a runnable bench shows.**
+
+## weltwerk — the verification kernel (current center of gravity)
+
+[`weltwerk/`](weltwerk/) is where the repository's active work now lives: a **verification kernel** with
+interchangeable proof engines, a Proof-Obligations ledger, an epistemic-runtime layer, and applications — the
+most developed realization of the ERE discipline described above, turned on *world-model verification* rather
+than rendering. Same no-inflation rule, validity-not-outcome self-tests, falsifiers, and separators. Pure-stdlib
+core; z3 optional and confined to `solver_adapter*`. Each subfolder has its own README with exact run commands.
+
+- **The kernel ([`weltwerk/verify/`](weltwerk/verify/)).** A model checker that became a verification kernel:
+  `TransitionRelation` (semantics) → `VerificationEngine` (search) → `VerificationResult` (contract); engines
+  plug in behind the result contract (`engine ≠ semantics`). An explicit-state BFS reference engine plus symbolic
+  SMT engines (z3, approaches A and a CANDIDATE B). Grading is honest and mechanical: **CLOSED** = proof over the
+  chosen action alphabet + transition function (carries a re-derivable `ReachabilityCertificate`); **BOUNDED** ≠
+  proof; **VIOLATED** ships a replayable witness `Trace`. The `AnalysisResult` honesty contract cannot be
+  constructed without a scope + ≥1 `Limitation`; `diagnose` / `counterfactual` / `repair` all project through it.
+- **The Proof-Obligations ledger** ([`PROOF_OBLIGATIONS.md`](weltwerk/verify/PROOF_OBLIGATIONS.md) /
+  [`EVIDENCE_GRAPH.md`](weltwerk/verify/EVIDENCE_GRAPH.md)). The kernel advances by *closing obligations*, not
+  adding features — each converts an intuition-terminating chain into executable evidence. **PO-1 … PO-10 are all
+  built and run-green**: oracle soundness (`agreement ≠ soundness`), certificate independence, boundary
+  immutability (the map cannot move the judge), counterfactual accuracy vs an exhaustive gold, repair
+  grade-stability (a `RESTORED_WITHIN_BOUND` shown to flip at 2K; `restores-(M,E,K) ≠ safe`), Approach-B
+  differential over a generated distribution, abstraction admissibility (`abstract-CLOSED ⇒ exact-CLOSED`),
+  honesty-contract universality, and the two RSI bounds.
+- **The RSI result (bounded on both sides).** A deflationary, executable answer to the same recursion question
+  the renderer arc raised with `m_novel`: PO-6 shows the natural restore task is **one-shot** (a single linear
+  policy wins at budget B=1), and PO-5 shows that on a *constructed not-one-shot* (XOR-shaped) task an iterated
+  loop delivers **bounded, saturating** accrual while one-shot + 4×-data stay at chance. Recursive improvement
+  here is **real but bounded, task-gated, first-order** — never open-ended or second-order. `iteration ≠ open-ended`.
+- **The epistemic-runtime layer (judge → compiler).** Reusable, domain-agnostic modules: `residual_channel.py`
+  (the confounder-conditioned-MI firewall — `audit(X,Y,Z)` decides signal-vs-confounder-leak; `residual-CMI ≠
+  channel`; `proves-the-procedure ≠ proves-the-phenomenon`); `claim_ledger.py` (the epistemic ladder as an
+  enforced `Claim` template; refuses ungraded/unfalsifiable/boundary-free claims); `epistemic_types.py` +
+  `enforced_transition.py` (`Grounded[T]` cannot be constructed without a verifier proof; `require_grounded`
+  refuses a raw/ungrounded state mutation *before* any effect — the no-inflation rule moved into the type system;
+  `grounded ≠ true`); `certificate_compiler.py` (a no-search 1-step inductive `ConstraintCertificate`;
+  `verify ≠ prove`); `frontier_gate.py` (reads `m_novel` → PIVOT on subcriticality; escape graded bounded).
+- **Hot-swap ([`weltwerk/verify/hotswap/`](weltwerk/verify/hotswap/), PO-11/12).** Live program hot-swapping as
+  a verified bounded search behind the frozen contracts: a stream-preservation certificate (`π∘μ=π`),
+  candidate-ranking swap planning at equal budget, and a built-in falsifier (deferred-race flip@2K, race@1).
+- **Applications.** [`weltwerk/halvorsen/`](weltwerk/halvorsen/) — the Halvorsen chaotic attractor: exact-invariant
+  floor (`∇·f=-3a`, C₃ symmetry), a trapping certificate *honestly rejected* for a quadratic V
+  (`empirical ≠ certified boundedness`), the FP `determinism ≠ reproducibility` ghost, differential-on-measures-
+  not-paths, a telemetry anomaly engine (fault vs sensor-misspec) and a fail-closed safety-gate mechanism.
+  [`weltwerk/verify/snowflake/`](weltwerk/verify/snowflake/) — the "does morphology encode a language?" audit:
+  every information-theoretic representation reduces to the field-driven growth law; the decisive test is
+  field-conditioned inter-branch CMI (predicted 0) — the worked example that produced the reusable firewall.
 
 ## What is proven, what you get, and where it goes next
 
