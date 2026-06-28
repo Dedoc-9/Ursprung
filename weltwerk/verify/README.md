@@ -361,13 +361,39 @@ anything else is a convenience layer that belongs elsewhere.
   (`imperative kernel → SMT encoding → symbolic fixpoint / k-induction`) for reachability that scales past
   enumeration. This was risky before and is safe now: the **differential harness** means a second semantics
   is not "we wrote another semantics" but "we wrote another semantics *and every world checks both*."
-- **Branch B — stronger certificates (`ConstraintCertificate`).** Move from the explicit certificate
-  ("here is the reachable set I computed", as expensive to check as to produce) toward a *compact reason*
-  the bad set is unreachable (e.g. an inductive invariant), with an independent checker. This is where the
-  verify-cheaper-than-prove asymmetry actually appears. `bounded-contradiction-explanation ≠ proof-of-impossibility`.
+- **Branch B — stronger certificates (`ConstraintCertificate`). [BUILT — checker only]** `certificate_compiler.py`
+  + `test_certificate_compiler.py`: a compact predicate invariant with a no-search **1-step inductiveness**
+  checker (C1 `Init ⊆ Inv`; C2 `Inv ∧ T ⊆ Inv′`; C3 `Inv ⊆ Safe` ⇒ `reachable ⊆ Safe`), an independent
+  `cross_check` (reachable ⊆ Inv) oracle, and an unsat-core-style `minimal_reason` (failing condition + witness).
+  Honest grading: the **checker is DEMONSTRATED**; **auto-deriving** `Inv` is **PLAUSIBLE-BUT-UNVERIFIED** (a
+  user supplies it — `checking ≠ finding`); the **size-independent** asymmetry (one solver query for C2 over the
+  transition *rule*, independent of |reachable|) is **DEMONSTRATED-ACHIEVABLE via the optional z3 path**, not in
+  the pure-stdlib file (there C2/C3 scan a supplied finite universe, so cost ≈ BFS — the same caveat the explicit
+  certificate carries). `verify ≠ prove`; `bounded-contradiction-explanation ≠ proof-of-impossibility`.
 - **Non-code, and probably first:** freeze the public interfaces, write the architecture doc from the final
   state, and add an end-to-end example (`ghost → diagnosis → counterfactual → repair candidate → human
   decision`). The code has outgrown the original roadmap; consolidating beats piling on features.
+
+## Epistemic runtime layer (reusable, domain-agnostic)
+
+Four general modules lifted out of the studies above; each reuses the honesty contract and adds no authority.
+
+- **`residual_channel.py`** — confounder-conditioned dependence audit: `I(X;Y|Z)` + within-Z shuffle null +
+  mis-specification stress + planted-case validator; decides signal-vs-confounder-leak. `residual-CMI ≠ channel`.
+- **`claim_ledger.py`** — the epistemic-ladder `Claim` template (grade + mechanism + does-not-show + falsifier
+  + `as_analysis`) with `audit_ledger` refusing ungraded/unfalsifiable/boundary-free claims.
+- **`epistemic_types.py` — Leap 2 (judge → compiler). [BUILT, tested 6/6]** `Grounded[T]` is a value that
+  cannot be constructed without a `Grounding` proof — `__post_init__` raises **`UngroundedError`** on any path
+  (factory or direct; no bypass). `require_grounded("action")` is a gate that refuses to run a function on a
+  raw/ungrounded argument **before the body executes**; `synthesize_gate` is the generative loop as a compiler
+  (ungrounded candidates never become `Grounded`). Proof adapters wrap existing verifier outputs **unchanged**:
+  `EngineClosed` (`ReachabilityCertificate.status == "CLOSED"`), `SupportedClaim` (grade ∈ {ESTABLISHED,
+  MEASURED}), `ChannelEstablished`/`NoHiddenChannel` (a `residual_channel` decision). *Accurate scope:* the
+  proof is a `Grounding` object, **not** an `AnalysisResult` (that is only the `as_analysis` projection); there
+  is **no p-value gate**; and the gate is a **standalone decorator — not yet wired into `TransitionRelation`**
+  (wiring appliers behind it is the next step). `grounded ≠ true`; the type forbids ungrounded synthesis, it
+  creates no authority.
+- **`certificate_compiler.py` — Leap 1 / Branch B (checker). [BUILT, tested]** see Branch B above.
 
 ## Self-upgrading rules — the agentic realization layer (scoped)
 
