@@ -24,7 +24,9 @@ The flow (cyclically symmetric, `a ≈ 1.4`):
 | `differential` / oracle (PO-4) | differential on **invariant measures** (λ-sign, dissipation, bbox) — *not* paths |
 | ghost taxonomy | FP run-to-run divergence = sensitive-dependence (precision), rate ≈ λ_max |
 | `claim_ledger` | `attractor_ledger.py` grades every claim |
-| `frontier_gate` (m_novel) | box-coverage discovery rate depletes ⇒ gate reads SUBCRITICAL |
+| `frontier_gate` (m_novel) | `coverage_gate.py`: box-coverage discovery rate depletes ⇒ gate reads SUBCRITICAL |
+| `residual_channel` (firewall) | `telemetry_audit.py`: fault vs sensor-misspec via `I(X;Y\|Z)` vs `I(X;Y\|Z,W)` |
+| `epistemic_types` / `require_grounded` | `safety_gate.py`: O(1) certified-region gate; fail-closed when unsound |
 
 ## What is exactly true (DEMONSTRATED floor)
 
@@ -53,17 +55,31 @@ information beyond the flow" — **SPECULATIVE**, routed to the `residual_channe
 
 ## Files & run
 
-`flow.py` · `trapping_certificate.py` · `invariant_audit.py` · `attractor_ledger.py` · `coverage_gate.py`
-(+ a test per module). Reuses `../verify/claim_ledger.py` and `../verify/frontier_gate.py` unchanged.
+Seven modules, each with a test (`test_<module>.py`):
+
+| module | role | grade |
+|---|---|---|
+| `flow.py` | the flow + exact invariants (`divergence`=-3a, C₃ equivariance) + RK4/Euler integrators | DEMONSTRATED (algebra) + MEASURED (orbit) |
+| `trapping_certificate.py` | continuous inductive boundedness certificate; quadratic-V **rejected** for Halvorsen, certified for a toy | DEMONSTRATED (checker) · cert OPEN |
+| `invariant_audit.py` | Lyapunov, dissipation, FP `determinism≠reproducibility` ghost, differential-on-measures | MEASURED |
+| `attractor_ledger.py` | the claim ladder (H1–H6) via `claim_ledger` | — |
+| `coverage_gate.py` | box-coverage saturation read by `frontier_gate` | MEASURED |
+| `telemetry_audit.py` | fault vs sensor-misspec via `residual_channel` (`I(X;Y\|Z)` vs `I(X;Y\|Z,W)`) | DEMONSTRATED (procedure) |
+| `safety_gate.py` | Part A: O(1) certified-region gate (`require_grounded`), fail-closed. Part B (sound cert): OPEN | DEMONSTRATED (mechanism) · cert OPEN |
+
+Reuses, unchanged, from `../verify/`: `claim_ledger.py`, `frontier_gate.py`, `residual_channel.py`,
+`epistemic_types.py`, plus the `artifacts` honesty contract.
 
 ```powershell
-cd "weltwerk\halvorsen"; python flow.py; python trapping_certificate.py; python invariant_audit.py; python attractor_ledger.py; python coverage_gate.py
-cd "weltwerk\halvorsen"; python test_flow.py; python test_trapping_certificate.py; python test_invariant_audit.py; python test_attractor_ledger.py; python test_coverage_gate.py
+# demos
+cd "weltwerk\halvorsen"; python flow.py; python trapping_certificate.py; python invariant_audit.py; python attractor_ledger.py; python coverage_gate.py; python telemetry_audit.py; python safety_gate.py
+# tests
+cd "weltwerk\halvorsen"; python test_flow.py; python test_trapping_certificate.py; python test_invariant_audit.py; python test_attractor_ledger.py; python test_coverage_gate.py; python test_telemetry_audit.py; python test_safety_gate.py
 ```
 
-Pure-stdlib (no numpy/z3). `invariant_audit` and `coverage_gate` run integration loops (tens of seconds).
-Numerical results are MEASURED with our own integrator and audited for integrator-robustness — never cited as
-truth. `integrator ≠ flow`; `trajectory ≠ attractor`; `integrity ≠ truth`.
+Pure-stdlib (no numpy/z3). `invariant_audit`, `coverage_gate`, and `telemetry_audit` run integration / counting
+loops (tens of seconds). Numerical results are MEASURED with our own integrator and audited for integrator-
+robustness — never cited as truth. `integrator ≠ flow`; `trajectory ≠ attractor`; `integrity ≠ truth`.
 
 ## Robust real-world adaptation patterns
 
