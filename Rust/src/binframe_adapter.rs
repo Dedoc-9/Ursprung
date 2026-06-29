@@ -128,6 +128,25 @@ pub const SCHEMA_ABI: Schema = Schema {
     ],
 };
 
+/// **Schema D — stratified CMI-firewall samples (Gateway L3 ingestion).** One record = one sample of the
+/// forbidden-coupling audit's channels: `x` (the diagnostic / source), `y` (the future dynamics / target), `z0`
+/// (a legitimate determinant of `y` — the conditioning set), and `w0` (a candidate confounder for the `(Z,W)`
+/// mis-specification stress). A fixed **32-byte** little-endian record (`<dddd`), so it streams through the
+/// SAME fixed-record reader as TELEM/ABI — no new reader, the blueprint's fixed-buffer invariant holds. The
+/// canonical DVSM coupling is `dim(Z)=dim(W)=1`; a wider coupling is simply a wider *fixed* schema (`z1`, `w1`,
+/// …) and the row→`CouplingInput` assembler reads the extra columns by the `z*`/`w*` name convention. The frame
+/// carries only the SAMPLES; which coupling they test and the audit reps/seed are declared by the caller, never
+/// by the dump. `samples ≠ proof`; `residual-CMI ≠ channel`.
+pub const SCHEMA_CMI: Schema = Schema {
+    name: "dvsm.cmi_sample",
+    fields: &[
+        ("x", FieldType::F64),
+        ("y", FieldType::F64),
+        ("z0", FieldType::F64),
+        ("w0", FieldType::F64),
+    ],
+};
+
 /// One parsed row: `(field name, value)`, with `Pad` fields dropped (mirrors the Python `_`-prefix skip).
 pub type Row = Vec<(&'static str, Field)>;
 

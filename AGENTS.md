@@ -549,7 +549,7 @@ claim, validity-not-outcome tests; Rust ships **compile-unverified** until the u
   (`AIR_GAP_HELD` / `OBSERVER_CONTAMINATION` / `CONFOUNDED_ARTIFACT` / `UNIDENTIFIABLE`) on the validated core —
   quantile binner + (Z,W) mis-spec stress + identifiability decline — wired into the orchestrator as
   `CouplingTool` (`Request::Coupling`). Its planted-regime tests were validated in Python first, then mirrored.
-  `cargo test` in `Rust/` (**65 green**).
+  `cargo test` in `Rust/` (green; re-run for the count).
 
 **`GATEWAY_SPEC.md` (repo root) — the `ursprung-gateway` design, now BUILT (frame path, cargo-green).** A single-binary, fail-closed
 "integrity gateway monitor" collapsing ingestion → skew-remediation → contraction-certifier → CMI-firewall →
@@ -568,10 +568,14 @@ proof-gated claim gate (`commercial_obligations.rs`) over a **single-source mani
 receipt (`audit_live` in Rust; `verify.py` emits the receipt in Python). The **single binary `ursprung-gateway`**
 (`src/bin/gateway.rs`) composes L1→L4 fail-closed and **streams the dump end-to-end** (bounded memory, the
 verdict is decision-identical to the whole-file path — `streaming ≡ whole-file`). CLOSED: `mirror ≠ source`, `static-check ≠ live-execution`
-(both languages), and the single-binary assembly. STILL OPEN / honest boundary: the binary does **not** run
-L2 (contraction certifier) or L3 (CMI firewall) from a frame dump — those need typed inputs (κ matrices;
-`(X,Y,Z)` samples), so the Ω→V / ν→λ air-gaps are reported **non-liftable**; and the perf / mmap benchmark
-(§6) is **UNMEASURED**. `parts ≠ whole`; the verdict is a commitment, not a model-safety certification.
+(both languages), and the single-binary assembly. **L3 now runs from a dump too:** `--schema cmi` ingests
+**Schema D** (fixed 32-byte `x,y,z0,w0` CMI samples) and runs the forbidden-coupling firewall end-to-end
+(`run_coupling_streaming` → `audit_coupling`; OBSERVER_CONTAMINATION fails closed). STILL OPEN / honest
+boundary: **L2 has no Rust validator** — `discrete_certificate` + `kappa_remediation` live only in Python, so a
+κ-block **Schema C** dump would parse but not certify (`parsed ≠ validated`); porting that certifier gates
+Schema C. From a *public telemetry frame* (TELEM/ABI) the Ω→V / ν→λ air-gaps remain **non-liftable** (no κ, no
+`(X,Y,Z)` in the frame); and the perf / mmap benchmark (§6) is **UNMEASURED**. `parts ≠ whole`; the verdict is
+a commitment, not a model-safety certification.
 
 **Lesson this arc earned (binds future passes):** *before porting a Python module to Rust, check `Rust/src/`
 first.* `residual_channel` + the orchestrator were already ported; a duplicate `DVSM/cmi_firewall` crate was

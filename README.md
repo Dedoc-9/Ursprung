@@ -160,7 +160,7 @@ and a `does_not_show` — is [`method.md`](method.md) at the repo root; read it 
   `Result` (an analysis with no scope or no limitation cannot be constructed), and `Grounded<T>` holds its value
   in a private field behind a checked constructor (holding one *is* the witness that it was verified). The Rust
   `residual_channel` is **differential-tested against the Python reference** (MI/CMI value-parity to 1e-9 + null/
-  channel decision-parity; `decisions match, floats need not`). `cargo test` in `Rust/` is **65 green**; the crate
+  channel decision-parity; `decisions match, floats need not`). `cargo test` in `Rust/` is **green** (re-run for the live count; counts drift as schemas/suites are added); the crate
   ships **compile-unverified** until that run is green on the user's machine.
 - **[`GATEWAY_SPEC.md`](GATEWAY_SPEC.md) → the `ursprung-gateway` binary (BUILT, cargo-green).** A single,
   dependency-free, fail-closed *integrity gateway monitor* that composes ingestion → obligation-lift →
@@ -169,9 +169,11 @@ and a `does_not_show` — is [`method.md`](method.md) at the repo root; read it 
   parser, including under one-byte-at-a-time fragmented reads); L4 is the proof-gated claim gate over the
   single-source manifest, live-bound to a build receipt. The honest boundaries are stated, not hidden: the
   verdict is a **commitment, not a signature** (no PKI); the certificate is a **sufficient condition, not global
-  stability**; L2 (contraction certifier) and L3 (CMI firewall) need typed inputs (κ matrices, `(X,Y,Z)` samples)
-  a frame dump cannot supply, so those air-gaps are reported **non-liftable**; "real-time/low-latency" is
-  **UNMEASURED**; and it is a technical conformity check, **not** regulatory compliance. `parts ≠ whole`;
+  stability**; the **L3 CMI firewall now runs from a dump** (`--schema cmi` ingests Schema-D `x,y,z0,w0` samples
+  → `audit_coupling`, OBSERVER_CONTAMINATION fails closed), but **L2 has no Rust certifier yet** so a κ-block
+  (Schema C) dump would parse without certifying, and a *public telemetry frame* still reports the Ω→V / ν→λ
+  air-gaps **non-liftable** (no κ, no `(X,Y,Z)`); "real-time/low-latency" is **UNMEASURED**; and it is a
+  technical conformity check, **not** regulatory compliance. `parts ≠ whole`;
   `integrity ≠ truth`.
 
 ## What is proven, what you get, and where it goes next

@@ -33,11 +33,14 @@ absolutely. `undetected ≠ absent`; `bounded ≠ conservative`; `certificate �
   the Rust gate, so `mirror ≠ source` is closed by construction. The Python gate now also **binds to live test
   execution** (Obligation B): `verify.py` emits a fresh receipt and a supported claim counts discharged only if
   its backing suite PASSED this run — with the honest ceiling `receipt ≠ proof`. **Now also built: the single
-  binary `ursprung-gateway`** (`Rust/src/bin/gateway.rs`) composes L1 ingest+lift → L4 proof-gate **with the
-  Rust-side live receipt read**, emitting a fail-closed verdict + a disclaimer-first report. Honest boundary:
-  it does **not** run L2 (contraction certifier) or L3 (CMI firewall) from a public frame dump — those need
-  their own typed inputs (κ matrices; (X,Y,Z) samples) and stay library APIs, which is exactly why the
-  Ω→V / ν→λ air-gaps come back **non-liftable**. Confirmed by `cargo test` (56 green) + `cargo build --bin
+  binary `ursprung-gateway`** (`Rust/src/bin/gateway.rs`) **streams** L1 ingest+lift → L4 proof-gate **with the
+  Rust-side live receipt read** (bounded memory, `streaming ≡ whole-file`), emitting a fail-closed verdict + a
+  disclaimer-first report. **L3 now also runs from a dump:** `--schema cmi` ingests **Schema D** (stratified
+  `x,y,z0,w0` CMI samples) and runs the forbidden-coupling firewall end-to-end — OBSERVER_CONTAMINATION fails
+  closed, AIR_GAP_HELD passes. Honest boundary that REMAINS: **L2 (contraction certifier) has no Rust port
+  yet**, so a κ-block (Schema C) dump would parse but not certify (`parsed ≠ validated`); and from a *public
+  telemetry frame* (TELEM/ABI) the Ω→V / ν→λ air-gaps still come back **non-liftable** (a frame carries neither
+  κ nor (X,Y,Z)). Confirmed by `cargo test` (green; re-run for the count) + `cargo build --bin
   ursprung-gateway`. `parts ≠ whole`; the verdict is a commitment, not a certification of model safety.
 
 ## 1. Position
@@ -105,11 +108,14 @@ already Rust (`menger_telemetry`). The `ursprung-gateway` binary composes the **
 dependency-free executable — so the fork below resolved to **(A) port the Python to Rust**, done incrementally
 and differential-tested (CMI value+decision parity; lift verdicts; commercial-gate verdicts).
 
-What a *full* single-binary monolith still lacks is not a port but **inputs**: L2 (κ contraction certifier) and
-L3 (CMI firewall) need typed inputs (κ matrices; `(X,Y,Z)` samples) that a public BinaryFrame dump does not
-carry — which is exactly why the gateway reports the Ω→V / ν→λ air-gaps **non-liftable** rather than running
-them. Feeding those in (a richer ingest, or a second input channel) is the remaining work. `monolith ≠ free`;
-`parts ≠ whole`. (Rejected at the fork: **(B) embed CPython** — not dependency-free, ships a Python runtime.)
+What a *full* single-binary monolith still lacks splits cleanly now. **L3 got its typed-input channel:**
+**Schema D** (`--schema cmi`, `x,y,z0,w0` samples) feeds the already-ported CMI firewall + coupling taxonomy
+end-to-end. **L2 still lacks two things:** there is **no Rust contraction certifier** (`discrete_certificate`
++ `kappa_remediation` live only in Python), so even a κ-block **Schema C** dump would parse but not certify
+(`parsed ≠ validated`) — porting that certifier is the prerequisite before Schema C is worth wiring. From a
+*public telemetry frame* the Ω→V / ν→λ air-gaps stay **non-liftable** (the frame carries neither κ nor
+`(X,Y,Z)`). `monolith ≠ free`; `parts ≠ whole`. (Rejected at the fork: **(B) embed CPython** — not
+dependency-free, ships a Python runtime.)
 
 ## 4. Output contract (what a "gate-approved artifact" actually asserts)
 
