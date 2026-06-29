@@ -549,18 +549,24 @@ claim, validity-not-outcome tests; Rust ships **compile-unverified** until the u
   `CouplingTool` (`Request::Coupling`). Its planted-regime tests were validated in Python first, then mirrored.
   `cargo test` in `Rust/` (33 green).
 
-**`GATEWAY_SPEC.md` (repo root) — the `ursprung-gateway` design, NOT YET BUILT.** A single-binary, fail-closed
+**`GATEWAY_SPEC.md` (repo root) — the `ursprung-gateway` design, now BUILT (frame path, cargo-green).** A single-binary, fail-closed
 "integrity gateway monitor" collapsing ingestion → skew-remediation → contraction-certifier → CMI-firewall →
 proof-gated ledger into one CLI. It is a **specification** (SCOPED/UNDERCOMMITTED) with explicit boundaries: a
 "single dependency-free binary" requires porting the Python firewall+gate to Rust (the math kernels already
 are); the output is a **commitment, not a signature** (no PKI); the certificate is a **sufficient condition, not
 global stability**; "real-time/low-latency" is **UNMEASURED**; and it is a technical conformity check, **not**
 regulatory compliance. Build order (§8): port the CMI core → port the gate → two-tier ingestion → CLI → measure.
-**Progress (Rust, `cargo test`-green, each differential-tested vs the Python):** the CMI firewall + coupling
-taxonomy (L3), the proof-gated claim gate (L4, `commercial_obligations.rs`), and the BinaryFrame parser (L1,
-Sub-Slice 1A, `binframe_adapter.rs` — a *deterministic fixed-record reader*, **not** zero-copy). Still OPEN:
-the L1 obligation-lift (1B, needs `invariant_ledger`), binding the gate to live execution
-(`static-check ≠ live-execution`), and the single-binary assembly. `parts-ported ≠ monolith-built`.
+**Status (Rust, `cargo test`-green, each differential-tested vs the Python):** L1 ingestion is whole —
+BinaryFrame parser (`binframe_adapter.rs`, a *deterministic fixed-record reader*, **not** zero-copy) +
+obligation `lift()` over the ported `invariant_ledger`; L3 = CMI firewall + coupling taxonomy; L4 = the
+proof-gated claim gate (`commercial_obligations.rs`) over a **single-source manifest**
+(`DVSM/commercial/ledger.tsv` + `obligations.tsv`, loaded by both languages) and **live-bound** to a build
+receipt (`audit_live` in Rust; `verify.py` emits the receipt in Python). The **single binary `ursprung-gateway`**
+(`src/bin/gateway.rs`) composes L1→L4 fail-closed. CLOSED: `mirror ≠ source`, `static-check ≠ live-execution`
+(both languages), and the single-binary assembly. STILL OPEN / honest boundary: the binary does **not** run
+L2 (contraction certifier) or L3 (CMI firewall) from a frame dump — those need typed inputs (κ matrices;
+`(X,Y,Z)` samples), so the Ω→V / ν→λ air-gaps are reported **non-liftable**; and the perf / mmap benchmark
+(§6) is **UNMEASURED**. `parts ≠ whole`; the verdict is a commitment, not a model-safety certification.
 
 **Lesson this arc earned (binds future passes):** *before porting a Python module to Rust, check `Rust/src/`
 first.* `residual_channel` + the orchestrator were already ported; a duplicate `DVSM/cmi_firewall` crate was
