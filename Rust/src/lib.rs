@@ -42,11 +42,12 @@ pub mod residual_channel;
 pub use artifacts::{AnalysisResult, Finding, HonestyError, Limitation};
 pub use claim_ledger::{audit_ledger, Claim, Grade, LedgerAudit, SupportedClaim};
 pub use binframe_adapter::{
-    containment, field, lift, non_liftable, parse_frames, read_frames_streaming, replay_parity, stream_frames,
-    Field, FieldType, ParseReport, Row, Schema, NON_LIFTABLE_NEEDS, SCHEMA_ABI, SCHEMA_TELEM, U_MAX_DEFAULT,
+    containment, containment_from, field, lift, lift_streaming, non_liftable, parse_frames,
+    read_frames_streaming, replay_parity, stream_frames, Field, FieldType, ParseReport, Row, Schema,
+    NON_LIFTABLE_NEEDS, SCHEMA_ABI, SCHEMA_TELEM, U_MAX_DEFAULT,
 };
 pub use invariant_ledger::{ObligationResult, ObligationStatus};
-pub use gateway::{parse_receipt, render_report, run_gateway, GatewayReport};
+pub use gateway::{parse_receipt, render_report, run_gateway, run_gateway_streaming, GatewayReport};
 pub use commercial_obligations::{
     shipped_ledger, CommercialAudit, CommercialClaim, CommercialLedger, HYPE,
 };

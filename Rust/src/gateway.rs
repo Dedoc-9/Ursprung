@@ -12,7 +12,9 @@
 
 use std::collections::BTreeMap;
 
-use crate::binframe_adapter::{lift, parse_frames, ParseReport, Schema};
+use std::io::Read;
+
+use crate::binframe_adapter::{lift, lift_streaming, parse_frames, ParseReport, Schema};
 use crate::commercial_obligations::{shipped_ledger, CommercialAudit};
 use crate::invariant_ledger::{ObligationResult, ObligationStatus};
 
@@ -43,17 +45,16 @@ pub fn parse_receipt(text: &str) -> BTreeMap<String, String> {
     m
 }
 
-/// Run the gate over a telemetry buffer. Pure (no IO) for testability; the binary does the file IO. Fail-closed:
-/// any parse anomaly, any VIOLATED obligation, or a non-honest commercial ledger blocks (`ok=false`).
-pub fn run_gateway(
-    data: &[u8],
-    schema: &Schema,
-    u_max: f64,
-    header_lines: usize,
+/// Assemble the fail-closed verdict from already-lifted obligations — shared by the whole-file and streaming
+/// entry points so they produce an identical `GatewayReport`. Blocks on any parse anomaly, any VIOLATED
+/// obligation, or a non-honest commercial ledger.
+fn assemble_report(
+    schema_name: &'static str,
+    parse: ParseReport,
+    obligations: Vec<ObligationResult>,
+    non_liftable: Vec<(&'static str, &'static str)>,
     receipts: Option<&BTreeMap<String, String>>,
 ) -> GatewayReport {
-    let (rows, parse) = parse_frames(data, schema, header_lines);
-    let (obligations, non_liftable) = lift(&rows, schema, u_max, None);
     let led = shipped_ledger();
     let commercial = match receipts {
         Some(r) => led.audit_live(r),
@@ -91,7 +92,7 @@ pub fn run_gateway(
 
     let ok = reasons.is_empty();
     GatewayReport {
-        schema: schema.name,
+        schema: schema_name,
         parse,
         obligations,
         non_liftable,
@@ -100,6 +101,34 @@ pub fn run_gateway(
         ok,
         reasons,
     }
+}
+
+/// Run the gate over a whole telemetry buffer. Pure (no IO) for testability.
+pub fn run_gateway(
+    data: &[u8],
+    schema: &Schema,
+    u_max: f64,
+    header_lines: usize,
+    receipts: Option<&BTreeMap<String, String>>,
+) -> GatewayReport {
+    let (rows, parse) = parse_frames(data, schema, header_lines);
+    let (obligations, non_liftable) = lift(&rows, schema, u_max, None);
+    assemble_report(schema.name, parse, obligations, non_liftable, receipts)
+}
+
+/// Run the gate by STREAMING from any reader — bounded memory (O(record), independent of file size). Produces
+/// the same `GatewayReport` as `run_gateway` on the same bytes (the obligation builders are shared; equivalence
+/// is asserted in `tests/gateway.rs`). This is the binary's path so it scales to large dumps. An IO error is
+/// surfaced as `Err`; a truncated/partial trailing record is a `layout_mismatch` ⇒ `ok=false` (fail-closed).
+pub fn run_gateway_streaming<R: Read>(
+    reader: R,
+    schema: &Schema,
+    u_max: f64,
+    header_lines: usize,
+    receipts: Option<&BTreeMap<String, String>>,
+) -> std::io::Result<GatewayReport> {
+    let (obligations, non_liftable, parse) = lift_streaming(reader, schema, u_max, header_lines)?;
+    Ok(assemble_report(schema.name, parse, obligations, non_liftable, receipts))
 }
 
 /// Render a disclaimer-first gate report (the gate-approved artifact, or the block reason).

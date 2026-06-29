@@ -12,7 +12,7 @@ use std::collections::BTreeMap;
 use std::process::ExitCode;
 use std::time::SystemTime;
 
-use ursprung::gateway::{parse_receipt, render_report, run_gateway};
+use ursprung::gateway::{parse_receipt, render_report, run_gateway_streaming};
 use ursprung::{Schema, SCHEMA_ABI, SCHEMA_TELEM, U_MAX_DEFAULT};
 
 const RECEIPT_MAX_AGE_SECS: u64 = 600;
@@ -63,14 +63,6 @@ fn main() -> ExitCode {
     let header_lines = arg_val(&args, "--header-lines").and_then(|v| v.parse().ok()).unwrap_or(0usize);
     let strict = args.iter().any(|a| a == "--strict");
 
-    let data = match std::fs::read(&tele) {
-        Ok(d) => d,
-        Err(e) => {
-            eprintln!("cannot read telemetry {tele:?}: {e}");
-            return ExitCode::FAILURE;
-        }
-    };
-
     let receipt_path = arg_val(&args, "--receipt");
     let receipts = receipt_path.as_deref().and_then(read_fresh_receipt);
     if strict && receipt_path.is_some() && receipts.is_none() {
@@ -78,7 +70,21 @@ fn main() -> ExitCode {
         return ExitCode::FAILURE;
     }
 
-    let report = run_gateway(&data, schema, u_max, header_lines, receipts.as_ref());
+    // STREAM the file (bounded memory, O(record)) rather than slurping it whole — scales to large dumps.
+    let file = match std::fs::File::open(&tele) {
+        Ok(f) => f,
+        Err(e) => {
+            eprintln!("cannot open telemetry {tele:?}: {e}");
+            return ExitCode::FAILURE;
+        }
+    };
+    let report = match run_gateway_streaming(file, schema, u_max, header_lines, receipts.as_ref()) {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("ursprung-gateway: read error on {tele:?}: {e} — failing closed.");
+            return ExitCode::FAILURE;
+        }
+    };
     let md = render_report(&report);
 
     match arg_val(&args, "--output") {

@@ -319,16 +319,11 @@ fn has_field(rows: &[Row], name: &str) -> bool {
     rows.first().map_or(false, |r| field(r, name).is_some())
 }
 
-/// §7 containment: ‖Z‖ (the `energy` channel) stays under `u_max` on the emitted run.
-pub fn containment(rows: &[Row], u_max: f64) -> ObligationResult {
-    let mut mx = f64::NAN;
-    let mut seen = false;
-    for r in rows {
-        if let Some(v) = field(r, "energy").and_then(|f| f.as_f64()) {
-            mx = if seen { mx.max(v) } else { v };
-            seen = true;
-        }
-    }
+/// §7 containment from the pre-reduced max energy + frame count — the obligation builder shared by the
+/// whole-file `containment` and the streaming fold, so both produce a BYTE-IDENTICAL `ObligationResult`.
+/// `max_energy = None` (no energy field seen) ⇒ NaN ⇒ VIOLATED, matching the whole-file path.
+pub fn containment_from(max_energy: Option<f64>, n_frames: usize, u_max: f64) -> ObligationResult {
+    let mx = max_energy.unwrap_or(f64::NAN);
     let status = if mx.is_finite() && mx < u_max {
         ObligationStatus::Bounded
     } else {
@@ -338,9 +333,35 @@ pub fn containment(rows: &[Row], u_max: f64) -> ObligationResult {
         "DVSM-3-kernel",
         "‖Z‖ stays under U_MAX on the REAL emitted telemetry",
         status,
-        format!("max(energy)={:.3} over {} real frames (bound={})", mx, rows.len(), u_max),
+        format!("max(energy)={:.3} over {} real frames (bound={})", mx, n_frames, u_max),
         "boundedness for all inputs — only this dumped run; empirical-boundedness ≠ certified",
         "a real dump whose energy reaches U_MAX without GhostSnap recovery",
+    )
+}
+
+/// §7 containment: ‖Z‖ (the `energy` channel) stays under `u_max` on the emitted run.
+pub fn containment(rows: &[Row], u_max: f64) -> ObligationResult {
+    let mut max_energy: Option<f64> = None;
+    for r in rows {
+        if let Some(v) = field(r, "energy").and_then(|f| f.as_f64()) {
+            max_energy = Some(match max_energy {
+                Some(m) => m.max(v),
+                None => v,
+            });
+        }
+    }
+    containment_from(max_energy, rows.len(), u_max)
+}
+
+/// The UNDERDETERMINED "no replay hash in this schema" obligation — shared by `lift` and `lift_streaming`.
+fn no_hash_obligation(schema: &Schema) -> ObligationResult {
+    ObligationResult::new(
+        "DVSM-6-kernel",
+        "replay-hash parity on the real dump",
+        ObligationStatus::Underdetermined,
+        format!("the {} frame carries no hash field — cannot check replay parity from this schema", schema.name),
+        "anything about reproducibility from a hashless dump",
+        "switch to the ABI/run_profile dump (carries the FNV-1a hash)",
     )
 }
 
@@ -393,15 +414,53 @@ pub fn lift(
             obs.push(replay_parity(rows, rb));
         }
     } else if !rows.is_empty() {
-        obs.push(ObligationResult::new(
-            "DVSM-6-kernel",
-            "replay-hash parity on the real dump",
-            ObligationStatus::Underdetermined,
-            format!("the {} frame carries no hash field — cannot check replay parity from this schema", schema.name),
-            "anything about reproducibility from a hashless dump",
-            "switch to the ABI/run_profile dump (carries the FNV-1a hash)",
-        ));
+        obs.push(no_hash_obligation(schema));
     }
     (obs, non_liftable(rows))
+}
+
+/// Streaming `lift` for a SINGLE dump — bounded memory (one row + a running max energy, independent of file
+/// size). Produces the SAME obligations + non-liftable set as `lift(rows, schema, u_max, None)` would on the
+/// fully-buffered rows (the obligation builders are shared, so the equivalence is by construction; it is also
+/// asserted in `tests/gateway.rs`). `streaming ≡ whole-file`. (A two-dump `replay_parity` is intentionally not
+/// offered here — it would need both hash sequences held in lockstep, breaking the O(record) bound.)
+pub fn lift_streaming<R: Read>(
+    reader: R,
+    schema: &Schema,
+    u_max: f64,
+    header_lines: usize,
+) -> std::io::Result<(Vec<ObligationResult>, Vec<(&'static str, &'static str)>, ParseReport)> {
+    let mut max_energy: Option<f64> = None;
+    let mut first_row: Option<Row> = None;
+    let report = stream_frames(reader, schema, header_lines, |row| {
+        if first_row.is_none() {
+            first_row = Some(row.clone()); // hold exactly ONE row (O(record))
+        }
+        if let Some(v) = field(row, "energy").and_then(|f| f.as_f64()) {
+            max_energy = Some(match max_energy {
+                Some(m) => m.max(v),
+                None => v,
+            });
+        }
+    })?;
+
+    let mut obs = Vec::new();
+    let non_lift;
+    match &first_row {
+        Some(fr) => {
+            let probe = std::slice::from_ref(fr); // 1-row slice ⇒ `has_field` / `non_liftable` see the schema
+            if has_field(probe, "energy") {
+                obs.push(containment_from(max_energy, report.n_records, u_max));
+            }
+            if !has_field(probe, "hash") {
+                obs.push(no_hash_obligation(schema));
+            }
+            non_lift = non_liftable(probe);
+        }
+        None => {
+            non_lift = non_liftable(&[]); // empty stream
+        }
+    }
+    Ok((obs, non_lift, report))
 }
 
