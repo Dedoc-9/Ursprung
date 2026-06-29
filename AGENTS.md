@@ -12,6 +12,12 @@ discipline* below).
 > engines, a Proof-Obligations ledger, an epistemic-runtime layer, and applications (hot-swap, the snowflake
 > language audit, the Halvorsen attractor). It obeys the *same* Dentatus discipline as this contract; see the
 > **weltwerk** section below. This renderer contract remains in force for `ursprung/`.
+>
+> A newer **sibling-kernel hardening arc** (`DVSM/`, `Rust/`, `DVSM/commercial/`, `GATEWAY_SPEC.md`) applies the
+> same discipline outward to external research kernels and to std-only Rust ports; see *DVSM, the Rust ports, and
+> the gateway* below. **The honest, graded index of the entire repository — every component with a maturity grade
+> and a `does_not_show` — is `method.md` at the repo root; read it first for orientation.** `written ≠ true` — the
+> grades there are a falsifiable claim, re-checkable by re-running the gates.
 
 ## The pipeline (the only shape)
 
@@ -510,6 +516,52 @@ Concrete product patterns (tool · law/method · how the LLM builds it · the me
 the constructed numbers are illustrative; the *discipline and the interfaces* are what transfer. The defensible
 one-line for any of them: *a verification/measurement product that reports what it found, by which estimator
 class, with what coverage boundary — and refuses to act, grade, or claim beyond it.*
+
+## DVSM, the Rust ports, and the gateway (the sibling-kernel hardening arc)
+
+A newer arc applies the verification discipline **outward** — to an external research kernel, to std-only Rust
+ports, and to a proof-gated commercial layer. The honest index with grades + `does_not_show` is `method.md`;
+this is the working summary. These are **experiments and reusable layers, adjacent to (not an advancement of)
+the renderer thesis** — `adjacent ≠ on-mission`. Same discipline: read the source not the README, grade every
+claim, validity-not-outcome tests; Rust ships **compile-unverified** until the user's `cargo test` is green.
+
+- **`DVSM/` (Python auditors of an EXTERNAL DVSM-π+++ kernel).** `coupling_audit` (forbidden-coupling CMI
+  firewall, built on `weltwerk/verify/residual_channel`), `invariant_ledger` (caught a κ-skew VIOLATED at the
+  diagonal), `dvsm_backend` (profile D), `kappa_remediation` (antisymmetrize `κ←(κ−κᵀ)/2`, CLOSED),
+  `discrete_certificate` (`2‖κ‖_F·σ<λ ∧ dt·λ≤1 ⇒ ρ<1` — a **sufficient condition, not a stability proof**). One
+  gate: `python DVSM/verify.py` (11 suites). Results are **reference-relative** — they audit a Python reference,
+  not the shipped Rust kernel. `reference-model ≠ authoritative-kernel`.
+- **`DVSM/commercial/` (proof-gated claims).** `commercial_obligations` (a claim ships only if a *discharged*
+  obligation backs it, + a HYPE-lexicon ban), `compliance_doc` (a disclaimer-first doc *generated from* the gated
+  ledger so it cannot drift), `binframe_adapter` (real BinaryFrame ingest). Infrastructure VERIFIED; **financial
+  value is SPECULATIVE** (no users) — de-risking, not revenue. `warranty ≠ proof`; `generated ≠ executed`.
+- **The Rust ports (`Rust/` = crate `ursprung`, `DVSM/reality_core/`, `Rust/menger_telemetry/`).** Std-only,
+  zero-dep. `ursprung` ports the fundamentals + the Epistemic Runtime Orchestrator, with two invariants enforced
+  **by type** (`AnalysisResult::new` returns `Result`; `Grounded<T>` has a private value + checked constructor).
+  The kernels use Q32.32 fixed-point, in-tree SHA-256, a real fractal mask, and recompute-and-compare verify; all
+  carry `bounded-by-clamp ≠ stable-dynamics`.
+- **Cross-language validation.** `Rust/tests/differential_residual.rs` + `tests/fixtures/` validate the Rust
+  `residual_channel` against the **Python reference**: MI/CMI value-parity (1e-9, RNG-free) + decision-parity on
+  planted null/channel. `decisions match, floats need not`.
+- **The coupling taxonomy in Rust.** `Rust/src/coupling_audit.rs` ports the forbidden-coupling verdicts
+  (`AIR_GAP_HELD` / `OBSERVER_CONTAMINATION` / `CONFOUNDED_ARTIFACT` / `UNIDENTIFIABLE`) on the validated core —
+  quantile binner + (Z,W) mis-spec stress + identifiability decline — wired into the orchestrator as
+  `CouplingTool` (`Request::Coupling`). Its planted-regime tests were validated in Python first, then mirrored.
+  `cargo test` in `Rust/` (33 green).
+
+**`GATEWAY_SPEC.md` (repo root) — the `ursprung-gateway` design, NOT YET BUILT.** A single-binary, fail-closed
+"integrity gateway monitor" collapsing ingestion → skew-remediation → contraction-certifier → CMI-firewall →
+proof-gated ledger into one CLI. It is a **specification** (SCOPED/UNDERCOMMITTED) with explicit boundaries: a
+"single dependency-free binary" requires porting the Python firewall+gate to Rust (the math kernels already
+are); the output is a **commitment, not a signature** (no PKI); the certificate is a **sufficient condition, not
+global stability**; "real-time/low-latency" is **UNMEASURED**; and it is a technical conformity check, **not**
+regulatory compliance. Build order (§8): port the CMI core → port the gate → two-tier ingestion → CLI → measure.
+**Step 1 is done** (the differential test + coupling taxonomy above).
+
+**Lesson this arc earned (binds future passes):** *before porting a Python module to Rust, check `Rust/src/`
+first.* `residual_channel` + the orchestrator were already ported; a duplicate `DVSM/cmi_firewall` crate was
+started and discarded. The value of "step 1" was the cross-language **differential test**, not a re-port.
+`quantity ≠ coherence`; `described ≠ built`.
 
 ## Performance work
 
