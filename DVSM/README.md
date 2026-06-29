@@ -57,7 +57,7 @@ already `repr(C)`, ABI-stable, delta-encoded — the stream the auditor was buil
 ## Run (PowerShell, folder-directed)
 
 ```powershell
-cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\DVSM"
+cd DVSM               # from the repo root
 $env:PYTHONHASHSEED=0
 python dvsm_reference.py
 python coupling_audit.py

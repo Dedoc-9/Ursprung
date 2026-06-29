@@ -61,7 +61,7 @@ obligation; boundary rows are downgraded on purpose.
 ## Run
 
 ```powershell
-cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\DVSM\commercial"
+cd DVSM/commercial    # from the repo root
 $env:PYTHONHASHSEED=0
 python kernel_auditor.py
 python commercial_obligations.py

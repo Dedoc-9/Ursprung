@@ -36,7 +36,7 @@ string set checked at runtime).
 ## Run
 
 ```powershell
-cd "C:\Users\dillb_lzxy763\Claude\Projects\Ursprung\Rust"
+cd Rust               # from the repo root
 cargo test            # unit tests (each module) + tests/chokepoints.rs integration
 cargo run --example chokepoints
 ```
