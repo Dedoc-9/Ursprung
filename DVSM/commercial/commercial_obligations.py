@@ -46,6 +46,12 @@ DISCHARGED: Dict[str, str] = {
         "test_dvsm_reference::determinism + invariant_ledger DVSM-6 — identical input ⇒ identical report",
     "ledger.catches_ghosts":
         "test_invariant_ledger::kappa_ghost_caught, energy_law_rejected — obligations grade honestly",
+    "kappa.remediated_skew":
+        "test_kappa_remediation (DVSM) — antisymmetrized κ=(κ−κᵀ)/2 is hollow+skew (max|κ+κᵀ|=0); the skew "
+        "obligation flips VIOLATED→CLOSED",
+    "certificate.discrete_contraction":
+        "test_discrete_certificate (DVSM) — a checkable sufficient condition (2‖κ‖_F·σ<λ ∧ dt·λ≤1 ⇒ ρ<1) with "
+        "the σ-margin and ρ stated; analytic ρ bounds measured growth; the κ fix widens the margin",
 }
 
 # Obligations that are OPEN or REJECTED — a SUPPORTED commercial claim may NOT rest on any of these.
@@ -117,6 +123,20 @@ COMMERCIAL_CLAIMS: Tuple[CommercialClaim, ...] = (
         "ESTABLISHED", "coupling.declares_blindness",
         "that blind couplings are absent — undetected ≠ absent.",
         "an unidentifiable coupling silently reported AIR_GAP_HELD.", "open-core"),
+    CommercialClaim(
+        "C7", "Ships with a checkable discrete-time contraction certificate: a sufficient condition "
+              "(2‖κ‖_F·σ < λ, dt·λ ≤ 1) with the noise margin σ_max and the contraction factor ρ stated.",
+        "MEASURED", "certificate.discrete_contraction",
+        "stability for ‖S‖ > σ, the fixed-point clamps, or the full coupled Z–S–W system — it is a SUFFICIENT "
+        "condition, NOT a global stability proof.",
+        "a sampled trajectory whose growth exceeds the analytic ρ within the certified σ.", "commercial"),
+    CommercialClaim(
+        "C8", "The Lie-coupling κ can be antisymmetrized to a hollow, skew-symmetric matrix, after which the "
+              "skew-symmetry obligation closes (max|κ+κᵀ| = 0).",
+        "ESTABLISHED", "kappa.remediated_skew",
+        "that the shipped upstream kernel uses the corrected κ — only that the remediation satisfies the premise.",
+        "an entry with κ[i,j] + κ[j,i] ≠ 0 after antisymmetrization (a coding error in the remediation).",
+        "open-core"),
     # ---- boundary claims: what we explicitly do NOT sell — downgraded, rest on OPEN_OR_REJECTED ----
     CommercialClaim(
         "B1", "We do NOT guarantee your kernel is numerically bounded.",

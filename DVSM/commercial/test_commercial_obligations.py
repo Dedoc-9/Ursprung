@@ -86,6 +86,21 @@ def test_claims_emit_analysis():
     return chk("claims_emit_analysis", not bad, f"non-analysis: {bad or 'none'}")
 
 
+def test_scoped_certificate_and_kappa_claims():
+    by_id = {c.id: c for c in COMMERCIAL_CLAIMS}
+    c7, c8 = by_id.get("C7"), by_id.get("C8")
+    scoped = (c7 is not None and c8 is not None
+              and c7.grade in SUPPORTED and c7.rests_on in DISCHARGED
+              and "not a global stability proof" in c7.does_not_show.lower()  # scoped, not overclaimed
+              and c8.grade in SUPPORTED and c8.rests_on in DISCHARGED)
+    # the gate must still reject a "the kernel is stable" claim resting on the OPEN boundedness obligation
+    overclaim = COMMERCIAL_CLAIMS + (CommercialClaim(
+        "XS", "The kernel is stable.", "ESTABLISHED", "kernel.boundedness", "n/a", "n/a"),)
+    rejected = "XS" in audit_commercial_ledger(overclaim)["exceeds_proof"]
+    return chk("scoped_certificate_and_kappa", scoped and rejected,
+               f"C7/C8 scoped={scoped}  stability-overclaim-rejected={rejected}")
+
+
 def main():
     results = [
         test_shipped_ledger_honest(),
@@ -96,6 +111,7 @@ def main():
         test_unknown_obligation_caught(),
         test_every_claim_has_boundary(),
         test_claims_emit_analysis(),
+        test_scoped_certificate_and_kappa_claims(),
     ]
     print("test_commercial_obligations — no commercial claim exceeds discharged proof\n")
     passed = sum(int(ok) for _n, ok, _d in results)
