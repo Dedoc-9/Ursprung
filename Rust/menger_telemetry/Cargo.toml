@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+[package]
+name = "menger_telemetry"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-only"
+authors = ["Daniel J. Dillberg"]
+description = "Hardened, std-only, zero-dependency re-engineering of the DVSM Menger-sponge telemetry kernel: deterministic Q32.32 fixed-point pipeline, a correct depth-dependent Menger/Sierpinski sparsity mask, an in-tree SHA-256 commitment, and a real (recompute-and-compare) integrity check."
+repository = "https://github.com/Dedoc-9/Ursprung"
+keywords = ["telemetry", "deterministic", "fixed-point", "fractal", "sha256"]
+categories = ["science"]
+
+[lib]
+name = "menger_telemetry"
+path = "src/lib.rs"
+# `lib` for tests; cdylib/staticlib expose the C ABI (src/ffi.rs).
+crate-type = ["lib", "cdylib", "staticlib"]
+
+# Zero dependencies on purpose. The upstream pulled `sha2`; we ship an in-tree SHA-256 (tested against the
+# NIST vectors) so there is no supply-chain surface and the commitment is fully self-contained. Q32.32 (i64
+# values, i128 products) is chosen over the upstream's Q64.64 because Q64.64 products need a 256-bit integer
+# the upstream references as a bare `i256` that does not exist / does not compile. `representable > aspirational`.
+[dependencies]
