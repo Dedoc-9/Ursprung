@@ -18,6 +18,8 @@
 //! * [`claim_ledger`] — `Grade` (an enum ⇒ off-ladder grades are *unrepresentable*), `Claim`, `audit_ledger`.
 //! * [`frontier_gate`] — bounded metric deflation: SUPER/SUB/NEAR → EXPLOIT/PIVOT/HOLD.
 //! * [`residual_channel`] — the confounder-conditioned mutual-information diagnostic (deterministic).
+//! * [`coupling_audit`] — the forbidden-coupling taxonomy (AIR_GAP_HELD / OBSERVER_CONTAMINATION /
+//!   CONFOUNDED_ARTIFACT / UNIDENTIFIABLE) on top of the residual core, with quantile binning + (Z,W) stress.
 //! * [`orchestrator`] — the Epistemic Runtime Orchestrator: a router with the two chokepoints. It adds no
 //!   authority. `router ≠ verifier`; `composition ≠ capability`; `integrity ≠ truth`.
 //!
@@ -27,6 +29,7 @@
 
 pub mod artifacts;
 pub mod claim_ledger;
+pub mod coupling_audit;
 pub mod epistemic_types;
 pub mod frontier_gate;
 pub mod orchestrator;
@@ -34,11 +37,12 @@ pub mod residual_channel;
 
 pub use artifacts::{AnalysisResult, Finding, HonestyError, Limitation};
 pub use claim_ledger::{audit_ledger, Claim, Grade, LedgerAudit, SupportedClaim};
+pub use coupling_audit::{audit_coupling, Binner, CouplingInput, CouplingResult, CouplingVerdict};
 pub use epistemic_types::{enact, Attested, Grounded, Grounding, UngroundedError};
 pub use frontier_gate::{classify_regime, Action, Decision, FrontierGate, Regime};
 pub use orchestrator::{
-    default_orchestrator, EpistemicTool, FrontierTool, LedgerTool, Orchestrator, OrchestratorError,
-    Request, ResidualTool,
+    default_orchestrator, CouplingTool, EpistemicTool, FrontierTool, LedgerTool, Orchestrator,
+    OrchestratorError, Request, ResidualTool,
 };
 pub use residual_channel::{
     audit, audit_default, conditional_mutual_information, demo_gen_channel, demo_gen_null,

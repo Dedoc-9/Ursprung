@@ -18,12 +18,14 @@ use crate::claim_ledger::{audit_ledger, Claim};
 use crate::epistemic_types::{enact, Grounding, UngroundedError};
 use crate::frontier_gate::FrontierGate;
 use crate::residual_channel::{audit, Sample};
+use crate::coupling_audit::{audit_coupling, CouplingInput};
 
 /// The request a tool consumes. One variant per fundamental tool.
 pub enum Request {
     Residual { samples: Vec<Sample>, reps: usize, seed: u64 },
     Frontier { m_novel: f64, ci: (f64, f64) },
     Ledger { claims: Vec<Claim> },
+    Coupling(Box<CouplingInput>),
 }
 
 /// A registered tool: a name + a total function into the honesty contract.
@@ -112,6 +114,21 @@ impl EpistemicTool for LedgerTool {
     }
 }
 
+/// Forbidden-coupling firewall — the taxonomy (AIR_GAP_HELD / OBSERVER_CONTAMINATION / CONFOUNDED_ARTIFACT /
+/// UNIDENTIFIABLE) layered on the residual-channel core.
+pub struct CouplingTool;
+impl EpistemicTool for CouplingTool {
+    fn name(&self) -> &str {
+        "coupling_audit"
+    }
+    fn analyze(&self, req: &Request) -> AnalysisResult {
+        match req {
+            Request::Coupling(inp) => audit_coupling(inp).as_analysis(),
+            _ => unsupported(self.name()),
+        }
+    }
+}
+
 /// Tool dispatch failure.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum OrchestratorError {
@@ -184,7 +201,8 @@ pub fn default_orchestrator() -> Orchestrator {
     let mut o = Orchestrator::new();
     o.register(Box::new(ResidualTool))
         .register(Box::new(FrontierTool))
-        .register(Box::new(LedgerTool));
+        .register(Box::new(LedgerTool))
+        .register(Box::new(CouplingTool));
     o
 }
 
