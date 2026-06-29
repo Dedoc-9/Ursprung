@@ -174,7 +174,8 @@ and a `does_not_show` — is [`method.md`](method.md) at the repo root; read it 
   ingests Schema-C 160-byte dense κ-blocks → `contraction_cert`, certifying each in O(1) memory, κ as ingested,
   NOT_CERTIFIED fails closed) — so the binary composes **L1+L2+L3+L4 all from dumps**; a *public telemetry
   frame* still reports the Ω→V / ν→λ air-gaps **non-liftable** (no κ, no `(X,Y,Z)`); the certificate is
-  **sufficient** not global; "real-time/low-latency" is **UNMEASURED**; and it is a
+  **sufficient** not global; the §6 throughput harness (`gateway-bench`) is **built** but its numbers are
+  host-specific (run it; nothing hardcoded), and it is a
   technical conformity check, **not** regulatory compliance. `parts ≠ whole`;
   `integrity ≠ truth`.
 

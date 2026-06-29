@@ -578,8 +578,9 @@ boundary: **L2 now has a Rust validator** — `contraction_cert.rs` ports the di
 (one matrix at a time), κ **as ingested** (never silently antisymmetrized), failing closed on NOT_CERTIFIED /
 non-finite. **So the binary now composes L1+L2+L3+L4 all from dumps — the monolith footprint is closed**
 (`ported ≠ ingested` closed for L2). From a *public telemetry frame* (TELEM/ABI) the Ω→V / ν→λ air-gaps remain
-**non-liftable** (no κ, no `(X,Y,Z)` in a plain frame); the certificate is **sufficient**, not global; and the
-perf / mmap benchmark (§6) is **UNMEASURED**. `parts ≠ whole`; the verdict is
+**non-liftable** (no κ, no `(X,Y,Z)` in a plain frame); the certificate is **sufficient**, not global; and the §6
+throughput harness (`gateway-bench`, zero-dep `std::time`) is now **BUILT** — figures are host-specific and
+produced only on run (`measured ≠ guaranteed`; RSS bounded by-construction, not measured — no std API). `parts ≠ whole`; the verdict is
 a commitment, not a model-safety certification.
 
 **Lesson this arc earned (binds future passes):** *before porting a Python module to Rust, check `Rust/src/`

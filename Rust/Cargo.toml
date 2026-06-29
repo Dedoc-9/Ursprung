@@ -20,5 +20,12 @@ path = "src/lib.rs"
 name = "ursprung-gateway"
 path = "src/bin/gateway.rs"
 
+# §6 metrology harness: a zero-dependency, std-only throughput/latency benchmark over the streaming pipeline.
+# NOT a `cargo bench` target (that needs nightly or Criterion = a dependency); a plain binary using
+# std::time::Instant. Timing is non-deterministic, so it lives OUTSIDE the test suite. `measured ≠ guaranteed`.
+[[bin]]
+name = "gateway-bench"
+path = "src/bin/gateway_bench.rs"
+
 # Zero dependencies on purpose — the Python core is pure-stdlib; this mirrors that discipline.
 [dependencies]
