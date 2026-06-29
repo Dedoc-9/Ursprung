@@ -170,9 +170,10 @@ and a `does_not_show` — is [`method.md`](method.md) at the repo root; read it 
   single-source manifest, live-bound to a build receipt. The honest boundaries are stated, not hidden: the
   verdict is a **commitment, not a signature** (no PKI); the certificate is a **sufficient condition, not global
   stability**; the **L3 CMI firewall now runs from a dump** (`--schema cmi` ingests Schema-D `x,y,z0,w0` samples
-  → `audit_coupling`, OBSERVER_CONTAMINATION fails closed), but **L2 has no Rust certifier yet** so a κ-block
-  (Schema C) dump would parse without certifying, and a *public telemetry frame* still reports the Ω→V / ν→λ
-  air-gaps **non-liftable** (no κ, no `(X,Y,Z)`); "real-time/low-latency" is **UNMEASURED**; and it is a
+  → `audit_coupling`, OBSERVER_CONTAMINATION fails closed); **L2's contraction certifier is now ported**
+  (`contraction_cert`, differential-tested vs Python) but not yet wired to a κ-block (Schema C) ingest path
+  (`ported ≠ ingested`), and a *public telemetry frame* still reports the Ω→V / ν→λ air-gaps **non-liftable**
+  (no κ, no `(X,Y,Z)`); "real-time/low-latency" is **UNMEASURED**; and it is a
   technical conformity check, **not** regulatory compliance. `parts ≠ whole`;
   `integrity ≠ truth`.
 

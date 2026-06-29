@@ -31,6 +31,7 @@ pub mod artifacts;
 pub mod binframe_adapter;
 pub mod claim_ledger;
 pub mod commercial_obligations;
+pub mod contraction_cert;
 pub mod coupling_audit;
 pub mod epistemic_types;
 pub mod frontier_gate;
@@ -55,6 +56,10 @@ pub use commercial_obligations::{
     shipped_ledger, CommercialAudit, CommercialClaim, CommercialLedger, HYPE,
 };
 pub use coupling_audit::{audit_coupling, Binner, CouplingInput, CouplingResult, CouplingVerdict};
+pub use contraction_cert::{
+    antisymmetrize, as_obligation as contraction_obligation, certify, frob, hollow_residual, kappa_matrix,
+    kappa_skew, kappa_skew_obligation, sigma_max, skew_residual, step as lie_step, CertDecision, CertifyResult,
+};
 pub use epistemic_types::{enact, Attested, Grounded, Grounding, UngroundedError};
 pub use frontier_gate::{classify_regime, Action, Decision, FrontierGate, Regime};
 pub use orchestrator::{

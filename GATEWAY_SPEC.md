@@ -37,11 +37,14 @@ absolutely. `undetected ≠ absent`; `bounded ≠ conservative`; `certificate �
   Rust-side live receipt read** (bounded memory, `streaming ≡ whole-file`), emitting a fail-closed verdict + a
   disclaimer-first report. **L3 now also runs from a dump:** `--schema cmi` ingests **Schema D** (stratified
   `x,y,z0,w0` CMI samples) and runs the forbidden-coupling firewall end-to-end — OBSERVER_CONTAMINATION fails
-  closed, AIR_GAP_HELD passes. Honest boundary that REMAINS: **L2 (contraction certifier) has no Rust port
-  yet**, so a κ-block (Schema C) dump would parse but not certify (`parsed ≠ validated`); and from a *public
-  telemetry frame* (TELEM/ABI) the Ω→V / ν→λ air-gaps still come back **non-liftable** (a frame carries neither
-  κ nor (X,Y,Z)). Confirmed by `cargo test` (green; re-run for the count) + `cargo build --bin
-  ursprung-gateway`. `parts ≠ whole`; the verdict is a commitment, not a certification of model safety.
+  closed, AIR_GAP_HELD passes. **L2 now has a Rust validator too:** `contraction_cert.rs` ports the discrete
+  contraction certificate (`2‖κ‖_F·σ<λ ∧ dtλ≤1 ⇒ ρ<1`) + the `κ←(κ−κᵀ)/2` remediation, differential-tested
+  against the Python (frob/σ_max/ρ/step value-parity + CONTRACTIVE_CERT/NOT_CERTIFIED decision-parity).
+  Honest boundary that REMAINS: the certifier is a **library API, not yet wired to a κ-block (Schema C) ingest
+  path**, so the *binary* still can't certify L2 from a dump (`ported ≠ ingested`); and from a *public telemetry
+  frame* (TELEM/ABI) the Ω→V / ν→λ air-gaps stay **non-liftable** (a frame carries neither κ nor (X,Y,Z)).
+  Confirmed by `cargo test` (green; re-run for the count) + `cargo build --bin ursprung-gateway`. `parts ≠
+  whole`; the verdict is a commitment, not a certification of model safety.
 
 ## 1. Position
 
@@ -110,12 +113,12 @@ and differential-tested (CMI value+decision parity; lift verdicts; commercial-ga
 
 What a *full* single-binary monolith still lacks splits cleanly now. **L3 got its typed-input channel:**
 **Schema D** (`--schema cmi`, `x,y,z0,w0` samples) feeds the already-ported CMI firewall + coupling taxonomy
-end-to-end. **L2 still lacks two things:** there is **no Rust contraction certifier** (`discrete_certificate`
-+ `kappa_remediation` live only in Python), so even a κ-block **Schema C** dump would parse but not certify
-(`parsed ≠ validated`) — porting that certifier is the prerequisite before Schema C is worth wiring. From a
-*public telemetry frame* the Ω→V / ν→λ air-gaps stay **non-liftable** (the frame carries neither κ nor
-`(X,Y,Z)`). `monolith ≠ free`; `parts ≠ whole`. (Rejected at the fork: **(B) embed CPython** — not
-dependency-free, ships a Python runtime.)
+end-to-end. **L2 got its validator:** `contraction_cert.rs` ports the discrete contraction certificate + κ
+remediation (differential-tested vs Python). What L2 still lacks is the **κ-block (Schema C) ingest path** that
+would feed the certifier from a dump — the certifier is a library API today (`ported ≠ ingested`); a fixed
+compile-time `n` κ-block reader (mirroring Schema D) is the remaining wiring. From a *public telemetry frame*
+the Ω→V / ν→λ air-gaps stay **non-liftable** (the frame carries neither κ nor `(X,Y,Z)`). `monolith ≠ free`;
+`parts ≠ whole`. (Rejected at the fork: **(B) embed CPython** — not dependency-free, ships a Python runtime.)
 
 ## 4. Output contract (what a "gate-approved artifact" actually asserts)
 
