@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+[package]
+name = "dvsm_reality_core"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-only"
+authors = ["Daniel J. Dillberg"]
+description = "A hardened, standalone Rust product of the DVSM 2-Layer Reality Core: an immutable geometric core (S^(n-1) x St(n,r) contractive projection dynamics) under a mutable runtime that may observe but never alter the geometry. Deterministic, std-only, invariant-measured."
+repository = "https://github.com/Dedoc-9/Ursprung"
+keywords = ["dynamical-system", "stiefel", "deterministic", "manifold"]
+categories = ["science", "no-std"]
+
+[lib]
+name = "dvsm_reality_core"
+path = "src/lib.rs"
+
+# Zero dependencies on purpose. The upstream research file used nalgebra; a from-scratch std-only linear
+# algebra layer removes the supply-chain surface, keeps results bit-deterministic (no BLAS dispatch), and
+# makes the Stiefel retraction's shape explicit (no library QR-shape ambiguity). hardening over convenience.
+[dependencies]
