@@ -37,6 +37,7 @@ SUITES = [
     ("commercial", "commercial", "test_kernel_auditor.py"),
     ("commercial", "commercial", "test_commercial_obligations.py"),
     ("commercial", "commercial", "test_binframe_adapter.py"),
+    ("commercial", "commercial", "test_compliance_doc.py"),
 ]
 
 

@@ -1,0 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Generated compliance documents are derived from COMMERCIAL_CLAIMS (regenerate via compliance_doc.py).
+*.generated.md
+__pycache__/
