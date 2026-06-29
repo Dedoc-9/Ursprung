@@ -12,6 +12,10 @@ the project's core discipline: a sales claim is honest only if a discharged tech
 So marketing cannot exceed evidence — the same vulnerability the whole project treats as a defect, enforced at
 the contract layer. `claim ≠ proof`; `grade ≠ truth`.
 
+SINGLE SOURCE OF TRUTH: the claims and the obligation registries are loaded from the manifests `ledger.tsv`
+and `obligations.tsv` (same files the Rust `shipped_ledger()` reads via `include_str!`), so the two
+language ports cannot drift. Edit the manifest, not the code. `mirror ≠ source` → resolved to one source.
+
 Grades reuse the open-core epistemic ladder (`claim_ledger.GRADES`): ESTABLISHED, MEASURED, UNDERDETERMINED,
 SPECULATIVE, NOT_MEASURED. SUPPORTED = {ESTABLISHED, MEASURED}.
 """
@@ -20,51 +24,44 @@ from __future__ import annotations
 import os
 import sys
 from dataclasses import dataclass
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "weltwerk", "verify"))
 from claim_ledger import Claim, audit_ledger, GRADES, SUPPORTED                 # noqa: E402
 
+_HERE = os.path.dirname(os.path.abspath(__file__))
 
-# Technical obligations ACTUALLY discharged by the DVSM test suite — the evidence a sales claim may rest on.
-DISCHARGED: Dict[str, str] = {
-    "coupling.detect_identifiable":
-        "test_coupling_audit::omega_detected, novelty_detected — planted identifiable leaks → OBSERVER_CONTAMINATION",
-    "coupling.airgap_clean":
-        "test_coupling_audit::clean_air_gap — an air-gapped trace reads AIR_GAP_HELD",
-    "coupling.declares_blindness":
-        "test_coupling_audit::unidentifiable_flagged — declines to rule on unidentifiable couplings",
-    "backend.refuse_contaminated_atomic":
-        "test_dvsm_backend / test_kernel_auditor — contaminated telemetry refused before any effect",
-    "backend.honest_answers":
-        "test_dvsm_backend::windows_emit_analysis — every answer is an AnalysisResult (scope + ≥1 limitation)",
-    "backend.no_fused_scalar":
-        "test_dvsm_backend::panel_no_scalar / test_kernel_auditor::posture_no_scalar — no single health score",
-    "auditor.custom_probe":
-        "test_kernel_auditor::custom_probe — a customer-defined probe over arbitrary telemetry columns works",
-    "reproducibility.determinism":
-        "test_dvsm_reference::determinism + invariant_ledger DVSM-6 — identical input ⇒ identical report",
-    "ledger.catches_ghosts":
-        "test_invariant_ledger::kappa_ghost_caught, energy_law_rejected — obligations grade honestly",
-    "kappa.remediated_skew":
-        "test_kappa_remediation (DVSM) — antisymmetrized κ=(κ−κᵀ)/2 is hollow+skew (max|κ+κᵀ|=0); the skew "
-        "obligation flips VIOLATED→CLOSED",
-    "certificate.discrete_contraction":
-        "test_discrete_certificate (DVSM) — a checkable sufficient condition (2‖κ‖_F·σ<λ ∧ dt·λ≤1 ⇒ ρ<1) with "
-        "the σ-margin and ρ stated; analytic ρ bounds measured growth; the κ fix widens the margin",
-}
 
-# Obligations that are OPEN or REJECTED — a SUPPORTED commercial claim may NOT rest on any of these.
-OPEN_OR_REJECTED: Dict[str, str] = {
-    "kernel.boundedness":
-        "DVSM-2 REJECTED_AS_PROOF (continuous energy law ≠ discrete bound); discrete Lyapunov cert OPEN",
-    "coupling.exhaustive":
-        "undetected ≠ absent; unidentifiable couplings exist — the firewall is not a completeness proof",
-    "kernel.energy_law_holds":
-        "DVSM-1 VIOLATED — κ=sin(k·1.37−j·1.73) is not skew-symmetric, the energy-law premise fails",
-    "realkernel.lift":
-        "all reference grades are reference-relative until re-run on real BinaryFrame dumps (reference ≠ kernel)",
-}
+def _read_tsv(name: str) -> List[List[str]]:
+    """Read a tab-separated manifest (skipping blank / '#' lines). UTF-8 so κ / ‖ / σ survive on any platform
+    (do NOT rely on the locale default — Windows cp1252 would corrupt them)."""
+    rows: List[List[str]] = []
+    with open(os.path.join(_HERE, name), encoding="utf-8") as f:
+        for line in f:
+            line = line.rstrip("\r\n")
+            if not line or line.startswith("#"):
+                continue
+            rows.append(line.split("\t"))
+    return rows
+
+
+def _load_obligations() -> Tuple[Dict[str, str], Dict[str, str]]:
+    discharged: Dict[str, str] = {}
+    open_rej: Dict[str, str] = {}
+    for row in _read_tsv("obligations.tsv"):
+        key, status = row[0], row[1]
+        evidence = row[2] if len(row) > 2 else ""
+        if status == "DISCHARGED":
+            discharged[key] = evidence
+        elif status == "OPEN_OR_REJECTED":
+            open_rej[key] = evidence
+        else:
+            raise ValueError("unknown obligation status %r for key %r" % (status, key))
+    return discharged, open_rej
+
+
+# Technical obligations + their status, loaded from the single-source manifest (obligations.tsv).
+DISCHARGED, OPEN_OR_REJECTED = _load_obligations()
 
 # Hype lexicon — banned from any SUPPORTED claim (semantic inflation the product treats as a defect).
 HYPE: Tuple[str, ...] = (
@@ -89,71 +86,19 @@ class CommercialClaim:
                      self.does_not_show, self.falsifier)
 
 
-# The SHIPPED commercial ledger. Supported value-props rest on discharged obligations; boundary rows are
-# explicitly downgraded so the contract states, in writing, what the product does NOT do.
-COMMERCIAL_CLAIMS: Tuple[CommercialClaim, ...] = (
-    CommercialClaim(
-        "C1", "Detects identifiable diagnostic→dynamics leaks (observer contamination) in your kernel telemetry.",
-        "MEASURED", "coupling.detect_identifiable",
-        "a mechanism or magnitude; only that a residual survives conditioning on the modeled drivers.",
-        "the residual dissolves under a further candidate confounder or finer windowing.", "open-core"),
-    CommercialClaim(
-        "C2", "Refuses to certify contaminated or unidentifiable telemetry as controller-safe — atomically.",
-        "ESTABLISHED", "backend.refuse_contaminated_atomic",
-        "that certified telemetry is correct — only that an ungrounded certification cannot execute.",
-        "an action running on a non-AIR_GAP_HELD window.", "open-core"),
-    CommercialClaim(
-        "C3", "Every finding carries its scope and at least one limitation; no fused 'health score'.",
-        "ESTABLISHED", "backend.honest_answers",
-        "that the findings are complete — only that none ships without its boundary.",
-        "an answer emitted without a scope or limitation, or a single aggregate score field.", "open-core"),
-    CommercialClaim(
-        "C4", "Deterministic, reproducible reports: identical telemetry yields an identical report.",
-        "ESTABLISHED", "reproducibility.determinism",
-        "correctness or cross-precision parity; integrity ≠ truth.",
-        "identical input producing divergent reports.", "open-core"),
-    CommercialClaim(
-        "C5", "Works on YOUR kernel: customer-defined probes over arbitrary telemetry columns.",
-        "MEASURED", "auditor.custom_probe",
-        "that your specific kernel is leak-free — only that the procedure runs on your schema.",
-        "a probe schema the auditor cannot evaluate.", "commercial"),
-    CommercialClaim(
-        "C6", "States where it is blind: a coupling whose diagnostic is a function of the conditioned state is "
-              "reported UNIDENTIFIABLE, not falsely cleared.",
-        "ESTABLISHED", "coupling.declares_blindness",
-        "that blind couplings are absent — undetected ≠ absent.",
-        "an unidentifiable coupling silently reported AIR_GAP_HELD.", "open-core"),
-    CommercialClaim(
-        "C7", "Ships with a checkable discrete-time contraction certificate: a sufficient condition "
-              "(2‖κ‖_F·σ < λ, dt·λ ≤ 1) with the noise margin σ_max and the contraction factor ρ stated.",
-        "MEASURED", "certificate.discrete_contraction",
-        "stability for ‖S‖ > σ, the fixed-point clamps, or the full coupled Z–S–W system — it is a SUFFICIENT "
-        "condition, NOT a global stability proof.",
-        "a sampled trajectory whose growth exceeds the analytic ρ within the certified σ.", "commercial"),
-    CommercialClaim(
-        "C8", "The Lie-coupling κ can be antisymmetrized to a hollow, skew-symmetric matrix, after which the "
-              "skew-symmetry obligation closes (max|κ+κᵀ| = 0).",
-        "ESTABLISHED", "kappa.remediated_skew",
-        "that the shipped upstream kernel uses the corrected κ — only that the remediation satisfies the premise.",
-        "an entry with κ[i,j] + κ[j,i] ≠ 0 after antisymmetrization (a coding error in the remediation).",
-        "open-core"),
-    # ---- boundary claims: what we explicitly do NOT sell — downgraded, rest on OPEN_OR_REJECTED ----
-    CommercialClaim(
-        "B1", "We do NOT guarantee your kernel is numerically bounded.",
-        "NOT_MEASURED", "kernel.boundedness",
-        "boundedness — the continuous energy law does not certify the discrete kernel; a Lyapunov cert is open.",
-        "a discrete-time trapping certificate (would upgrade this).", "open-core"),
-    CommercialClaim(
-        "B2", "We do NOT claim to detect every coupling — only identifiable ones.",
-        "NOT_MEASURED", "coupling.exhaustive",
-        "completeness or absence of a leak. undetected ≠ absent.",
-        "a completeness proof over the coupling space.", "open-core"),
-    CommercialClaim(
-        "B3", "Reference-model results are reference-relative until run on your real kernel trace dumps.",
-        "UNDERDETERMINED", "realkernel.lift",
-        "any property of the shipped Rust kernel from the Python reference alone.",
-        "a run on real BinaryFrame dumps reproducing the verdicts.", "commercial"),
-)
+def _load_claims() -> Tuple[CommercialClaim, ...]:
+    out: List[CommercialClaim] = []
+    for row in _read_tsv("ledger.tsv"):
+        if len(row) != 7:
+            raise ValueError("ledger.tsv row needs 7 tab-separated fields, got %d: %r" % (len(row), row))
+        cid, grade, tier, rests_on, statement, does_not_show, falsifier = row
+        out.append(CommercialClaim(cid, statement, grade, rests_on, does_not_show, falsifier, tier))
+    return tuple(out)
+
+
+# The SHIPPED commercial ledger, loaded from the single-source manifest (ledger.tsv). Supported value-props
+# rest on discharged obligations; boundary rows are explicitly downgraded and rest on OPEN_OR_REJECTED.
+COMMERCIAL_CLAIMS: Tuple[CommercialClaim, ...] = _load_claims()
 
 
 def audit_commercial_ledger(claims: Tuple[CommercialClaim, ...]) -> dict:
@@ -177,7 +122,8 @@ def main():
         print(f"  [{c.grade:15s}] {c.id} ({c.tier}, {kind}) ← {c.rests_on}")
     print(f"\n  ledger honest: {a['honest']}  exceeds_proof={a['exceeds_proof']}  hype={a['hype']}  "
           f"unknown={a['unknown_obligation']}")
-    print("  marketing cannot exceed evidence; claim ≠ proof; grade ≠ truth.")
+    print(f"  loaded {len(COMMERCIAL_CLAIMS)} claims + {len(DISCHARGED)} discharged / {len(OPEN_OR_REJECTED)} "
+          f"open obligations from the single-source manifest. marketing cannot exceed evidence; claim ≠ proof.")
 
 
 if __name__ == "__main__":

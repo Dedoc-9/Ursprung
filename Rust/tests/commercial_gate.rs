@@ -18,6 +18,20 @@ fn shipped_ledger_is_honest() {
 }
 
 #[test]
+fn manifest_loads_single_source_ledger() {
+    // shipped_ledger() is built from the SAME ledger.tsv / obligations.tsv the Python reads — verify the Rust
+    // parser reproduces the expected shape (11 claims, 11 discharged + 4 open obligations).
+    let led = shipped_ledger();
+    assert_eq!(led.claims.len(), 11, "ledger.tsv holds C1-C8 + B1-B3");
+    assert_eq!(led.discharged.len(), 11);
+    assert_eq!(led.open_or_rejected.len(), 4);
+    let ids: Vec<&str> = led.claims.iter().map(|c| c.id.as_str()).collect();
+    for want in ["C1", "C7", "C8", "B1", "B3"] {
+        assert!(ids.contains(&want), "manifest must load claim {want}");
+    }
+}
+
+#[test]
 fn boundary_negation_is_not_flagged_as_hype() {
     // B1's statement literally contains "guarantee" ("We do NOT guarantee ...") — but it is NOT_MEASURED, and
     // the hype scan is grade-gated to SUPPORTED claims, so the ledger stays honest. This is the load-bearing

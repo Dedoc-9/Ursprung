@@ -1,26 +1,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-//! commercial_obligations — the proof-gated buyer-facing claims ledger (gateway layer 4), ported from
-//! `DVSM/commercial/commercial_obligations.py` over the validated [`crate::claim_ledger`] substrate.
-//!
-//! A sales claim is honest only if a *discharged* technical obligation backs it. The ledger audits honest iff:
-//!   (a) every claim carries a non-empty `does_not_show` and `falsifier` (reused from `claim_ledger::audit_ledger`);
+//! commercial_obligations — the proof-gated buyer-facing claims ledger (gateway layer 4), over the validated
+//! [`crate::claim_ledger`] substrate. A sales claim is honest only if a *discharged* technical obligation backs
+//! it. The ledger audits honest iff:
+//!   (a) every claim carries a non-empty `does_not_show` and `falsifier` (via `claim_ledger::audit_ledger`);
 //!   (b) no SUPPORTED (Established/Measured) claim rests on an UNDISCHARGED obligation (`exceeds_proof`);
 //!   (c) no SUPPORTED claim contains hype-lexicon language (`hype`);
 //!   (d) every `rests_on` names a known obligation — discharged or open/rejected (`unknown_obligation`).
 //!
-//! `claim ≠ proof`; `grade ≠ truth`. Grades are on-ladder by construction (the `Grade` enum), a Rust
-//! strengthening over the Python string ladder.
+//! `claim ≠ proof`; `grade ≠ truth`.
 //!
-//! ## LOAD-BEARING `does_not_show` (the boundary the grading pass surfaced)
+//! ## SINGLE SOURCE OF TRUTH (mirror → source, resolved)
+//! `shipped_ledger()` is loaded from the SAME manifests the Python reads — `DVSM/commercial/ledger.tsv` and
+//! `obligations.tsv` — embedded at compile time via `include_str!`. There is now ONE source for the ledger
+//! across both languages; editing the manifest updates both. The earlier `mirror ≠ source` drift risk is
+//! closed by construction (no hand-duplicated claim data here).
+//!
+//! ## LOAD-BEARING `does_not_show`
 //! `static-check ≠ live-execution`. This gate verifies that a claim *names* a discharged obligation; it does
-//! **NOT** execute that obligation's test, nor confirm it passed in this build. The `discharged` set is a
-//! declared cross-reference, trusted as data. Binding `discharged` to a live `verify.py` / `cargo test` run is
-//! an OPEN hardening, not done here.
-//!
-//! ## Drift note
-//! The Python ledger remains canonical; this is a mirror for the single-binary gateway. The differential test
-//! (`tests/commercial_gate.rs`) asserts the shipped ledger audits honest exactly as the Python does, which
-//! catches gross drift — but two hand-maintained ledgers can still diverge in detail. `mirror ≠ source`.
+//! NOT execute that obligation's test, nor confirm it passed in this build. Binding `discharged` to a live run
+//! is a separate OPEN obligation (Obligation B).
 
 use crate::claim_ledger::{audit_ledger, Claim, Grade};
 use std::collections::BTreeSet;
@@ -68,7 +66,6 @@ impl CommercialClaim {
     }
 
     fn to_claim(&self) -> Claim {
-        // mechanism carries the obligation reference, mirroring the Python `rests_on=...`
         Claim::new(
             self.id.clone(),
             self.statement.clone(),
@@ -102,7 +99,7 @@ impl CommercialLedger {
     /// on an undischarged obligation; no SUPPORTED claim contains hype; every `rests_on` is a known key.
     pub fn audit(&self) -> CommercialAudit {
         let mapped: Vec<Claim> = self.claims.iter().map(|c| c.to_claim()).collect();
-        let base = audit_ledger(&mapped); // boundary-field (does_not_show / falsifier) check + on-ladder
+        let base = audit_ledger(&mapped);
 
         let mut exceeds_proof = Vec::new();
         let mut hype = Vec::new();
@@ -140,81 +137,58 @@ impl CommercialLedger {
     }
 }
 
-fn set(keys: &[&str]) -> BTreeSet<String> {
-    keys.iter().map(|s| s.to_string()).collect()
+// ---- single-source manifest (the SAME files the Python loads) -------------------------------------
+const LEDGER_TSV: &str = include_str!("../../DVSM/commercial/ledger.tsv");
+const OBLIGATIONS_TSV: &str = include_str!("../../DVSM/commercial/obligations.tsv");
+
+fn parse_grade(s: &str) -> Grade {
+    match s {
+        "ESTABLISHED" => Grade::Established,
+        "MEASURED" => Grade::Measured,
+        "UNDERDETERMINED" => Grade::Underdetermined,
+        "SPECULATIVE" => Grade::Speculative,
+        "NOT_MEASURED" => Grade::NotMeasured,
+        other => panic!("unknown grade {other:?} in ledger.tsv"),
+    }
 }
 
-/// The SHIPPED ledger — a faithful mirror of the Python `COMMERCIAL_CLAIMS` + registries. Supported
-/// value-props (C*) rest on discharged obligations; boundary rows (B*) are explicitly downgraded and rest on
-/// open/rejected keys. The Python remains canonical (see the Drift note).
+/// Load the SHIPPED ledger from the single-source manifests embedded at compile time. `str::lines()` strips the
+/// `\n`/`\r\n` terminators, so field content is taken verbatim between tabs.
 pub fn shipped_ledger() -> CommercialLedger {
-    let discharged = set(&[
-        "coupling.detect_identifiable",
-        "coupling.airgap_clean",
-        "coupling.declares_blindness",
-        "backend.refuse_contaminated_atomic",
-        "backend.honest_answers",
-        "backend.no_fused_scalar",
-        "auditor.custom_probe",
-        "reproducibility.determinism",
-        "ledger.catches_ghosts",
-        "kappa.remediated_skew",
-        "certificate.discrete_contraction",
-    ]);
-    let open_or_rejected = set(&[
-        "kernel.boundedness",
-        "coupling.exhaustive",
-        "kernel.energy_law_holds",
-        "realkernel.lift",
-    ]);
+    let mut discharged = BTreeSet::new();
+    let mut open_or_rejected = BTreeSet::new();
+    for line in OBLIGATIONS_TSV.lines() {
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let mut it = line.split('\t');
+        let key = it.next().expect("obligation key").to_string();
+        match it.next().expect("obligation status") {
+            "DISCHARGED" => {
+                discharged.insert(key);
+            }
+            "OPEN_OR_REJECTED" => {
+                open_or_rejected.insert(key);
+            }
+            other => panic!("unknown obligation status {other:?} in obligations.tsv"),
+        }
+    }
 
-    let claims = vec![
-        CommercialClaim::new("C1", "Detects identifiable diagnostic→dynamics leaks (observer contamination) in your kernel telemetry.",
-          Grade::Measured, "coupling.detect_identifiable",
-          "a mechanism or magnitude; only that a residual survives conditioning on the modeled drivers.",
-          "the residual dissolves under a further candidate confounder or finer windowing.", "open-core"),
-        CommercialClaim::new("C2", "Refuses to certify contaminated or unidentifiable telemetry as controller-safe — atomically.",
-          Grade::Established, "backend.refuse_contaminated_atomic",
-          "that certified telemetry is correct — only that an ungrounded certification cannot execute.",
-          "an action running on a non-AIR_GAP_HELD window.", "open-core"),
-        CommercialClaim::new("C3", "Every finding carries its scope and at least one limitation; no fused 'health score'.",
-          Grade::Established, "backend.honest_answers",
-          "that the findings are complete — only that none ships without its boundary.",
-          "an answer emitted without a scope or limitation, or a single aggregate score field.", "open-core"),
-        CommercialClaim::new("C4", "Deterministic, reproducible reports: identical telemetry yields an identical report.",
-          Grade::Established, "reproducibility.determinism",
-          "correctness or cross-precision parity; integrity ≠ truth.",
-          "identical input producing divergent reports.", "open-core"),
-        CommercialClaim::new("C5", "Works on YOUR kernel: customer-defined probes over arbitrary telemetry columns.",
-          Grade::Measured, "auditor.custom_probe",
-          "that your specific kernel is leak-free — only that the procedure runs on your schema.",
-          "a probe schema the auditor cannot evaluate.", "commercial"),
-        CommercialClaim::new("C6", "States where it is blind: a coupling whose diagnostic is a function of the conditioned state is reported UNIDENTIFIABLE, not falsely cleared.",
-          Grade::Established, "coupling.declares_blindness",
-          "that blind couplings are absent — undetected ≠ absent.",
-          "an unidentifiable coupling silently reported AIR_GAP_HELD.", "open-core"),
-        CommercialClaim::new("C7", "Ships with a checkable discrete-time contraction certificate: a sufficient condition (2‖κ‖_F·σ < λ, dt·λ ≤ 1) with the noise margin σ_max and the contraction factor ρ stated.",
-          Grade::Measured, "certificate.discrete_contraction",
-          "stability for ‖S‖ > σ, the fixed-point clamps, or the full coupled Z–S–W system — it is a SUFFICIENT condition, NOT a global stability proof.",
-          "a sampled trajectory whose growth exceeds the analytic ρ within the certified σ.", "commercial"),
-        CommercialClaim::new("C8", "The Lie-coupling κ can be antisymmetrized to a hollow, skew-symmetric matrix, after which the skew-symmetry obligation closes (max|κ+κᵀ| = 0).",
-          Grade::Established, "kappa.remediated_skew",
-          "that the shipped upstream kernel uses the corrected κ — only that the remediation satisfies the premise.",
-          "an entry with κ[i,j] + κ[j,i] ≠ 0 after antisymmetrization (a coding error in the remediation).", "open-core"),
-        // ---- boundary claims: what we explicitly do NOT sell — downgraded, rest on open/rejected ----
-        CommercialClaim::new("B1", "We do NOT guarantee your kernel is numerically bounded.",
-          Grade::NotMeasured, "kernel.boundedness",
-          "boundedness — the continuous energy law does not certify the discrete kernel; a Lyapunov cert is open.",
-          "a discrete-time trapping certificate (would upgrade this).", "open-core"),
-        CommercialClaim::new("B2", "We do NOT claim to detect every coupling — only identifiable ones.",
-          Grade::NotMeasured, "coupling.exhaustive",
-          "completeness or absence of a leak. undetected ≠ absent.",
-          "a completeness proof over the coupling space.", "open-core"),
-        CommercialClaim::new("B3", "Reference-model results are reference-relative until run on your real kernel trace dumps.",
-          Grade::Underdetermined, "realkernel.lift",
-          "any property of the shipped Rust kernel from the Python reference alone.",
-          "a run on real BinaryFrame dumps reproducing the verdicts.", "commercial"),
-    ];
+    let mut claims = Vec::new();
+    for line in LEDGER_TSV.lines() {
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let f: Vec<&str> = line.split('\t').collect();
+        assert!(
+            f.len() == 7,
+            "ledger.tsv row needs 7 tab-separated fields, got {}: {:?}",
+            f.len(),
+            f
+        );
+        // columns: id  grade  tier  rests_on  statement  does_not_show  falsifier
+        claims.push(CommercialClaim::new(f[0], f[4], parse_grade(f[1]), f[3], f[5], f[6], f[2]));
+    }
 
     CommercialLedger { claims, discharged, open_or_rejected }
 }
