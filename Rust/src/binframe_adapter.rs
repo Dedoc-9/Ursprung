@@ -10,9 +10,11 @@
 //!   * [`SCHEMA_ABI`] (`dvsm_v20.run_profile`, 42 B) — frame + 3 f64 (energy, stress, entropy) + 2 u8
 //!     (ghost, contained) + u64 hash (the FNV-1a replay hash).
 //!
-//! ## Faithful to the reference — what this DOES NOT do
-//! - **No `lift()`.** The obligation-lifting half of the Python adapter depends on `invariant_ledger`
-//!   (`ObligationResult`), which is not yet in Rust. That is Sub-Slice 1B. This slice is parse + report only.
+//! ## Faithful to the reference — what this DOES / DOES NOT do
+//! - **`lift()` (Sub-Slice 1B, now wired).** Grades the obligations a dump CAN support (containment,
+//!   replay-parity) over the ported [`crate::invariant_ledger`], and HONESTLY declares the non-liftable
+//!   air-gap checks (Ω→V, ν→λ) because the public frame carries neither `v` nor `lambda_eff`.
+//!   `emitted-telemetry ≠ full-state`; `undetected ≠ absent`.
 //! - **No "ForbiddenSetViolation."** The Python `ParseReport` has exactly two anomalies — `layout_mismatch`
 //!   (a non-zero record remainder) and `nonfinite` (NaN/Inf in a float field). There is no forbidden-flag check
 //!   in the reference, so none is invented here. `claim ≠ code`.
@@ -24,6 +26,8 @@
 //! dividing-but-misaligned stream would parse to garbage. Verify the schema against your build's
 //! `sizeof(BinaryFrame)` before trusting values. `emitted-telemetry ≠ full-state` (V and λ are not emitted, so
 //! the Ω→V / ν→λ air-gap obligations cannot be lifted from a public frame — surfaced in 1B, not here).
+
+use crate::invariant_ledger::{ObligationResult, ObligationStatus};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FieldType {
@@ -218,3 +222,99 @@ pub fn parse_frames(data: &[u8], schema: &Schema, header_lines: usize) -> (Vec<R
     };
     (rows, report)
 }
+
+// ---- lift: obligations the emitted telemetry CAN support, kernel-relative (Sub-Slice 1B) ----------
+
+/// Default containment bound (`U_MAX_DEFAULT` in the Python adapter).
+pub const U_MAX_DEFAULT: f64 = 100.0;
+
+fn has_field(rows: &[Row], name: &str) -> bool {
+    rows.first().map_or(false, |r| field(r, name).is_some())
+}
+
+/// §7 containment: ‖Z‖ (the `energy` channel) stays under `u_max` on the emitted run.
+pub fn containment(rows: &[Row], u_max: f64) -> ObligationResult {
+    let mut mx = f64::NAN;
+    let mut seen = false;
+    for r in rows {
+        if let Some(v) = field(r, "energy").and_then(|f| f.as_f64()) {
+            mx = if seen { mx.max(v) } else { v };
+            seen = true;
+        }
+    }
+    let status = if mx.is_finite() && mx < u_max {
+        ObligationStatus::Bounded
+    } else {
+        ObligationStatus::Violated
+    };
+    ObligationResult::new(
+        "DVSM-3-kernel",
+        "‖Z‖ stays under U_MAX on the REAL emitted telemetry",
+        status,
+        format!("max(energy)={:.3} over {} real frames (bound={})", mx, rows.len(), u_max),
+        "boundedness for all inputs — only this dumped run; empirical-boundedness ≠ certified",
+        "a real dump whose energy reaches U_MAX without GhostSnap recovery",
+    )
+}
+
+/// §6 replay parity: two real dumps from the same seed share an identical replay-hash sequence.
+pub fn replay_parity(rows_a: &[Row], rows_b: &[Row]) -> ObligationResult {
+    let a: Vec<Option<u64>> = rows_a.iter().map(|r| field(r, "hash").and_then(|f| f.as_u64())).collect();
+    let b: Vec<Option<u64>> = rows_b.iter().map(|r| field(r, "hash").and_then(|f| f.as_u64())).collect();
+    let status = if !a.is_empty() && a == b { ObligationStatus::Closed } else { ObligationStatus::Violated };
+    ObligationResult::new(
+        "DVSM-6-kernel",
+        "two real dumps from the same seed share an identical replay-hash sequence",
+        status,
+        format!("{} vs {} frames; hash sequences identical = {}", a.len(), b.len(), a == b),
+        "CORRECTNESS or cross-precision parity — integrity ≠ truth; hash ≠ reality",
+        "identical seed yielding divergent emitted hashes",
+    )
+}
+
+/// Forbidden-coupling obligations a PUBLIC frame dump cannot support: `(id, needed-field, why)`. Neither `v`
+/// nor `lambda_eff` is emitted, so both are always non-liftable from the public schemas. `undetected ≠ absent`.
+pub const NON_LIFTABLE_NEEDS: &[(&str, &str, &str)] = &[
+    ("DVSM-7 (Ω→V air-gap)", "v", "velocity V is not emitted in the public frame; the Ω→V air-gap needs it"),
+    ("DVSM-4 (ν→λ air-gap)", "lambda_eff", "dissipation λ is not emitted in the public frame; the ν→λ air-gap needs it"),
+];
+
+/// The forbidden-coupling obligations the emitted fields cannot support, with the reason — `(id, why)`.
+pub fn non_liftable(rows: &[Row]) -> Vec<(&'static str, &'static str)> {
+    NON_LIFTABLE_NEEDS
+        .iter()
+        .filter(|(_id, need, _why)| !has_field(rows, need))
+        .map(|(id, _need, why)| (*id, *why))
+        .collect()
+}
+
+/// Lift every obligation the dump supports to a graded [`ObligationResult`], and return the non-liftable ones
+/// with why. Mirrors the Python `lift()`: containment if `energy` present; replay-parity if `hash` present and
+/// a second dump is supplied, else an UNDERDETERMINED no-hash obligation for a hashless schema.
+pub fn lift(
+    rows: &[Row],
+    schema: &Schema,
+    u_max: f64,
+    rows_b: Option<&[Row]>,
+) -> (Vec<ObligationResult>, Vec<(&'static str, &'static str)>) {
+    let mut obs = Vec::new();
+    if has_field(rows, "energy") {
+        obs.push(containment(rows, u_max));
+    }
+    if has_field(rows, "hash") {
+        if let Some(rb) = rows_b {
+            obs.push(replay_parity(rows, rb));
+        }
+    } else if !rows.is_empty() {
+        obs.push(ObligationResult::new(
+            "DVSM-6-kernel",
+            "replay-hash parity on the real dump",
+            ObligationStatus::Underdetermined,
+            format!("the {} frame carries no hash field — cannot check replay parity from this schema", schema.name),
+            "anything about reproducibility from a hashless dump",
+            "switch to the ABI/run_profile dump (carries the FNV-1a hash)",
+        ));
+    }
+    (obs, non_liftable(rows))
+}
+

@@ -34,14 +34,17 @@ pub mod commercial_obligations;
 pub mod coupling_audit;
 pub mod epistemic_types;
 pub mod frontier_gate;
+pub mod invariant_ledger;
 pub mod orchestrator;
 pub mod residual_channel;
 
 pub use artifacts::{AnalysisResult, Finding, HonestyError, Limitation};
 pub use claim_ledger::{audit_ledger, Claim, Grade, LedgerAudit, SupportedClaim};
 pub use binframe_adapter::{
-    field, parse_frames, Field, FieldType, ParseReport, Row, Schema, SCHEMA_ABI, SCHEMA_TELEM,
+    containment, field, lift, non_liftable, parse_frames, replay_parity, Field, FieldType, ParseReport,
+    Row, Schema, NON_LIFTABLE_NEEDS, SCHEMA_ABI, SCHEMA_TELEM, U_MAX_DEFAULT,
 };
+pub use invariant_ledger::{ObligationResult, ObligationStatus};
 pub use commercial_obligations::{
     shipped_ledger, CommercialAudit, CommercialClaim, CommercialLedger, HYPE,
 };
