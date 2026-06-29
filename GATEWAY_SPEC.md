@@ -158,7 +158,24 @@ exists** — `cargo run --release --bin gateway-bench -- --schema telem|abi|cmi|
 [--corrupt]` — a zero-dependency, std-only (`std::time::Instant` / `File` / `BufWriter`) runner that streams a
 synthetic dump through the SAME `stream_frames` / `run_*_streaming` paths and prints a `MEASURED`, point-in-time
 ledger (MB/s, ns/record, chunked p50/p95/p99, optional full-gate + fail-closed timing). Numbers are
-**host-specific and produced only on run** — this spec deliberately hardcodes none. `measured ≠ guaranteed`.
+**host-specific and point-in-time**; a dated reference run is recorded below, explicitly bounded — re-run on
+your own host for your own figures. `measured ≠ guaranteed`.
+
+### Reference run — MEASURED 2026-06-29, developer Windows host, `--release`, temp-dir filesystem, single run
+
+| Schema | Records | read+parse (file) | read+parse (memory) | ns/record (mem) | p50 / p95 / p99 (chunked) | full-gate |
+|---|---|---|---|---|---|---|
+| A · telem (44B) | 2,000,000 | 849 MB/s | 1,151 MB/s | 38.2 ns | 51.0 / 53.6 / 66.1 ns | — |
+| B · abi (42B) | 2,000,000 | 910 MB/s | 1,268 MB/s | 33.1 ns | 45.5 / 46.7 / 68.5 ns | — |
+| C · kappa (160B) | 1,000,000 | 1,593 MB/s | 3,012 MB/s | 53.1 ns | 98.8 / 105.2 / 117.1 ns | **L2 cert: 263 MB/s** (0.608 s, PASS) |
+| D · cmi (32B) | 200,000 | 690 MB/s | 1,057 MB/s | 30.3 ns | 42.0 / 59.9 / 59.9 ns | **L3 firewall: 9.7 MB/s** (0.663 s, reps=20, PASS) |
+
+What this run *shows* (and only this): **(1)** parse is per-record-bounded (~30–53 ns/record CPU, roughly flat
+across schemas) and disk-read costs a real fraction (memory pass ~1.3–1.9× the file pass); **(2)** the §6
+hypothesis is **confirmed** — *the firewall, not ingestion, is the latency driver*: L3 CMI audit (~9.7 MB/s)
+runs ~70× slower than its own parse (~690 MB/s), so the firewall must stay a *windowed* periodic audit, never a
+per-packet filter; **(3)** L2 certification is cheap (263 MB/s, `--samples 0`). What it does **not** show: any
+*averaged* or warm/cold-cache-controlled figure (single run each), any other hardware, or RSS (see below).
 
 - **Memory-mapped fixed-record framing.** Frames are fixed-size `repr(C)` records (`binframe_adapter`
   already validates `len(body) % rec_size == 0`). `mmap` the file; iterate records in place (no copy). A
