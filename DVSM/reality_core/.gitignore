@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Build output
+/target/
+
+# Generated telemetry traces (reproducible via `cargo run --example dump_trace`; not source).
+# These are emitted by the verification backend and should not be tracked.
+*.csv
+
+# Editor / OS cruft
+*.swp
+*~
+.DS_Store
