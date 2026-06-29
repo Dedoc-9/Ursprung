@@ -7,11 +7,13 @@ stability, visual fidelity, deterministic replay, debugging, the asset/world pip
 **information integrity** (anti-cheat / multiplayer disclosure — the second arc; see *The information-firewall
 discipline* below).
 
-> **Repo orientation (current).** Beyond the renderer described here (`ursprung/`, `experiments/`), the
-> repository's **current center of gravity is `weltwerk/`** — a verification kernel with interchangeable proof
-> engines, a Proof-Obligations ledger, an epistemic-runtime layer, and applications (hot-swap, the snowflake
-> language audit, the Halvorsen attractor). It obeys the *same* Dentatus discipline as this contract; see the
-> **weltwerk** section below. This renderer contract remains in force for `ursprung/`.
+> **Repo orientation (current).** The repository is **five arcs sharing one discipline**, not one program — the
+> README's *index* maps each one (what it pioneered, what it is for) and no single arc is "the center." Beyond the
+> renderer described here (`ursprung/`, `experiments/`), the most developed companion line is **`weltwerk/`** — a
+> verification kernel with interchangeable proof engines, a Proof-Obligations ledger, an epistemic-runtime layer,
+> and applications (hot-swap, the snowflake language audit, the Halvorsen attractor). It obeys the *same* Dentatus
+> discipline as this contract; see the **weltwerk** section below. This renderer contract remains in force for
+> `ursprung/`.
 >
 > A newer **sibling-kernel hardening arc** (`DVSM/`, `Rust/`, `DVSM/commercial/`, `GATEWAY_SPEC.md`) applies the
 > same discipline outward to external research kernels and to std-only Rust ports; see *DVSM, the Rust ports, and
@@ -529,7 +531,7 @@ claim, validity-not-outcome tests; Rust ships **compile-unverified** until the u
   firewall, built on `weltwerk/verify/residual_channel`), `invariant_ledger` (caught a κ-skew VIOLATED at the
   diagonal), `dvsm_backend` (profile D), `kappa_remediation` (antisymmetrize `κ←(κ−κᵀ)/2`, CLOSED),
   `discrete_certificate` (`2‖κ‖_F·σ<λ ∧ dt·λ≤1 ⇒ ρ<1` — a **sufficient condition, not a stability proof**). One
-  gate: `python DVSM/verify.py` (11 suites). Results are **reference-relative** — they audit a Python reference,
+  gate: `python DVSM/verify.py` (**12 suites + a LIVE commercial gate**, one exit code). Results are **reference-relative** — they audit a Python reference,
   not the shipped Rust kernel. `reference-model ≠ authoritative-kernel`.
 - **`DVSM/commercial/` (proof-gated claims).** `commercial_obligations` (a claim ships only if a *discharged*
   obligation backs it, + a HYPE-lexicon ban), `compliance_doc` (a disclaimer-first doc *generated from* the gated
@@ -547,7 +549,7 @@ claim, validity-not-outcome tests; Rust ships **compile-unverified** until the u
   (`AIR_GAP_HELD` / `OBSERVER_CONTAMINATION` / `CONFOUNDED_ARTIFACT` / `UNIDENTIFIABLE`) on the validated core —
   quantile binner + (Z,W) mis-spec stress + identifiability decline — wired into the orchestrator as
   `CouplingTool` (`Request::Coupling`). Its planted-regime tests were validated in Python first, then mirrored.
-  `cargo test` in `Rust/` (33 green).
+  `cargo test` in `Rust/` (**65 green**).
 
 **`GATEWAY_SPEC.md` (repo root) — the `ursprung-gateway` design, now BUILT (frame path, cargo-green).** A single-binary, fail-closed
 "integrity gateway monitor" collapsing ingestion → skew-remediation → contraction-certifier → CMI-firewall →
@@ -557,12 +559,15 @@ are); the output is a **commitment, not a signature** (no PKI); the certificate 
 global stability**; "real-time/low-latency" is **UNMEASURED**; and it is a technical conformity check, **not**
 regulatory compliance. Build order (§8): port the CMI core → port the gate → two-tier ingestion → CLI → measure.
 **Status (Rust, `cargo test`-green, each differential-tested vs the Python):** L1 ingestion is whole —
-BinaryFrame parser (`binframe_adapter.rs`, a *deterministic fixed-record reader*, **not** zero-copy) +
-obligation `lift()` over the ported `invariant_ledger`; L3 = CMI firewall + coupling taxonomy; L4 = the
+BinaryFrame parser (`binframe_adapter.rs`, a *deterministic fixed-record reader* that **streams the dump
+end-to-end** — synchronous `BufReader`, bounded memory **O(record)**, proven decision-equivalent to the
+whole-file parse incl. one-byte-at-a-time fragmented reads; **not** zero-copy) + obligation `lift()` over the
+ported `invariant_ledger`; L3 = CMI firewall + coupling taxonomy; L4 = the
 proof-gated claim gate (`commercial_obligations.rs`) over a **single-source manifest**
 (`DVSM/commercial/ledger.tsv` + `obligations.tsv`, loaded by both languages) and **live-bound** to a build
 receipt (`audit_live` in Rust; `verify.py` emits the receipt in Python). The **single binary `ursprung-gateway`**
-(`src/bin/gateway.rs`) composes L1→L4 fail-closed. CLOSED: `mirror ≠ source`, `static-check ≠ live-execution`
+(`src/bin/gateway.rs`) composes L1→L4 fail-closed and **streams the dump end-to-end** (bounded memory, the
+verdict is decision-identical to the whole-file path — `streaming ≡ whole-file`). CLOSED: `mirror ≠ source`, `static-check ≠ live-execution`
 (both languages), and the single-binary assembly. STILL OPEN / honest boundary: the binary does **not** run
 L2 (contraction certifier) or L3 (CMI firewall) from a frame dump — those need typed inputs (κ matrices;
 `(X,Y,Z)` samples), so the Ω→V / ν→λ air-gaps are reported **non-liftable**; and the perf / mmap benchmark
@@ -704,7 +709,7 @@ M10–M21 the information-firewall arc → Channel Discovery + the Measurement D
 meta-invariant **`identity includes provenance`** (the Provenance Principle — a law of the runtime, not a
 numbered world-law). Run: `PYTHONHASHSEED=0 python3 loop.py`; suite `python3 tests/test_ursprung.py`.
 
-The empirical phase (`experiments/`, seeded benches *outside* the 502-check core): six latent phases → three
+The empirical phase (`experiments/`, seeded benches *outside* the verified renderer core): six latent phases → three
 provenance runtimes → live/latent compression → the **RealityKernel** consolidation (the constraint surface
 above), whose **Rust CORE port is verified on real silicon** (`cargo test` green) and whose **lineage-scale
 closure** proves *optimization cannot erase history* to 5×10⁵ commits with zero lineage lost. Then the **GPU

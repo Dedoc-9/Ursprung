@@ -4,7 +4,8 @@ A deterministic high-fidelity renderer that treats rendering as a **perception l
 world model** — and, underneath the renderer, a **provenance-centered runtime that refuses to let state outlive
 its explanation.** The renderer is the *first client* of that runtime, not the whole of it: a simulation, an
 agent, or a world generator are equally valid clients — and the **`weltwerk/` verification kernel** (see
-*weltwerk* below) is the runtime's most developed client today, the repository's current center of gravity. Ursprung consumes the sealed `Reality_Engine`
+*weltwerk* below) is the runtime's most developed client today (the **index** just below maps every arc — what
+each one pioneered and what it is for). Ursprung consumes the sealed `Reality_Engine`
 (Chronicle/Dentatus) workbench read-only as its verification substrate; the workbench supplies the deterministic
 kernel and the integrity discipline, and Ursprung is the renderer projected off the committed trajectory.
 
@@ -40,7 +41,28 @@ The renderer never discovers truth; it manages where its approximations fail. It
 **arbitrary boundaries require deterministic handling, and finite fidelity should be allocated by expected
 future failure cost, not present visual complexity.**
 
-> **Status (current).** The conceptual arc is complete (a **502-check** stdlib suite), the empirical phase ran,
+## The index — five arcs, what each pioneered, what it is for
+
+The repository is not one program but five arcs sharing one discipline (`integrity ≠ truth`; every claim graded,
+every result falsifiable, every boundary stated). They are listed in order of how the work grew; none is "the
+center" — the honest, per-component graded index with a `does_not_show` for each is [`method.md`](method.md).
+
+| Arc (where) | What it pioneered | What it is for |
+|---|---|---|
+| **The renderer** — `ursprung/`, `loop.py` | Rendering as a **provably observer-only** perception layer (replay-identical even with the VIEW corrupted every tick), and the **`ranking ≠ allocation`** split — *what matters* and *what is expensive to represent* are different objects (water-filling under a resistance tensor). | Allocating finite fidelity by expected future failure cost; deterministic replay; a reference for any renderer/sim that must never let presentation move committed truth. |
+| **Information firewall & measurement discipline** — `ursprung/` M10–M21, `ursprung/perception/` | **"The defense is the leak"** (the system's own timing/reaction/absence/cost is a side channel) and **`observation ≠ intervention` as a *measured* boundary** — a backdoor that reconstructs, is gauge-invariant, and correlates ≈0.6 still fails because `do(c)` doesn't move it. *Security = non-identifiability under bounded access.* | Anti-cheat / fog-of-war disclosure, mutual-information leak auditing (`channel_discovery`), agent/RL observation governance — reporting what is leakable *to which observer class*, never a bare "safe." |
+| **weltwerk — the verification kernel** — `weltwerk/` | A model-checker-turned-**verification kernel** with a Proof-Obligations ledger and a **judge→compiler** epistemic runtime: `Grounded[T]` (an action fires only behind a verifier proof) + an orchestrator with two chokepoints; plus a deflationary, **bounded** RSI result. | Verified-config/policy checking, signal-vs-confounder-leak auditing (`residual_channel`), grounded-action gates for autonomous agents — each answer an `AnalysisResult`, each action `Grounded`. |
+| **The empirical phase** — `experiments/` | That the provenance discipline **survives learning**, and a **fair, sealed-observer GPU metrology harness** that *falsified the project's own* spatial allocation hypothesis on silicon (then supported its conditional temporal form); a RealityKernel **Rust CORE verified under concurrency**. | A falsification-grade perf A/B harness (equal *measured* budget, Pareto-vector error); a provenance kernel for any stateful system; auditing self-improving / auto-tuning AI loops. |
+| **Sibling-kernel hardening** — `DVSM/`, `Rust/`, `GATEWAY_SPEC.md` | The same discipline pointed **outward** at an external research kernel, collapsed into a single dependency-free **fail-closed integrity gateway** (`ursprung-gateway`) with two **type-level** honesty invariants and a streaming, bounded-memory reader. | Auditing third-party deterministic kernels (reference-relative); a proof-gated claims/compliance layer (infrastructure VERIFIED, financial value SPECULATIVE); a single-binary integrity monitor. |
+
+Honest framing for the whole table: every bench number is **constructed and expires on real silicon** unless it
+says otherwise; the renderer/firewall/empirical arcs are the developed line, the sibling-kernel arc is
+**adjacent, not an advancement** of the renderer thesis (`adjacent ≠ on-mission`). Grades are re-checkable by
+re-running the gates.
+
+> **Status (current).** The conceptual arc is complete (a deterministic stdlib suite — `tests/test_ursprung.py`
+> prints the authoritative count, **506 at last run**; counts drift as milestones land, so re-run rather than trust
+> a number here), the empirical phase ran,
 > and it has **crossed onto real silicon all the way through the summit and into the temporal arc**: the Rust
 > CORE port is verified (`cargo test` 10/10) and the GPU benchmark is verified on hardware —
 > `experiments/bench_gpu_real`, **M1–M6c (spatial) plus M6d / T1–T4 (temporal)** on an ASUS ROG Xbox Ally X
@@ -64,7 +86,7 @@ future failure cost, not present visual complexity.**
 > under an external verification regime. Every instrument self-tests; the durable artifact is the apparatus, not a
 > verdict. **No claim here exceeds what a runnable bench shows.**
 
-## weltwerk — the verification kernel (current center of gravity)
+## weltwerk — the verification kernel
 
 [`weltwerk/`](weltwerk/) is where the repository's active work now lives: a **verification kernel** with
 interchangeable proof engines, a Proof-Obligations ledger, an epistemic-runtime layer, and applications — the
@@ -110,6 +132,47 @@ core; z3 optional and confined to `solver_adapter*`. Each subfolder has its own 
   [`weltwerk/verify/snowflake/`](weltwerk/verify/snowflake/) — the "does morphology encode a language?" audit:
   every information-theoretic representation reduces to the field-driven growth law; the decisive test is
   field-conditioned inter-branch CMI (predicted 0) — the worked example that produced the reusable firewall.
+
+## DVSM, the Rust ports, and the integrity gateway (the sibling-kernel hardening arc)
+
+A newer arc points the *same* verification discipline **outward** — at an external research kernel, at std-only
+Rust ports, and at a proof-gated commercial layer — and collapses the result into a single fail-closed binary.
+These are **experiments and reusable layers adjacent to (not an advancement of) the renderer thesis**:
+`adjacent ≠ on-mission`. The honest, graded index of the whole repository — every component with a maturity grade
+and a `does_not_show` — is [`method.md`](method.md) at the repo root; read it first for orientation
+(`written ≠ true` — the grades there are a falsifiable claim, re-checkable by re-running the gates).
+
+- **[`DVSM/`](DVSM/) — Python auditors of an EXTERNAL `DVSM-π+++` kernel.** A `coupling_audit` forbidden-coupling
+  CMI firewall (built on `weltwerk/verify/residual_channel`), an `invariant_ledger` that caught a κ-skew
+  **VIOLATED** on the diagonal, a `kappa_remediation` that flips it **CLOSED** (`κ←(κ−κᵀ)/2`), and a
+  `discrete_certificate` that is a **sufficient condition, not a stability proof** (`2‖κ‖_F·σ<λ ∧ dt·λ≤1 ⇒ ρ<1`).
+  One gate — `python DVSM/verify.py` — runs **12 suites + a LIVE commercial gate**, one exit code. Every verdict
+  is **reference-relative**: it audits a reduced Python reference, never the shipped Rust kernel
+  (`reference-model ≠ authoritative-kernel`; `proves-the-procedure ≠ proves-the-phenomenon`).
+- **[`DVSM/commercial/`](DVSM/commercial/) — proof-gated claims.** A buyer-facing claim ships only if a
+  *discharged* obligation backs it (+ a HYPE-lexicon ban); the compliance doc is *generated from* the gated ledger
+  so it cannot drift past the proofs. Both languages load one **single-source manifest** (`ledger.tsv` +
+  `obligations.tsv`), and the gate is **live-bound** to a fresh build receipt. Infrastructure is VERIFIED; the
+  **financial value is SPECULATIVE** (no users) — de-risking, not revenue. `warranty ≠ proof`; `receipt ≠ proof`.
+- **The Rust ports (`Rust/` = crate `ursprung`, plus `DVSM/reality_core/`, `Rust/menger_telemetry/`).** Std-only,
+  zero-dependency. The `ursprung` crate ports the fundamentals + the Epistemic Runtime Orchestrator, with two
+  invariants enforced **by the type system** rather than a runtime re-check: `AnalysisResult::new` returns a
+  `Result` (an analysis with no scope or no limitation cannot be constructed), and `Grounded<T>` holds its value
+  in a private field behind a checked constructor (holding one *is* the witness that it was verified). The Rust
+  `residual_channel` is **differential-tested against the Python reference** (MI/CMI value-parity to 1e-9 + null/
+  channel decision-parity; `decisions match, floats need not`). `cargo test` in `Rust/` is **65 green**; the crate
+  ships **compile-unverified** until that run is green on the user's machine.
+- **[`GATEWAY_SPEC.md`](GATEWAY_SPEC.md) → the `ursprung-gateway` binary (BUILT, cargo-green).** A single,
+  dependency-free, fail-closed *integrity gateway monitor* that composes ingestion → obligation-lift →
+  proof-gated ledger into one CLI. L1 ingestion **streams the telemetry dump end-to-end** (synchronous
+  `BufReader`, bounded memory **O(record)**, no whole-file slurp — proven decision-equivalent to the whole-file
+  parser, including under one-byte-at-a-time fragmented reads); L4 is the proof-gated claim gate over the
+  single-source manifest, live-bound to a build receipt. The honest boundaries are stated, not hidden: the
+  verdict is a **commitment, not a signature** (no PKI); the certificate is a **sufficient condition, not global
+  stability**; L2 (contraction certifier) and L3 (CMI firewall) need typed inputs (κ matrices, `(X,Y,Z)` samples)
+  a frame dump cannot supply, so those air-gaps are reported **non-liftable**; "real-time/low-latency" is
+  **UNMEASURED**; and it is a technical conformity check, **not** regulatory compliance. `parts ≠ whole`;
+  `integrity ≠ truth`.
 
 ## What is proven, what you get, and where it goes next
 
@@ -535,9 +598,10 @@ It does **not** prove the renderer is correct, fast, or pretty. `integrity ≠ t
 
 ## Status
 
-The full suite is **502 checks** (stdlib asserts; 495 + 7 for the re-run promotion gate — the printed run
-count is authoritative), every milestone carrying a verified demo, a negative control, and an explicit
-"expires on real silicon" bound.
+The full suite is a deterministic set of stdlib asserts — the printed run count is authoritative (**506 at last
+run**; the count drifts as milestones are added, so re-run `python tests/test_ursprung.py` rather than trust a
+number here), every milestone carrying a verified demo, a negative control, and an explicit "expires on real
+silicon" bound.
 
 - **M1 — foundation.** Invariant harness; the renderer is proven observer-only (`integrity ≠ truth`).
 - **M2 — the five laws.** Reality Debt · Arbitrary-Boundary · Predictive Fidelity (PFAL/TCFF) · Polygon
@@ -762,7 +826,7 @@ attached*):
 
 The conceptual arc ended at a claim it could not yet test: that the project's discipline would survive contact
 with a real, flexible learning system. `experiments/` is where that claim meets numbers. Each phase is a small,
-**seeded, replayable** bench (numpy or pure stdlib) kept *outside* the 502-check core so the verified renderer
+**seeded, replayable** bench (numpy or pure stdlib) kept *outside* the verified renderer core so the renderer
 stays dependency-free; each has its own self-check, an explicit "expires on a non-toy world" bound, and reuses
 the prior phase's contract *unedited* — the reuse is the experiment. The organizing instruction was
 **"define the horizon, then trust the dark"** ([`docs/LATENT_SPACETIME.md`](docs/LATENT_SPACETIME.md)): demarcate
