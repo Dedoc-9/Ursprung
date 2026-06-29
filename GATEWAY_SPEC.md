@@ -28,9 +28,10 @@ absolutely. `undetected ≠ absent`; `bounded ≠ conservative`; `certificate �
   the ported `invariant_ledger`, in `binframe_adapter.rs`). The parser is a *deterministic fixed-record reader*,
   byte-for-byte matched to the Python — **not** zero-copy (it decodes into typed fields). The L4 ledger now has
   a **single source of truth** (`DVSM/commercial/ledger.tsv` + `obligations.tsv`), loaded by both the Python and
-  the Rust gate, so `mirror ≠ source` is closed by construction. Still OPEN: binding the gate to live test
-  execution (`static-check ≠ live-execution`, Obligation B) and the single-binary assembly.
-  `parts-ported ≠ monolith-built`.
+  the Rust gate, so `mirror ≠ source` is closed by construction. The Python gate now also **binds to live test
+  execution** (Obligation B): `verify.py` emits a fresh receipt and a supported claim counts discharged only if
+  its backing suite PASSED this run — with the honest ceiling `receipt ≠ proof`. Still OPEN: the Rust-side
+  receipt read (the Rust gate is still static) and the single-binary assembly. `parts-ported ≠ monolith-built`.
 
 ## 1. Position
 
@@ -76,14 +77,17 @@ Two places where earlier spec prose ran ahead of the code; recorded so the bluep
   UNDERDETERMINED` — **no `OPEN`**, faithful to the source) is ported, and `lift()` grades containment +
   replay-parity from a dump while honestly declaring the Ω→V / ν→λ air-gaps non-liftable (differential-tested).
   The invented "ForbiddenSetViolation" was excluded (not in the reference).
-- **The gate is a static reference check, not live execution.** Layer 4's proof-gate verifies that each
-  warranted claim *names* a discharged obligation, that no supported claim exceeds its proof or uses hype, and
-  that boundary fields are present. It does **not** execute the named test or confirm it passed in this build —
-  `discharged` is a declared cross-reference, trusted as data. `static-check ≠ live-execution`. Binding
-  `discharged` to a live `verify.py` / `cargo test` run is an OPEN hardening obligation (recorded, not done).
-  Status of layer 4: the gate logic is now ported to Rust (`Rust/src/commercial_obligations.rs`,
-  differential-tested against the Python verdicts); the compliance-doc renderer is not yet ported and need not
-  live in the fail-closed binary.
+- **Live execution binding (Obligation B, Python-side).** Layer 4's static audit verifies that each warranted
+  claim *names* a discharged obligation, with no overclaim/hype and boundary fields present. The **Python** gate
+  now additionally binds this to execution: `verify.py` runs every suite, emits a fresh, run-id-stamped receipt
+  (`.verify_receipt.tsv`: `suite ⇥ PASS|FAIL ⇥ run-id`), and `audit_commercial_ledger(..., live_receipts=)` marks
+  a supported claim `unverified_live` unless its backing suite (the `suite` column in `obligations.tsv`) reads
+  `PASS`; a missing / stale / failed suite ⇒ non-zero exit. **Honest ceiling, recorded not papered over:** this
+  lifts the gate from "a test is *named*" to "a test *ran and passed in this build*" — **not** "the test is
+  correct" (`tested ≠ safe`); the receipt is a trusted, freshness-bounded but forgeable build artifact, so the
+  regress terminates at the build environment's trust root (`receipt ≠ proof`). The **Rust** gate stays static
+  (a receipt-reading Rust path is a follow-on); the compliance-doc renderer is not ported (need not be in the
+  fail-closed binary).
 
 ## 3. The single-binary reality (the actual work)
 

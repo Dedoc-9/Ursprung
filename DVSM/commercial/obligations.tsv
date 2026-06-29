@@ -1,18 +1,18 @@
 # SINGLE SOURCE OF TRUTH for the obligation registries — loaded by BOTH commercial_obligations.py and
-# Rust/src/commercial_obligations.rs. Tab-separated; status ∈ {DISCHARGED, OPEN_OR_REJECTED}.
-# columns: key	status	evidence
-coupling.detect_identifiable	DISCHARGED	test_coupling_audit::omega_detected, novelty_detected — planted identifiable leaks → OBSERVER_CONTAMINATION
-coupling.airgap_clean	DISCHARGED	test_coupling_audit::clean_air_gap — an air-gapped trace reads AIR_GAP_HELD
-coupling.declares_blindness	DISCHARGED	test_coupling_audit::unidentifiable_flagged — declines to rule on unidentifiable couplings
-backend.refuse_contaminated_atomic	DISCHARGED	test_dvsm_backend / test_kernel_auditor — contaminated telemetry refused before any effect
-backend.honest_answers	DISCHARGED	test_dvsm_backend::windows_emit_analysis — every answer is an AnalysisResult (scope + ≥1 limitation)
-backend.no_fused_scalar	DISCHARGED	test_dvsm_backend::panel_no_scalar / test_kernel_auditor::posture_no_scalar — no single health score
-auditor.custom_probe	DISCHARGED	test_kernel_auditor::custom_probe — a customer-defined probe over arbitrary telemetry columns works
-reproducibility.determinism	DISCHARGED	test_dvsm_reference::determinism + invariant_ledger DVSM-6 — identical input ⇒ identical report
-ledger.catches_ghosts	DISCHARGED	test_invariant_ledger::kappa_ghost_caught, energy_law_rejected — obligations grade honestly
-kappa.remediated_skew	DISCHARGED	test_kappa_remediation (DVSM) — antisymmetrized κ=(κ−κᵀ)/2 is hollow+skew (max|κ+κᵀ|=0); the skew obligation flips VIOLATED→CLOSED
-certificate.discrete_contraction	DISCHARGED	test_discrete_certificate (DVSM) — checkable sufficient condition (2‖κ‖_F·σ<λ ∧ dt·λ≤1 ⇒ ρ<1) with the σ-margin and ρ stated; the κ fix widens the margin
-kernel.boundedness	OPEN_OR_REJECTED	DVSM-2 REJECTED_AS_PROOF (continuous energy law ≠ discrete bound); discrete Lyapunov cert OPEN
-coupling.exhaustive	OPEN_OR_REJECTED	undetected ≠ absent; unidentifiable couplings exist — the firewall is not a completeness proof
-kernel.energy_law_holds	OPEN_OR_REJECTED	DVSM-1 VIOLATED — κ=sin(k·1.37−j·1.73) is not skew-symmetric, the energy-law premise fails
-realkernel.lift	OPEN_OR_REJECTED	all reference grades are reference-relative until re-run on real BinaryFrame dumps (reference ≠ kernel)
+# Rust/src/commercial_obligations.rs (Rust reads only key+status; the extra columns are Python-side).
+# columns: key	status	suite	evidence    (suite = the verify.py suite stem that discharges it; '-' if none)
+coupling.detect_identifiable	DISCHARGED	test_coupling_audit	test_coupling_audit::omega_detected, novelty_detected — planted identifiable leaks → OBSERVER_CONTAMINATION
+coupling.airgap_clean	DISCHARGED	test_coupling_audit	test_coupling_audit::clean_air_gap — an air-gapped trace reads AIR_GAP_HELD
+coupling.declares_blindness	DISCHARGED	test_coupling_audit	test_coupling_audit::unidentifiable_flagged — declines to rule on unidentifiable couplings
+backend.refuse_contaminated_atomic	DISCHARGED	test_dvsm_backend	test_dvsm_backend / test_kernel_auditor — contaminated telemetry refused before any effect
+backend.honest_answers	DISCHARGED	test_dvsm_backend	test_dvsm_backend::windows_emit_analysis — every answer is an AnalysisResult (scope + ≥1 limitation)
+backend.no_fused_scalar	DISCHARGED	test_dvsm_backend	test_dvsm_backend::panel_no_scalar / test_kernel_auditor::posture_no_scalar — no single health score
+auditor.custom_probe	DISCHARGED	test_kernel_auditor	test_kernel_auditor::custom_probe — a customer-defined probe over arbitrary telemetry columns works
+reproducibility.determinism	DISCHARGED	test_dvsm_reference	test_dvsm_reference::determinism + invariant_ledger DVSM-6 — identical input ⇒ identical report
+ledger.catches_ghosts	DISCHARGED	test_invariant_ledger	test_invariant_ledger::kappa_ghost_caught, energy_law_rejected — obligations grade honestly
+kappa.remediated_skew	DISCHARGED	test_kappa_remediation	test_kappa_remediation (DVSM) — antisymmetrized κ=(κ−κᵀ)/2 is hollow+skew (max|κ+κᵀ|=0); the skew obligation flips VIOLATED→CLOSED
+certificate.discrete_contraction	DISCHARGED	test_discrete_certificate	test_discrete_certificate (DVSM) — checkable sufficient condition (2‖κ‖_F·σ<λ ∧ dt·λ≤1 ⇒ ρ<1) with the σ-margin and ρ stated; the κ fix widens the margin
+kernel.boundedness	OPEN_OR_REJECTED	-	DVSM-2 REJECTED_AS_PROOF (continuous energy law ≠ discrete bound); discrete Lyapunov cert OPEN
+coupling.exhaustive	OPEN_OR_REJECTED	-	undetected ≠ absent; unidentifiable couplings exist — the firewall is not a completeness proof
+kernel.energy_law_holds	OPEN_OR_REJECTED	-	DVSM-1 VIOLATED — κ=sin(k·1.37−j·1.73) is not skew-symmetric, the energy-law premise fails
+realkernel.lift	OPEN_OR_REJECTED	-	all reference grades are reference-relative until re-run on real BinaryFrame dumps (reference ≠ kernel)

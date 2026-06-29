@@ -38,6 +38,7 @@ SUITES = [
     ("commercial", "commercial", "test_commercial_obligations.py"),
     ("commercial", "commercial", "test_binframe_adapter.py"),
     ("commercial", "commercial", "test_compliance_doc.py"),
+    ("commercial", "commercial", "test_live_gate.py"),
 ]
 
 
@@ -51,6 +52,38 @@ def run_suite(subdir: str, fname: str) -> tuple:
     return proc.returncode == 0, time.time() - t0, proc.stdout, proc.stderr
 
 
+def _live_commercial_gate(results: dict) -> int:
+    """Obligation B (static-check → live-run): a SUPPORTED commercial claim's backing test suite must have
+    PASSED in THIS run. Drop a fresh receipt next to verify.py, then audit the ledger against it. Fails closed.
+    HONEST CEILING: `receipt ≠ proof`; `tested ≠ safe` — this proves the suite RAN AND PASSED in this build,
+    never that the suite is correct or complete; the receipt is a trusted build-environment artifact."""
+    run_id = "%d-%d" % (int(time.time()), os.getpid())
+    receipt = os.path.join(_HERE, ".verify_receipt.tsv")
+    try:
+        with open(receipt, "w", encoding="utf-8") as f:
+            f.write("# suite\tstatus\trun_id  (receipt != proof; tested != safe: ran+passed here, not 'correct')\n")
+            for suite in sorted(results):
+                f.write("%s\t%s\t%s\n" % (suite, "PASS" if results[suite] else "FAIL", run_id))
+    except OSError as e:
+        print(f"  LIVE GATE: cannot write receipt ({e}) — failing closed.")
+        return 1
+    sys.path.insert(0, os.path.join(_HERE, "commercial"))
+    try:
+        from commercial_obligations import COMMERCIAL_CLAIMS, audit_commercial_ledger
+    except Exception as e:                                                   # noqa: BLE001
+        print(f"  LIVE GATE: cannot import commercial ledger ({e}) — failing closed.")
+        return 1
+    live = {s: ("PASS" if ok else "FAIL") for s, ok in results.items()}
+    a = audit_commercial_ledger(COMMERCIAL_CLAIMS, live_receipts=live)
+    if a["unverified_live"]:
+        print(f"\n  LIVE GATE FAILED: supported claims whose backing suite did not PASS in this run: "
+              f"{a['unverified_live']}. static-check ≠ live-execution; receipt ≠ proof.")
+        return 1
+    print(f"  LIVE GATE PASSED: every supported claim's backing suite PASSED this run (run_id={run_id}). "
+          f"receipt ≠ proof; tested ≠ safe.")
+    return 0
+
+
 def main(argv):
     group = argv[1] if len(argv) > 1 else "all"
     suites = [s for s in SUITES if group in ("all", s[0])]
@@ -61,8 +94,10 @@ def main(argv):
     print(f"DVSM verification gate — group={group}, {len(suites)} suite(s), PYTHONHASHSEED=0\n")
     passed = 0
     failures = []
+    results = {}
     for _grp, subdir, fname in suites:
         ok, dt, out, err = run_suite(subdir, fname)
+        results[os.path.splitext(fname)[0]] = ok
         summary = next((ln.strip() for ln in reversed((out or "").splitlines()) if "checks." in ln), "")
         print(f"  [{'PASS' if ok else 'FAIL'}] {subdir}/{fname:32s} ({dt:4.1f}s)  {summary}")
         if ok:
@@ -80,6 +115,12 @@ def main(argv):
                 print("[stderr]\n" + "\n".join(err.splitlines()[-15:]))
         print("\n  GATE FAILED. green-gate ≠ correct-product; but a red gate is decisive. tested ≠ safe.")
         return 1
+    if group == "all":
+        # Obligation B: bind the commercial gate to THIS run. Only meaningful on a full run (a partial group
+        # lacks some backing suites), so it is skipped for `core` / `commercial`.
+        rc = _live_commercial_gate(results)
+        if rc != 0:
+            return rc
     print("  GATE PASSED. tested ≠ safe; measured ≠ guaranteed; integrity ≠ truth.")
     return 0
 
