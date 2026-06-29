@@ -158,6 +158,48 @@ impl GeometricCore {
     }
 }
 
+impl Config {
+    /// Clamp parameters into the valid ranges (`α,λ ∈ [0,1]`; `η ≥ 0`; `eps > 0`). Hardening: the core should
+    /// never run with out-of-contract parameters, even if a caller passes nonsense.
+    pub fn validated(self) -> Config {
+        Config {
+            alpha: self.alpha.clamp(0.0, 1.0),
+            lambda: self.lambda.clamp(0.0, 1.0),
+            eta: if self.eta.is_finite() && self.eta >= 0.0 { self.eta } else { 0.0 },
+            eps: if self.eps.is_finite() && self.eps > 0.0 { self.eps } else { 1e-12 },
+        }
+    }
+}
+
+impl Observation {
+    /// True iff the core is fully nominal (no degenerate/non-finite condition this step).
+    pub fn is_healthy(&self) -> bool {
+        matches!(self.health, Health::Nominal)
+    }
+}
+
+impl GeometricCore {
+    /// Controlled initial condition. `s0` is projected onto the sphere and the `w0` columns are
+    /// orthonormalized onto the Stiefel manifold BEFORE use — so even a seeded start passes through the
+    /// invariants (there is no raw private-field write). Config is validated.
+    pub fn seeded(n: usize, r: usize, cfg: Config, s0: &[f64], w0: Vec<Vec<f64>>) -> Self {
+        assert_eq!(s0.len(), n, "s0 dimension mismatch");
+        assert_eq!(w0.len(), r, "w0 must have r columns");
+        for c in &w0 {
+            assert_eq!(c.len(), n, "w0 column dimension mismatch");
+        }
+        let cfg = cfg.validated();
+        let mut w = Frame { n, r, cols: w0 };
+        w.orthonormalize(cfg.eps);
+        Self { s: linalg::normalized(s0, cfg.eps), w, cfg, frame: 0 }
+    }
+
+    /// Step a batch of inputs in order, returning one [`Observation`] each.
+    pub fn step_many(&mut self, inputs: &[Vec<f64>]) -> Vec<Observation> {
+        inputs.iter().map(|z| self.step(z)).collect()
+    }
+}
+
 fn classify(finite: bool, sphere: f64, stiefel: f64, reseeded: bool) -> Health {
     if !finite {
         Health::NonFinite

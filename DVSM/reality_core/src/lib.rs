@@ -31,9 +31,13 @@
 //! the internal state and the projected input — a salience signal, not a verdict. `salience != importance`.
 
 pub mod core;
+pub mod ffi;
 pub mod linalg;
 pub mod runtime;
+pub mod trace;
 
 pub use crate::core::{Config, GeometricCore, Health, Observation, SPHERE_TOL, STIEFEL_TOL};
+pub use crate::ffi::ObservationC;
 pub use crate::linalg::Frame;
 pub use crate::runtime::{Mode, Runtime};
+pub use crate::trace::{run_trace, write_csv, TraceRecord};

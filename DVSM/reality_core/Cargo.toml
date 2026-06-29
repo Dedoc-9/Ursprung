@@ -13,6 +13,8 @@ categories = ["science", "no-std"]
 [lib]
 name = "dvsm_reality_core"
 path = "src/lib.rs"
+# `lib` keeps `cargo test`/examples working; `cdylib`/`staticlib` make the C ABI (src/ffi.rs) embeddable.
+crate-type = ["lib", "cdylib", "staticlib"]
 
 # Zero dependencies on purpose. The upstream research file used nalgebra; a from-scratch std-only linear
 # algebra layer removes the supply-chain surface, keeps results bit-deterministic (no BLAS dispatch), and

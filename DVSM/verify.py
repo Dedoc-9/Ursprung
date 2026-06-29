@@ -31,6 +31,7 @@ SUITES = [
     ("core", ".", "test_coupling_audit.py"),
     ("core", ".", "test_invariant_ledger.py"),
     ("core", ".", "test_dvsm_backend.py"),
+    ("core", ".", "test_reality_core_probe.py"),
     ("commercial", "commercial", "test_kernel_auditor.py"),
     ("commercial", "commercial", "test_commercial_obligations.py"),
     ("commercial", "commercial", "test_binframe_adapter.py"),
