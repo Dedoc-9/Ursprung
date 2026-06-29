@@ -147,6 +147,31 @@ pub const SCHEMA_CMI: Schema = Schema {
     ],
 };
 
+/// **Schema C — dense κ-block (Gateway L2 ingestion).** One record = one `n×n` coupling matrix + the scalars the
+/// contraction certificate needs. Fixed at **n=4 ⇒ 160 bytes**: a `frame` id (`u64`, like TELEM/ABI), 16 κ
+/// entries **row-major** (`k00..k33`, `f64`), then `lam`, `dt`, `sigma` (`f64`). 8 + 16·8 + 3·8 = 160 B. Because
+/// `n` is a compile-time constant the record is fixed-size — it streams through the SAME reader as the other
+/// schemas, with **no heap matrix and no runtime stride-shifting** (the blueprint's rigid-layout requirement).
+/// Each record certifies independently, so the L2 gate runs in O(1) memory (one matrix at a time). The κ is
+/// certified **as ingested** — the gateway never silently antisymmetrizes it (`observation ≠ authority`);
+/// remediation is offered as an advisory, never applied to the committed input. `parsed ≠ validated`.
+pub const SCHEMA_KAPPA: Schema = Schema {
+    name: "dvsm.kappa_block",
+    fields: &[
+        ("frame", FieldType::U64),
+        ("k00", FieldType::F64), ("k01", FieldType::F64), ("k02", FieldType::F64), ("k03", FieldType::F64),
+        ("k10", FieldType::F64), ("k11", FieldType::F64), ("k12", FieldType::F64), ("k13", FieldType::F64),
+        ("k20", FieldType::F64), ("k21", FieldType::F64), ("k22", FieldType::F64), ("k23", FieldType::F64),
+        ("k30", FieldType::F64), ("k31", FieldType::F64), ("k32", FieldType::F64), ("k33", FieldType::F64),
+        ("lam", FieldType::F64),
+        ("dt", FieldType::F64),
+        ("sigma", FieldType::F64),
+    ],
+};
+
+/// The fixed κ dimension Schema C carries (`n=4`). A wider block is a wider *fixed* schema, not a runtime stride.
+pub const KAPPA_DIM: usize = 4;
+
 /// One parsed row: `(field name, value)`, with `Pad` fields dropped (mirrors the Python `_`-prefix skip).
 pub type Row = Vec<(&'static str, Field)>;
 

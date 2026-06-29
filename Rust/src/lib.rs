@@ -45,12 +45,13 @@ pub use claim_ledger::{audit_ledger, Claim, Grade, LedgerAudit, SupportedClaim};
 pub use binframe_adapter::{
     containment, containment_from, field, lift, lift_streaming, non_liftable, parse_frames,
     read_frames_streaming, replay_parity, stream_frames, Field, FieldType, ParseReport, Row, Schema,
-    NON_LIFTABLE_NEEDS, SCHEMA_ABI, SCHEMA_CMI, SCHEMA_TELEM, U_MAX_DEFAULT,
+    NON_LIFTABLE_NEEDS, KAPPA_DIM, SCHEMA_ABI, SCHEMA_CMI, SCHEMA_KAPPA, SCHEMA_TELEM, U_MAX_DEFAULT,
 };
 pub use invariant_ledger::{ObligationResult, ObligationStatus};
 pub use gateway::{
-    coupling_input_from_rows, parse_receipt, render_coupling_report, render_report, run_coupling_streaming,
-    run_gateway, run_gateway_streaming, CmiAssembleError, CouplingGateReport, GatewayReport,
+    coupling_input_from_rows, kappa_input_from_row, parse_receipt, render_cert_report, render_coupling_report,
+    render_report, run_cert_streaming, run_coupling_streaming, run_gateway, run_gateway_streaming,
+    CertAssembleError, CertGateReport, CmiAssembleError, CouplingGateReport, GatewayReport,
 };
 pub use commercial_obligations::{
     shipped_ledger, CommercialAudit, CommercialClaim, CommercialLedger, HYPE,

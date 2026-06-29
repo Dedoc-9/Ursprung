@@ -40,11 +40,15 @@ absolutely. `undetected ≠ absent`; `bounded ≠ conservative`; `certificate �
   closed, AIR_GAP_HELD passes. **L2 now has a Rust validator too:** `contraction_cert.rs` ports the discrete
   contraction certificate (`2‖κ‖_F·σ<λ ∧ dtλ≤1 ⇒ ρ<1`) + the `κ←(κ−κᵀ)/2` remediation, differential-tested
   against the Python (frob/σ_max/ρ/step value-parity + CONTRACTIVE_CERT/NOT_CERTIFIED decision-parity).
-  Honest boundary that REMAINS: the certifier is a **library API, not yet wired to a κ-block (Schema C) ingest
-  path**, so the *binary* still can't certify L2 from a dump (`ported ≠ ingested`); and from a *public telemetry
-  frame* (TELEM/ABI) the Ω→V / ν→λ air-gaps stay **non-liftable** (a frame carries neither κ nor (X,Y,Z)).
-  Confirmed by `cargo test` (green; re-run for the count) + `cargo build --bin ursprung-gateway`. `parts ≠
-  whole`; the verdict is a commitment, not a certification of model safety.
+  **L2 now also runs from a dump:** `--schema kappa` ingests **Schema C** (a fixed **160-byte** dense κ-block —
+  `frame` + 16 κ row-major + `λ,dt,σ`, n=4) and certifies each block in **O(1) memory** (one matrix at a time),
+  failing closed on NOT_CERTIFIED or non-finite — κ is certified **as ingested**, never silently
+  antisymmetrized (`observation ≠ authority`). **The binary now composes L1+L2+L3+L4 all from dumps** — the
+  monolith's structural footprint is closed (`ported ≠ ingested` is now closed for L2). Honest boundary that
+  REMAINS: from a *public telemetry frame* (TELEM/ABI) the Ω→V / ν→λ air-gaps stay **non-liftable** (a plain
+  frame carries neither κ nor (X,Y,Z)); the certificate is a **sufficient** condition, not global stability; and
+  perf (§6) is **UNMEASURED**. Confirmed by `cargo test` (green; re-run for the count) + `cargo build --bin
+  ursprung-gateway`. `parts ≠ whole`; the verdict is a commitment, not a certification of model safety.
 
 ## 1. Position
 
@@ -105,20 +109,21 @@ Two places where earlier spec prose ran ahead of the code; recorded so the bluep
 
 ## 3. The single-binary reality (the actual work)
 
-**Status: largely discharged.** L1 (ingest+lift), L3 (CMI firewall + coupling taxonomy) and L4 (proof-gated
-ledger) are now ported to Rust and `cargo`-green; the math kernels (Q32.32, in-tree SHA-256, Menger mask) were
+**Status: discharged across all four layers.** L1 (ingest+lift), L2 (contraction certifier, `--schema kappa`),
+L3 (CMI firewall + coupling taxonomy, `--schema cmi`) and L4 (proof-gated ledger) are now ported to Rust and
+`cargo`-green, each runnable from a dump; the math kernels (Q32.32, in-tree SHA-256, Menger mask) were
 already Rust (`menger_telemetry`). The `ursprung-gateway` binary composes the **L1→L4 frame path** in one
 dependency-free executable — so the fork below resolved to **(A) port the Python to Rust**, done incrementally
 and differential-tested (CMI value+decision parity; lift verdicts; commercial-gate verdicts).
 
 What a *full* single-binary monolith still lacks splits cleanly now. **L3 got its typed-input channel:**
 **Schema D** (`--schema cmi`, `x,y,z0,w0` samples) feeds the already-ported CMI firewall + coupling taxonomy
-end-to-end. **L2 got its validator:** `contraction_cert.rs` ports the discrete contraction certificate + κ
-remediation (differential-tested vs Python). What L2 still lacks is the **κ-block (Schema C) ingest path** that
-would feed the certifier from a dump — the certifier is a library API today (`ported ≠ ingested`); a fixed
-compile-time `n` κ-block reader (mirroring Schema D) is the remaining wiring. From a *public telemetry frame*
-the Ω→V / ν→λ air-gaps stay **non-liftable** (the frame carries neither κ nor `(X,Y,Z)`). `monolith ≠ free`;
-`parts ≠ whole`. (Rejected at the fork: **(B) embed CPython** — not dependency-free, ships a Python runtime.)
+end-to-end. **L2 is now complete end-to-end too:** `contraction_cert.rs` ports the certificate + κ remediation
+(differential-tested vs Python), and **`--schema kappa` ingests Schema C** (a fixed 160-byte κ-block, n=4) to
+certify each matrix in O(1) memory — so the binary now runs **L1+L2+L3+L4 all from dumps**, the closed monolith
+footprint. From a *public telemetry frame* the Ω→V / ν→λ air-gaps stay **non-liftable** (the frame carries
+neither κ nor `(X,Y,Z)`) — a property of the *plain frame*, not a missing port. `monolith ≠ free`; `parts ≠
+whole`. (Rejected at the fork: **(B) embed CPython** — not dependency-free, ships a Python runtime.)
 
 ## 4. Output contract (what a "gate-approved artifact" actually asserts)
 

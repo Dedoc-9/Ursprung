@@ -15,9 +15,10 @@ use std::collections::BTreeMap;
 use std::io::Read;
 
 use crate::binframe_adapter::{
-    field, lift, lift_streaming, parse_frames, read_frames_streaming, ParseReport, Row, Schema,
+    field, lift, lift_streaming, parse_frames, read_frames_streaming, stream_frames, ParseReport, Row, Schema,
 };
 use crate::commercial_obligations::{shipped_ledger, CommercialAudit};
+use crate::contraction_cert::{certify, CertDecision};
 use crate::coupling_audit::{audit_coupling, CouplingInput, CouplingResult, CouplingVerdict};
 use crate::invariant_ledger::{ObligationResult, ObligationStatus};
 
@@ -377,6 +378,146 @@ pub fn render_coupling_report(r: &CouplingGateReport) -> String {
     s.push_str(
         "\n---\nScope: AIR_GAP_HELD is absence-of-evidence at this window/conditioning, not proof of no \
          coupling; a surviving residual is a CANDIDATE until mis-specification-stable. `parts ≠ whole`.\n",
+    );
+    s
+}
+
+// ---- L2: contraction certifier over a Schema-C (dense κ-block) dump -----------------------------------------
+
+/// Error assembling a κ block + scalars from a parsed Schema-C row.
+#[derive(Debug, PartialEq, Eq)]
+pub enum CertAssembleError {
+    NoMatrix,
+    NonSquare(usize),
+    MissingColumn(&'static str),
+}
+
+impl std::fmt::Display for CertAssembleError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CertAssembleError::NoMatrix => write!(f, "no κ entries (k*) in the schema"),
+            CertAssembleError::NonSquare(n) => write!(f, "{n} κ entries is not a square matrix"),
+            CertAssembleError::MissingColumn(c) => write!(f, "field `{c}` missing or non-numeric"),
+        }
+    }
+}
+
+/// Re-shape a Schema-C row into `(κ, λ, dt, σ)` by convention: every `k*` field (in schema order) is a κ entry,
+/// reshaped **row-major** into an `n×n` matrix (`n = √count`); `lam`/`dt`/`sigma` are the scalars. A pure
+/// transpose of the parsed record — no mutation of the ingested κ. `ingested ≡ constructed`.
+pub fn kappa_input_from_row(row: &Row, schema: &Schema) -> Result<(Vec<Vec<f64>>, f64, f64, f64), CertAssembleError> {
+    let mut flat = Vec::new();
+    for &(fname, _ft) in schema.fields {
+        if fname.starts_with('k') {
+            let v = field(row, fname).and_then(|f| f.as_f64()).ok_or(CertAssembleError::MissingColumn(fname))?;
+            flat.push(v);
+        }
+    }
+    let total = flat.len();
+    if total == 0 {
+        return Err(CertAssembleError::NoMatrix);
+    }
+    let n = (total as f64).sqrt() as usize;
+    if n * n != total {
+        return Err(CertAssembleError::NonSquare(total));
+    }
+    let kappa: Vec<Vec<f64>> = (0..n).map(|i| flat[i * n..(i + 1) * n].to_vec()).collect();
+    let lam = field(row, "lam").and_then(|f| f.as_f64()).ok_or(CertAssembleError::MissingColumn("lam"))?;
+    let dt = field(row, "dt").and_then(|f| f.as_f64()).ok_or(CertAssembleError::MissingColumn("dt"))?;
+    let sigma = field(row, "sigma").and_then(|f| f.as_f64()).ok_or(CertAssembleError::MissingColumn("sigma"))?;
+    Ok((kappa, lam, dt, sigma))
+}
+
+/// The L2 contraction-gate verdict over a κ-block dump.
+#[derive(Debug)]
+pub struct CertGateReport {
+    pub schema: &'static str,
+    pub parse: ParseReport,
+    pub n_certified: usize,
+    pub ok: bool,
+    pub reasons: Vec<String>,
+}
+
+/// Run the contraction certifier over a STREAMED Schema-C dump — **O(1) memory** (each κ block certifies
+/// independently; one matrix is held at a time, nothing is collected). Fail-closed: a parse anomaly, a
+/// non-finite κ/scalar, an un-assemblable record, or ANY record that fails the sufficient condition
+/// (`2‖κ‖_F·σ < λ ∧ dtλ ≤ 1`) blocks. The κ is certified **as ingested** — never silently antisymmetrized
+/// (`observation ≠ authority`). `ported ≠ ingested` is now closed for L2; `parsed ≠ validated` is enforced.
+pub fn run_cert_streaming<R: Read>(
+    reader: R,
+    schema: &Schema,
+    header_lines: usize,
+    samples: usize,
+    seed: u64,
+) -> std::io::Result<CertGateReport> {
+    let mut n_certified = 0usize;
+    let mut reasons: Vec<String> = Vec::new();
+    let mut idx = 0usize;
+    let report = stream_frames(reader, schema, header_lines, |row| {
+        let i = idx;
+        idx += 1;
+        match kappa_input_from_row(row, schema) {
+            Ok((kappa, lam, dt, sigma)) => {
+                let r = certify(&kappa, lam, dt, sigma, samples, seed);
+                if r.decision == CertDecision::ContractiveCert {
+                    n_certified += 1;
+                } else if reasons.len() < 8 {
+                    reasons.push(format!(
+                        "record {i}: NOT_CERTIFIED (2‖κ‖_F·σ={:.4} vs λ={:.4}; ρ={:.4}; σ_max={:.4})",
+                        2.0 * r.frob * sigma,
+                        lam,
+                        r.rho,
+                        r.sigma_max
+                    ));
+                }
+            }
+            Err(e) => {
+                if reasons.len() < 8 {
+                    reasons.push(format!("record {i}: cannot assemble κ — {e}"));
+                }
+            }
+        }
+    })?;
+
+    if report.layout_mismatch {
+        reasons.push(format!("ingestion: layout_mismatch ({} leftover bytes)", report.leftover_bytes));
+    }
+    if report.nonfinite > 0 {
+        reasons.push(format!("ingestion: {} record(s) carried a non-finite float", report.nonfinite));
+    }
+    if report.n_records == 0 {
+        reasons.push("ingestion: no κ blocks parsed".to_string());
+    }
+
+    let clean_parse = !report.layout_mismatch && report.nonfinite == 0 && report.n_records > 0;
+    let ok = clean_parse && n_certified == report.n_records;
+    Ok(CertGateReport { schema: schema.name, parse: report, n_certified, ok, reasons })
+}
+
+/// Disclaimer-first render of the L2 contraction-gate report.
+pub fn render_cert_report(r: &CertGateReport) -> String {
+    let mut s = String::new();
+    s.push_str("# ursprung-gateway — L2 contraction certifier (NOT a certification of model safety)\n\n");
+    s.push_str(
+        "Each κ block is checked against the SUFFICIENT discrete-contraction condition `2‖κ‖_F·σ < λ ∧ dtλ ≤ 1 \
+         ⇒ ρ < 1`. CONTRACTIVE_CERT is a checkable COMMITMENT for ‖S‖ ≤ σ under explicit-Euler — NOT stability \
+         for ‖S‖ > σ, the fixed-point clamps, or the full coupled system. κ is certified AS INGESTED (never \
+         silently antisymmetrized). `certificate ≠ proof-of-everything`; `integrity ≠ truth`.\n\n",
+    );
+    s.push_str(&format!("- **gate: {}**\n", if r.ok { "PASS (all κ blocks certified)" } else { "BLOCKED" }));
+    s.push_str(&format!(
+        "- schema `{}` | κ blocks {} | certified {} | rec_size {}B | leftover {} | non-finite {}\n",
+        r.schema, r.parse.n_records, r.n_certified, r.parse.rec_size, r.parse.leftover_bytes, r.parse.nonfinite
+    ));
+    if !r.reasons.is_empty() {
+        s.push_str("\n## Why blocked\n");
+        for reason in &r.reasons {
+            s.push_str(&format!("- {}\n", reason));
+        }
+    }
+    s.push_str(
+        "\n---\nScope: a SUFFICIENT condition with an explicit boundary (`bounded-here ≠ safe-everywhere`); the \
+         κ-fix `κ←(κ−κᵀ)/2` widens σ_max but is an advisory, not applied to the committed input. `parts ≠ whole`.\n",
     );
     s
 }

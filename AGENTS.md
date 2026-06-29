@@ -573,11 +573,13 @@ verdict is decision-identical to the whole-file path — `streaming ≡ whole-fi
 (`run_coupling_streaming` → `audit_coupling`; OBSERVER_CONTAMINATION fails closed). STILL OPEN / honest
 boundary: **L2 now has a Rust validator** — `contraction_cert.rs` ports the discrete contraction certificate
 (`2‖κ‖_F·σ<λ ∧ dtλ≤1 ⇒ ρ<1`) + the `κ←(κ−κᵀ)/2` remediation, differential-tested vs the Python
-(value-parity on frob/σ_max/ρ/step + decision-parity). It is a **library API, not yet wired to a κ-block
-(Schema C) ingest path**, so the binary still can't certify L2 from a dump (`ported ≠ ingested`) — a
-fixed-`n` κ-block reader is the remaining wiring. From a *public telemetry frame* (TELEM/ABI) the Ω→V / ν→λ
-air-gaps remain **non-liftable** (no κ, no `(X,Y,Z)` in the frame); and the perf / mmap benchmark (§6) is
-**UNMEASURED**. `parts ≠ whole`; the verdict is
+(value-parity on frob/σ_max/ρ/step + decision-parity), and **`--schema kappa` ingests it from a dump**:
+**Schema C** is a fixed 160-byte κ-block (`frame` + 16 κ row-major + `λ,dt,σ`, n=4), certified in O(1) memory
+(one matrix at a time), κ **as ingested** (never silently antisymmetrized), failing closed on NOT_CERTIFIED /
+non-finite. **So the binary now composes L1+L2+L3+L4 all from dumps — the monolith footprint is closed**
+(`ported ≠ ingested` closed for L2). From a *public telemetry frame* (TELEM/ABI) the Ω→V / ν→λ air-gaps remain
+**non-liftable** (no κ, no `(X,Y,Z)` in a plain frame); the certificate is **sufficient**, not global; and the
+perf / mmap benchmark (§6) is **UNMEASURED**. `parts ≠ whole`; the verdict is
 a commitment, not a model-safety certification.
 
 **Lesson this arc earned (binds future passes):** *before porting a Python module to Rust, check `Rust/src/`
