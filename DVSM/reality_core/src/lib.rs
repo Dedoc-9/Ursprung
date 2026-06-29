@@ -30,12 +30,14 @@
 //! `bounded != correct`; `stress-is-low != model-is-right`. The stress `B(t)` is angular divergence between
 //! the internal state and the projected input — a salience signal, not a verdict. `salience != importance`.
 
+pub mod certificate;
 pub mod core;
 pub mod ffi;
 pub mod linalg;
 pub mod runtime;
 pub mod trace;
 
+pub use crate::certificate::{certify_sphere_bound, CertificateResult};
 pub use crate::core::{Config, GeometricCore, Health, Observation, SPHERE_TOL, STIEFEL_TOL};
 pub use crate::ffi::ObservationC;
 pub use crate::linalg::Frame;

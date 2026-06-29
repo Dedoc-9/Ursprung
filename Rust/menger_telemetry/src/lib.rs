@@ -30,12 +30,14 @@
 //! convention), which breaks energy conservation; the antisymmetric `κ` + bracket *form* is retained but no
 //! conservation is claimed. `bounded ≠ conservative`; `integrity ≠ truth`; `deterministic ≠ correct`.
 
+pub mod certificate;
 pub mod ffi;
 pub mod fixed;
 pub mod kernel;
 pub mod menger;
 pub mod sha256;
 
+pub use certificate::{certify_bounded, CertificateResult};
 pub use fixed::{qmul, quantize, Fixed, ONE};
 pub use kernel::{FrameSnapshot, Invariants, Kernel, ProcessError, D, HASH_SIZE, N};
 pub use menger::{max_depth, MengerMask};

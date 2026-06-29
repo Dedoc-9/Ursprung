@@ -4,7 +4,6 @@
 //!
 //! Return codes: 0 success · -1 invalid parameter · -2 processing error (rate limit) · -3 null pointer.
 
-use std::ptr;
 use std::slice;
 
 use crate::kernel::{FrameSnapshot, Kernel, ProcessError, HASH_SIZE, N};
@@ -136,8 +135,8 @@ mod tests {
 
             // guards
             assert_eq!(telemetry_process(h, sensors.as_ptr(), 3, 5_000_000, &mut snap), -1);
-            assert_eq!(telemetry_process(ptr::null_mut(), sensors.as_ptr(), N as u32, 0, &mut snap), -3);
-            assert_eq!(telemetry_verify(ptr::null()), -3);
+            assert_eq!(telemetry_process(std::ptr::null_mut(), sensors.as_ptr(), N as u32, 0, &mut snap), -3);
+            assert_eq!(telemetry_verify(std::ptr::null()), -3);
 
             telemetry_destroy(h);
         }
