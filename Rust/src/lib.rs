@@ -29,6 +29,7 @@
 
 pub mod artifacts;
 pub mod claim_ledger;
+pub mod commercial_obligations;
 pub mod coupling_audit;
 pub mod epistemic_types;
 pub mod frontier_gate;
@@ -37,6 +38,9 @@ pub mod residual_channel;
 
 pub use artifacts::{AnalysisResult, Finding, HonestyError, Limitation};
 pub use claim_ledger::{audit_ledger, Claim, Grade, LedgerAudit, SupportedClaim};
+pub use commercial_obligations::{
+    shipped_ledger, CommercialAudit, CommercialClaim, CommercialLedger, HYPE,
+};
 pub use coupling_audit::{audit_coupling, Binner, CouplingInput, CouplingResult, CouplingVerdict};
 pub use epistemic_types::{enact, Attested, Grounded, Grounding, UngroundedError};
 pub use frontier_gate::{classify_regime, Action, Decision, FrontierGate, Regime};

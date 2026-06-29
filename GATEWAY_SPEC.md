@@ -51,6 +51,25 @@ diagonal — making `max|κ+κᵀ|=0` a **structural** invariant of the data lay
 be re-measured each run. `asserted-invariant ≠ constructed-invariant`; the port's test must assert the
 construction, not a lucky rounding.
 
+## 2.1 Spec-vs-reality posture (caveats the grading pass surfaced)
+
+Two places where earlier spec prose ran ahead of the code; recorded so the blueprint does not inflate itself.
+
+- **Ingestion is float-native, not fixed-point.** The real DVSM frames are emitted as native `f32`/`f64`
+  (`struct '<QffffffffBBBB'` / `'<QdddBBQ'`), so the parser reads floats as emitted. The parse is
+  deterministic (fixed record layout, in-order read), but a Q32.32 conversion would be a **downstream
+  transform**, not an intrinsic property of ingestion. "Fixed-point ingestion eliminates float drift" overstates
+  layer 1 — what layer 1 guarantees is *deterministic, validated parsing*, not fixed-point arithmetic.
+  `parsed ≠ fixed-point`.
+- **The gate is a static reference check, not live execution.** Layer 4's proof-gate verifies that each
+  warranted claim *names* a discharged obligation, that no supported claim exceeds its proof or uses hype, and
+  that boundary fields are present. It does **not** execute the named test or confirm it passed in this build —
+  `discharged` is a declared cross-reference, trusted as data. `static-check ≠ live-execution`. Binding
+  `discharged` to a live `verify.py` / `cargo test` run is an OPEN hardening obligation (recorded, not done).
+  Status of layer 4: the gate logic is now ported to Rust (`Rust/src/commercial_obligations.rs`,
+  differential-tested against the Python verdicts); the compliance-doc renderer is not yet ported and need not
+  live in the fail-closed binary.
+
 ## 3. The single-binary reality (the actual work)
 
 Today layers 1, 3, 4 are **Python**; the math kernels are **Rust**. A single dependency-free binary requires
