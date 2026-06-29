@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+[package]
+name = "ursprung"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-only"
+authors = ["Daniel J. Dillberg"]
+description = "Ursprung fundamentals in Rust: the honesty contract (AnalysisResult), the epistemic type Grounded<T>, the graded claim ledger, the frontier gate, the residual-channel diagnostic, and the Epistemic Runtime Orchestrator (two chokepoints). std-only, zero dependencies."
+repository = "https://github.com/Dedoc-9/Ursprung"
+keywords = ["verification", "epistemics", "honesty", "orchestrator"]
+categories = ["science"]
+
+[lib]
+name = "ursprung"
+path = "src/lib.rs"
+
+# Zero dependencies on purpose — the Python core is pure-stdlib; this mirrors that discipline.
+[dependencies]
