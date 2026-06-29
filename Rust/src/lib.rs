@@ -28,6 +28,7 @@
 //! `salience ≠ importance`, `prediction ≠ causation`.
 
 pub mod artifacts;
+pub mod binframe_adapter;
 pub mod claim_ledger;
 pub mod commercial_obligations;
 pub mod coupling_audit;
@@ -38,6 +39,9 @@ pub mod residual_channel;
 
 pub use artifacts::{AnalysisResult, Finding, HonestyError, Limitation};
 pub use claim_ledger::{audit_ledger, Claim, Grade, LedgerAudit, SupportedClaim};
+pub use binframe_adapter::{
+    field, parse_frames, Field, FieldType, ParseReport, Row, Schema, SCHEMA_ABI, SCHEMA_TELEM,
+};
 pub use commercial_obligations::{
     shipped_ledger, CommercialAudit, CommercialClaim, CommercialLedger, HYPE,
 };

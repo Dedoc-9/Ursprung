@@ -60,7 +60,10 @@ Two places where earlier spec prose ran ahead of the code; recorded so the bluep
   deterministic (fixed record layout, in-order read), but a Q32.32 conversion would be a **downstream
   transform**, not an intrinsic property of ingestion. "Fixed-point ingestion eliminates float drift" overstates
   layer 1 — what layer 1 guarantees is *deterministic, validated parsing*, not fixed-point arithmetic.
-  `parsed ≠ fixed-point`.
+  `parsed ≠ fixed-point`. Status: the parser (Sub-Slice 1A — `parse_frames` + `ParseReport`, with the two
+  reference anomalies `layout_mismatch` and `nonfinite`) is now in Rust (`Rust/src/binframe_adapter.rs`,
+  differential-tested against Python-`struct`-packed fixtures). The obligation-lift half (1B) is pending the
+  `invariant_ledger` port; the invented "ForbiddenSetViolation" was excluded (not in the reference).
 - **The gate is a static reference check, not live execution.** Layer 4's proof-gate verifies that each
   warranted claim *names* a discharged obligation, that no supported claim exceeds its proof or uses hype, and
   that boundary fields are present. It does **not** execute the named test or confirm it passed in this build —
