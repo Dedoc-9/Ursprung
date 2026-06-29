@@ -14,5 +14,11 @@ categories = ["science"]
 name = "ursprung"
 path = "src/lib.rs"
 
+# The single-binary integrity gate: ingest a BinaryFrame dump → graded obligations → proof-gated ledger
+# (live-bound via a build receipt) → fail-closed verdict. `parts ≠ whole`; `receipt ≠ proof`.
+[[bin]]
+name = "ursprung-gateway"
+path = "src/bin/gateway.rs"
+
 # Zero dependencies on purpose — the Python core is pure-stdlib; this mirrors that discipline.
 [dependencies]

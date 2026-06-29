@@ -21,7 +21,7 @@
 //! is a separate OPEN obligation (Obligation B).
 
 use crate::claim_ledger::{audit_ledger, Claim, Grade};
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 /// Hype lexicon — banned from any SUPPORTED claim. Semantic inflation the product treats as a defect.
 pub const HYPE: &[&str] = &[
@@ -85,6 +85,9 @@ pub struct CommercialAudit {
     pub hype: Vec<String>,
     pub unknown_obligation: Vec<String>,
     pub missing_boundary: Vec<String>,
+    /// SUPPORTED claims whose backing suite did not read PASS in a supplied live receipt (empty for a static
+    /// audit). Obligation B; `receipt ≠ proof`.
+    pub unverified_live: Vec<String>,
 }
 
 /// The proof-gated commercial ledger.
@@ -92,18 +95,34 @@ pub struct CommercialLedger {
     pub claims: Vec<CommercialClaim>,
     pub discharged: BTreeSet<String>,
     pub open_or_rejected: BTreeSet<String>,
+    /// obligation key → the verify.py suite stem that discharges it (from the `suite` column of obligations.tsv).
+    pub suite_of: BTreeMap<String, String>,
 }
 
 impl CommercialLedger {
-    /// Audit honest iff: boundary fields present (via `claim_ledger::audit_ledger`); no SUPPORTED claim rests
-    /// on an undischarged obligation; no SUPPORTED claim contains hype; every `rests_on` is a known key.
+    /// STATIC audit: boundary fields present (via `claim_ledger::audit_ledger`); no SUPPORTED claim rests on an
+    /// undischarged obligation; no SUPPORTED claim contains hype; every `rests_on` is a known key.
+    /// `unverified_live` is empty (no receipt consulted).
     pub fn audit(&self) -> CommercialAudit {
+        self.audit_opt(None)
+    }
+
+    /// LIVE audit (Obligation B, Rust-side): the static checks PLUS — each SUPPORTED claim's backing suite
+    /// (`suite_of`) must read `PASS` in `receipts`, else it is `unverified_live`. HONEST CEILING:
+    /// `receipt ≠ proof`; `tested ≠ safe` — this proves the suite ran AND passed in this build, not that it is
+    /// correct; the receipt is a trusted, freshness-bounded build artifact.
+    pub fn audit_live(&self, receipts: &BTreeMap<String, String>) -> CommercialAudit {
+        self.audit_opt(Some(receipts))
+    }
+
+    fn audit_opt(&self, receipts: Option<&BTreeMap<String, String>>) -> CommercialAudit {
         let mapped: Vec<Claim> = self.claims.iter().map(|c| c.to_claim()).collect();
         let base = audit_ledger(&mapped);
 
         let mut exceeds_proof = Vec::new();
         let mut hype = Vec::new();
         let mut unknown_obligation = Vec::new();
+        let mut unverified_live = Vec::new();
         for c in &self.claims {
             let supported = c.grade.supported();
             let discharged = self.discharged.contains(&c.rests_on);
@@ -121,18 +140,32 @@ impl CommercialLedger {
             if !discharged && !open {
                 unknown_obligation.push(c.id.clone());
             }
+            if supported {
+                if let Some(r) = receipts {
+                    let live_ok = self
+                        .suite_of
+                        .get(&c.rests_on)
+                        .map(|s| r.get(s).map(|v| v == "PASS").unwrap_or(false))
+                        .unwrap_or(false);
+                    if !live_ok {
+                        unverified_live.push(c.id.clone());
+                    }
+                }
+            }
         }
 
         let honest = base.honest
             && exceeds_proof.is_empty()
             && hype.is_empty()
-            && unknown_obligation.is_empty();
+            && unknown_obligation.is_empty()
+            && unverified_live.is_empty();
         CommercialAudit {
             honest,
             exceeds_proof,
             hype,
             unknown_obligation,
             missing_boundary: base.missing_boundary,
+            unverified_live,
         }
     }
 }
@@ -157,20 +190,25 @@ fn parse_grade(s: &str) -> Grade {
 pub fn shipped_ledger() -> CommercialLedger {
     let mut discharged = BTreeSet::new();
     let mut open_or_rejected = BTreeSet::new();
+    let mut suite_of: BTreeMap<String, String> = BTreeMap::new();
     for line in OBLIGATIONS_TSV.lines() {
         if line.is_empty() || line.starts_with('#') {
             continue;
         }
-        let mut it = line.split('\t');
-        let key = it.next().expect("obligation key").to_string();
-        match it.next().expect("obligation status") {
+        let f: Vec<&str> = line.split('\t').collect();
+        let key = f[0].to_string();
+        match f[1] {
             "DISCHARGED" => {
-                discharged.insert(key);
+                discharged.insert(key.clone());
             }
             "OPEN_OR_REJECTED" => {
-                open_or_rejected.insert(key);
+                open_or_rejected.insert(key.clone());
             }
             other => panic!("unknown obligation status {other:?} in obligations.tsv"),
+        }
+        // column 2 (optional) = the verify.py suite stem that discharges this obligation ('-' if none)
+        if f.len() > 2 && f[2] != "-" && !f[2].is_empty() {
+            suite_of.insert(key, f[2].to_string());
         }
     }
 
@@ -190,5 +228,5 @@ pub fn shipped_ledger() -> CommercialLedger {
         claims.push(CommercialClaim::new(f[0], f[4], parse_grade(f[1]), f[3], f[5], f[6], f[2]));
     }
 
-    CommercialLedger { claims, discharged, open_or_rejected }
+    CommercialLedger { claims, discharged, open_or_rejected, suite_of }
 }

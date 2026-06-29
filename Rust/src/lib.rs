@@ -34,6 +34,7 @@ pub mod commercial_obligations;
 pub mod coupling_audit;
 pub mod epistemic_types;
 pub mod frontier_gate;
+pub mod gateway;
 pub mod invariant_ledger;
 pub mod orchestrator;
 pub mod residual_channel;
@@ -45,6 +46,7 @@ pub use binframe_adapter::{
     Row, Schema, NON_LIFTABLE_NEEDS, SCHEMA_ABI, SCHEMA_TELEM, U_MAX_DEFAULT,
 };
 pub use invariant_ledger::{ObligationResult, ObligationStatus};
+pub use gateway::{parse_receipt, render_report, run_gateway, GatewayReport};
 pub use commercial_obligations::{
     shipped_ledger, CommercialAudit, CommercialClaim, CommercialLedger, HYPE,
 };

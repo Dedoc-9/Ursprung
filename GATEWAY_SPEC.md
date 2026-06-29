@@ -30,8 +30,13 @@ absolutely. `undetected ≠ absent`; `bounded ≠ conservative`; `certificate �
   a **single source of truth** (`DVSM/commercial/ledger.tsv` + `obligations.tsv`), loaded by both the Python and
   the Rust gate, so `mirror ≠ source` is closed by construction. The Python gate now also **binds to live test
   execution** (Obligation B): `verify.py` emits a fresh receipt and a supported claim counts discharged only if
-  its backing suite PASSED this run — with the honest ceiling `receipt ≠ proof`. Still OPEN: the Rust-side
-  receipt read (the Rust gate is still static) and the single-binary assembly. `parts-ported ≠ monolith-built`.
+  its backing suite PASSED this run — with the honest ceiling `receipt ≠ proof`. **Now also built: the single
+  binary `ursprung-gateway`** (`Rust/src/bin/gateway.rs`) composes L1 ingest+lift → L4 proof-gate **with the
+  Rust-side live receipt read**, emitting a fail-closed verdict + a disclaimer-first report. Honest boundary:
+  it does **not** run L2 (contraction certifier) or L3 (CMI firewall) from a public frame dump — those need
+  their own typed inputs (κ matrices; (X,Y,Z) samples) and stay library APIs, which is exactly why the
+  Ω→V / ν→λ air-gaps come back **non-liftable**. Ships compile-unverified. `parts ≠ whole`; the verdict is a
+  commitment, not a certification of model safety.
 
 ## 1. Position
 
@@ -115,14 +120,21 @@ It is a **commitment, not a signature** (no PKI); add real key management before
 
 ## 5. CLI / deployment posture
 
+As built (`Rust/src/bin/gateway.rs`):
+
 ```
-ursprung-gateway --stream /var/log/ai-telemetry.bin --schema dvsm_v20 --gate-strict --output ./COMPLIANCE.md
+ursprung-gateway --telemetry ai-telemetry.bin [--schema telem|abi] [--receipt .verify_receipt.tsv]
+                 [--u-max 100.0] [--header-lines 1] [--output gate_report.md] [--strict]
 ```
 
-- Exit `0`: all checks passed; artifact written. Exit non-zero: a check failed, a leak was confirmed, or hype
-  was found → **blocks the CI/CD step**. Fail-closed by default; `--gate-strict` makes warnings fatal too.
-- Quarantine (not drop) for `UNIDENTIFIABLE` windows: emit them to a side channel with the reason, so a
-  false-positive doesn't silently discard data. `undetected ≠ absent`.
+- Exit `0`: parse clean (no layout-mismatch / non-finite), no VIOLATED obligation, and the proof-gated ledger
+  honest (live-bound when `--receipt` is given) → the disclaimer-first gate report is written. Exit non-zero:
+  any of those fails → **blocks the CI/CD step**, fail-closed.
+- `--strict` makes a missing/stale receipt itself a failure (forces live binding). Without `--receipt`, only
+  the static ledger audit runs and the report says so.
+- It does **not** run the CMI firewall, so there is no `UNIDENTIFIABLE`-window quarantine here; the firewall's
+  air-gap obligations are instead reported **non-liftable** from a public frame dump (`undetected ≠ absent`).
+  `parts ≠ whole`; the verdict is a commitment, not a certification of model safety.
 
 ## 6. Ingestion & performance design (HYPOTHESES — all figures UNMEASURED)
 
