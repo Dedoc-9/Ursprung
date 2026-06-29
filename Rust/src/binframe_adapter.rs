@@ -28,6 +28,7 @@
 //! the Ω→V / ν→λ air-gap obligations cannot be lifted from a public frame — surfaced in 1B, not here).
 
 use crate::invariant_ledger::{ObligationResult, ObligationStatus};
+use std::io::{BufReader, Read};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FieldType {
@@ -171,41 +172,7 @@ pub fn parse_frames(data: &[u8], schema: &Schema, header_lines: usize) -> (Vec<R
     let mut rows: Vec<Row> = Vec::with_capacity(n);
     let mut nonfinite = 0usize;
     for i in 0..n {
-        let mut off = i * rec;
-        let mut row: Row = Vec::with_capacity(schema.fields.len());
-        let mut row_nonfinite = false;
-        for &(name, ft) in schema.fields {
-            match ft {
-                FieldType::U64 => {
-                    let v = u64::from_le_bytes(body[off..off + 8].try_into().unwrap());
-                    off += 8;
-                    row.push((name, Field::U64(v)));
-                }
-                FieldType::F32 => {
-                    let v = f32::from_le_bytes(body[off..off + 4].try_into().unwrap());
-                    off += 4;
-                    if !v.is_finite() {
-                        row_nonfinite = true;
-                    }
-                    row.push((name, Field::F32(v)));
-                }
-                FieldType::F64 => {
-                    let v = f64::from_le_bytes(body[off..off + 8].try_into().unwrap());
-                    off += 8;
-                    if !v.is_finite() {
-                        row_nonfinite = true;
-                    }
-                    row.push((name, Field::F64(v)));
-                }
-                FieldType::U8 => {
-                    row.push((name, Field::U8(body[off])));
-                    off += 1;
-                }
-                FieldType::Pad => {
-                    off += 1; // consumed, dropped
-                }
-            }
-        }
+        let (row, row_nonfinite) = decode_record(&body[i * rec..i * rec + rec], schema);
         if row_nonfinite {
             nonfinite += 1;
         }
@@ -221,6 +188,126 @@ pub fn parse_frames(data: &[u8], schema: &Schema, header_lines: usize) -> (Vec<R
         nonfinite,
     };
     (rows, report)
+}
+
+/// Decode ONE fixed-size record into a `Row` + whether it carried a non-finite float. Shared by the whole-file
+/// [`parse_frames`] and the streaming readers so they decode IDENTICALLY — `streaming-decode ≡ whole-file-decode`
+/// by construction (the equivalence is asserted in `tests/streaming.rs`).
+fn decode_record(rec_bytes: &[u8], schema: &Schema) -> (Row, bool) {
+    let mut off = 0usize;
+    let mut row: Row = Vec::with_capacity(schema.fields.len());
+    let mut nonfinite = false;
+    for &(name, ft) in schema.fields {
+        match ft {
+            FieldType::U64 => {
+                let v = u64::from_le_bytes(rec_bytes[off..off + 8].try_into().unwrap());
+                off += 8;
+                row.push((name, Field::U64(v)));
+            }
+            FieldType::F32 => {
+                let v = f32::from_le_bytes(rec_bytes[off..off + 4].try_into().unwrap());
+                off += 4;
+                if !v.is_finite() {
+                    nonfinite = true;
+                }
+                row.push((name, Field::F32(v)));
+            }
+            FieldType::F64 => {
+                let v = f64::from_le_bytes(rec_bytes[off..off + 8].try_into().unwrap());
+                off += 8;
+                if !v.is_finite() {
+                    nonfinite = true;
+                }
+                row.push((name, Field::F64(v)));
+            }
+            FieldType::U8 => {
+                row.push((name, Field::U8(rec_bytes[off])));
+                off += 1;
+            }
+            FieldType::Pad => {
+                off += 1; // consumed, dropped
+            }
+        }
+    }
+    (row, nonfinite)
+}
+
+/// Stream-parse fixed records from any `Read`, invoking `on_record(&Row)` per record — **bounded input memory**
+/// (one record buffer; the whole dump is never loaded). Returns the same [`ParseReport`] the whole-file
+/// [`parse_frames`] would, including `layout_mismatch` on a trailing partial record. Synchronous and
+/// deterministic — NO async runtime, NO extra dependency (`std::io::BufReader` only). `streaming ≡ whole-file`
+/// on the decisions; the input may arrive in arbitrary fragments (a record is filled across reads).
+pub fn stream_frames<R: Read, F: FnMut(&Row)>(
+    reader: R,
+    schema: &Schema,
+    header_lines: usize,
+    mut on_record: F,
+) -> std::io::Result<ParseReport> {
+    let mut r = BufReader::new(reader);
+    // skip `header_lines` newline-terminated text lines
+    let mut skipped = 0usize;
+    let mut one = [0u8; 1];
+    while skipped < header_lines {
+        match r.read(&mut one)? {
+            0 => break,
+            _ => {
+                if one[0] == b'\n' {
+                    skipped += 1;
+                }
+            }
+        }
+    }
+
+    let rec = schema.rec_size();
+    let mut buf = vec![0u8; rec.max(1)];
+    let mut n_records = 0usize;
+    let mut nonfinite = 0usize;
+    let mut leftover_bytes = 0usize;
+    if rec > 0 {
+        loop {
+            let mut filled = 0usize;
+            while filled < rec {
+                match r.read(&mut buf[filled..rec])? {
+                    0 => break,
+                    k => filled += k,
+                }
+            }
+            if filled == 0 {
+                break; // clean EOF on a record boundary
+            }
+            if filled < rec {
+                leftover_bytes = filled; // trailing partial record
+                break;
+            }
+            let (row, rn) = decode_record(&buf[..rec], schema);
+            if rn {
+                nonfinite += 1;
+            }
+            n_records += 1;
+            on_record(&row);
+        }
+    }
+
+    Ok(ParseReport {
+        schema: schema.name,
+        n_records,
+        rec_size: rec,
+        leftover_bytes,
+        layout_mismatch: leftover_bytes != 0,
+        nonfinite,
+    })
+}
+
+/// Convenience: stream into a `Vec<Row>` — still bounded *input* buffering (reads incrementally rather than
+/// loading the whole file as bytes). Mirrors [`parse_frames`]'s return so it is a drop-in for large dumps.
+pub fn read_frames_streaming<R: Read>(
+    reader: R,
+    schema: &Schema,
+    header_lines: usize,
+) -> std::io::Result<(Vec<Row>, ParseReport)> {
+    let mut rows = Vec::new();
+    let report = stream_frames(reader, schema, header_lines, |row| rows.push(row.clone()))?;
+    Ok((rows, report))
 }
 
 // ---- lift: obligations the emitted telemetry CAN support, kernel-relative (Sub-Slice 1B) ----------
