@@ -395,13 +395,21 @@ def test_rasterizer_is_observer_only():
 
 def test_causal_continuity_is_provisional_and_gate_is_honest():
     check(cc.STATUS != "law", "Causal Continuity is never a hard-coded law (promotion to law needs real silicon)")
-    check(cc.STATUS == "supported_constructed",
-          "the re-specified form passed the constructed gate; status is supported, not hypothesis, not law")
-    # the gate promotes only on a strict win over all controls + control loses
+    # Real-silicon verdict (M6b → M6c → M6d/T1–T4): the GENERAL spatial claim was FALSIFIED on a neutral ruler;
+    # what survives is a CONDITIONAL result — a conditional temporal positive (T3) bounded by a hidden-future
+    # recoverability threshold (T4). The honest status is therefore neither "law" nor an unqualified "supported".
+    check(cc.STATUS == "conditional_on_neutral_ruler",
+          "status reflects the neutral-ruler verdict: spatial claim falsified, temporal claim conditional")
+    # the module must CARRY the evidence for that conditional posture (the conditional temporal win + the T4
+    # recoverability threshold), not assert an absolute spatial dominance
+    for name in ("NEUTRAL_RULER_RESULT", "SWEEP_M6C", "TEMPORAL_GATE_M6D", "HIDDEN_FUTURE_T4"):
+        check(len(getattr(cc, name, "")) > 200, name + " records the measured boundary, not a slogan")
+    # the constructed-gate FUNCTION stays honest in isolation (one tier BELOW the silicon verdict): it promotes
+    # only on a strict win over every control with the drifted control losing, and blocks otherwise.
     win = {"causal (U×C×P)": 1, "uniform": 2, "distance": 2, "visibility": 2, "pfal (U×C×P×S)": 2,
            "drifted (control)": 3}
     lose = dict(win); lose["uniform"] = 0
-    check(cc.earns_promotion(win)[0] is True, "a strict win over all controls earns promotion")
+    check(cc.earns_promotion(win)[0] is True, "the gate function promotes only on a strict win over all controls")
     check(cc.earns_promotion(lose)[0] is False, "losing to any control blocks promotion")
 
 
