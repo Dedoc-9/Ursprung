@@ -556,7 +556,11 @@ proof-gated ledger into one CLI. It is a **specification** (SCOPED/UNDERCOMMITTE
 are); the output is a **commitment, not a signature** (no PKI); the certificate is a **sufficient condition, not
 global stability**; "real-time/low-latency" is **UNMEASURED**; and it is a technical conformity check, **not**
 regulatory compliance. Build order (§8): port the CMI core → port the gate → two-tier ingestion → CLI → measure.
-**Step 1 is done** (the differential test + coupling taxonomy above).
+**Progress (Rust, `cargo test`-green, each differential-tested vs the Python):** the CMI firewall + coupling
+taxonomy (L3), the proof-gated claim gate (L4, `commercial_obligations.rs`), and the BinaryFrame parser (L1,
+Sub-Slice 1A, `binframe_adapter.rs` — a *deterministic fixed-record reader*, **not** zero-copy). Still OPEN:
+the L1 obligation-lift (1B, needs `invariant_ledger`), binding the gate to live execution
+(`static-check ≠ live-execution`), and the single-binary assembly. `parts-ported ≠ monolith-built`.
 
 **Lesson this arc earned (binds future passes):** *before porting a Python module to Rust, check `Rust/src/`
 first.* `residual_channel` + the orchestrator were already ported; a duplicate `DVSM/cmi_firewall` crate was
