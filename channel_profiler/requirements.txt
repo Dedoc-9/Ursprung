@@ -1,0 +1,5 @@
+# Ursprung Channel Profiler v0.1 — runtime dependencies (pure-Python wedge; no Rust, no workbench)
+numpy>=1.21
+matplotlib>=3.5
+# NOTE: the spec listed scipy too, but v0.1 does not use it (percentiles come from numpy). Omitted to keep the
+# dependency set honest — add it only when a component actually needs it. `declared ≠ used`.

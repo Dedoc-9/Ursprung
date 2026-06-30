@@ -48,3 +48,8 @@ Reality_Engine/
 *.pem
 *.secret
 CHRONICLE_SIGNER_PASSPHRASE
+
+demo_metrics.jsonl
+demo_convergence.png
+__pycache__/
+*.pyc
