@@ -53,6 +53,17 @@ the agent editing it as much as the code. Any pass — and an automated/LLM pass
 This is not a productivity technique — it is the same gate the code enforces on itself (`claim_ledger` →
 `rsi_engine` → `no_inflation_latch`), turned on whoever edits it. `declared ≠ verified`.
 
+**Running on Windows / PowerShell — set two environment variables for the session, not one.** Alongside
+`$env:PYTHONHASHSEED = "0"` (determinism, above), set `$env:PYTHONUTF8 = "1"` before running any suite. The
+second is load-bearing **whenever a suite's output is redirected or captured** (a `*>` / `2>&1` pipe, a `$(...)`
+capture, a CI log, a test-runner loop): the suites print separators (`≠`, `⊆`, `π`, `∇`, `→`), and on Windows a
+*redirected* Python stdout defaults to the legacy code page (cp1252), so the first such `print` raises
+`UnicodeEncodeError` and the process exits non-zero — a **false failure that mimics a broken suite**. To a console
+(a TTY) Python already uses UTF-8, so the crash appears *only* under redirection; `console-pass ≠ pipe-pass`.
+UTF-8 mode (`PYTHONUTF8=1`, equivalently `python -X utf8`) forces UTF-8 on redirected streams too. The failure is
+an encoding artifact of the harness, never a verdict on the code — confirm any suspected failure by running the
+one suite straight to the console before believing it.
+
 ## The four layers — classify every system before building it
 
 | Layer | Meaning | May move the committed trajectory? |
