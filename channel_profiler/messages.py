@@ -8,7 +8,7 @@ versioned. No speculative fields.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
 
@@ -19,6 +19,11 @@ class ChannelEstimate:
     `mi_estimate`/`ci_lower`/`ci_upper` are None unless `verdict == "ESTIMATED"`. The alphabet sizes are the
     OBSERVED distinct-symbol counts in the window (not the universe), so a reader can see the regime the estimate
     was made in.
+
+    `effective_n` (v0.2.1): the temporal-correlation-corrected sample count. Under i.i.d. sampling it equals
+    `n_samples`; under autocorrelation it is smaller (n / integrated-autocorrelation-time). It is the count the
+    sufficiency gate should use on real streams. `None` for the i.i.d. estimator, which does not compute it.
+    `effective_n ≤ n_samples`; `i.i.d.-n ≠ effective-n`.
     """
 
     mi_estimate: Optional[float]
@@ -29,6 +34,7 @@ class ChannelEstimate:
     alphabet_size_secret: int
     alphabet_size_observation: int
     verdict: str  # "ESTIMATED" | "UNDERDETERMINED" | "INSUFFICIENT_ALPHABET"
+    effective_n: Optional[int] = None
 
 
 @dataclass
