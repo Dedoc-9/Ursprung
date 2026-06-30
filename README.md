@@ -6,8 +6,10 @@ its explanation.** The renderer is the *first client* of that runtime, not the w
 agent, or a world generator are equally valid clients — and the **`weltwerk/` verification kernel** (see
 *weltwerk* below) is the runtime's most developed client today (the **index** just below maps every arc — what
 each one pioneered and what it is for). Ursprung consumes the sealed `Reality_Engine`
-(Chronicle/Dentatus) workbench read-only as its verification substrate; the workbench supplies the deterministic
-kernel and the integrity discipline, and Ursprung is the renderer projected off the committed trajectory.
+(Chronicle/Dentatus) workbench read-only as its verification substrate — `Reality_Engine` is the local clone of
+**[Dentatus](https://github.com/Dedoc-9/Dentatus)**, the project that preceded Ursprung; the workbench supplies
+the deterministic kernel and the integrity discipline, and Ursprung is the renderer projected off the committed
+trajectory.
 
 Underneath the renderer, the provenance runtime and its [`experiments/live_world_kernel/`](experiments/live_world_kernel/)
 instruments form a dynamic **Epistemic Runtime Environment (ERE)** — a layer that governs *claim integrity* rather
