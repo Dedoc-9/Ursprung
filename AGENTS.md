@@ -7,7 +7,7 @@ stability, visual fidelity, deterministic replay, debugging, the asset/world pip
 **information integrity** (anti-cheat / multiplayer disclosure — the second arc; see *The information-firewall
 discipline* below).
 
-> **Repo orientation (current).** The repository is **five arcs sharing one discipline**, not one program — the
+> **Repo orientation (current).** The repository is **six arcs sharing one discipline**, not one program — the
 > README's *index* maps each one (what it pioneered, what it is for) and no single arc is "the center." Beyond the
 > renderer described here (`ursprung/`, `experiments/`), the most developed companion line is **`weltwerk/`** — a
 > verification kernel with interchangeable proof engines, a Proof-Obligations ledger, an epistemic-runtime layer,
@@ -17,7 +17,9 @@ discipline* below).
 >
 > A newer **sibling-kernel hardening arc** (`DVSM/`, `Rust/`, `DVSM/commercial/`, `GATEWAY_SPEC.md`) applies the
 > same discipline outward to external research kernels and to std-only Rust ports; see *DVSM, the Rust ports, and
-> the gateway* below. **The honest, graded index of the entire repository — every component with a maturity grade
+> the gateway* below. The **Channel Profiler** (`channel_profiler/`, released `v0.2.1-alpha`) is the sixth arc —
+> the QIF measurement discipline packaged as a standalone, shipped instrument; see *The Channel Profiler — how to
+> use it* below. **The honest, graded index of the entire repository — every component with a maturity grade
 > and a `does_not_show` — is `method.md` at the repo root; read it first for orientation.** `written ≠ true` — the
 > grades there are a falsifiable claim, re-checkable by re-running the gates.
 
@@ -271,6 +273,47 @@ new VIEW/ALLOCATOR/OBSERVER system as something an adversary will read, and obey
 
 Every such system is an **OBSERVER** (it measures, ranks, attributes; it never mutates the trajectory and
 never asserts truth). The cardinal invariant and the four-layer law above still bind it.
+
+## The Channel Profiler — how to use it (`channel_profiler/`, released `v0.2.1-alpha`)
+
+The measurement-discipline arc above, **packaged as a standalone instrument** and the repo's **first released
+product** (git tag `v0.2.1-alpha`). Reach for it when a task needs *"how many bits does this observer learn about
+that secret, per step?"* with **honest error bars** — anti-cheat / fog-of-war disclosure, agent/RL observation
+governance, or leak-auditing of opaque (e.g. LLM-generated) code. It is pure-Python (numpy + matplotlib),
+standalone (does **not** import `ursprung/` or the workbench), AGPL-3.0. It is an **OBSERVER**: it measures and
+reports, it never controls the host (`telemetry ≠ control`).
+
+**The one rule that decides which estimator to use — get this right or the error bars lie:**
+
+- **i.i.d. samples** (independent draws — a shuffled dataset, the toy scene) → `MillerMadowEstimator`.
+- **a real interactive loop** (consecutive frames share state → autocorrelated) → **`BlockBootstrapEstimator`
+  (v0.2.1), mandatory.** On autocorrelated data the i.i.d. estimator's CIs are *silently wrong* — it covers the
+  true MI only **0.23** of the time (false precision). The block estimator restores **~0.95** via the two-part
+  fix (effective-`n` Miller–Madow for the *point* + stationary bootstrap for the *CI width*) and gates
+  sufficiency on **effective `n`**, not nominal `n`. Reaching for the i.i.d. estimator on a real stream is the
+  exact `bootstrap-CI ≠ valid-under-autocorrelation` error this arc exists to prevent.
+
+**The output contract (do not break it).** A `ChannelEstimate` is never a bare scalar — it carries the estimator,
+`n`, `effective_n`, the observed alphabets, and a verdict (`ESTIMATED` / `UNDERDETERMINED` /
+`INSUFFICIENT_ALPHABET`). Below sample sufficiency it returns **`UNDERDETERMINED`, never a fabricated bit-count**.
+Report "found by estimator E, on stream D" — never "safe."
+
+**The two boundaries to state in every use (not optional).** It is **tag-dependent** (`declared ≠ verified` — it
+cannot see a covert channel through a variable you didn't tag) and **statistical, not formal** (`tested ≠ safe`,
+`measured ≠ guaranteed` — a CI with a coverage rate, not a proof). It is a **measurement instrument, not a
+verification oracle**; do not let a green number become a safety claim.
+
+**Before building on it, read [`docs/V0_2_1_CANONICAL_REFERENCE.md`](docs/V0_2_1_CANONICAL_REFERENCE.md)** — the
+banked record of exactly what v0.2.1 validated (the numbers, the two-part claim, three declared sensitivity
+limits incl. the `τ`-proxy blindness under uniform marginals) and what is *not* built: a continuous estimator
+(KSG) is the next gate and the effective-`n` correction is an obligation it inherits; automatic channel discovery
+is scoped v0.3. `estimate ≠ capacity`; `necessary ≠ sufficient`.
+
+**Build a new use** by wiring your domain's `(secret_tags, observation_tags)` behind `SampleMessage`, keeping the
+estimator and the gate, and shipping every number with its CI and its coverage boundary. Run:
+`python tests/test_block_bootstrap.py` (the v0.2.1 validation, 4/4) and `python demo_closed_loop.py` (the advisory
+loop). This is the **shipped realization** of the "leak-measurement SaaS" product pattern sketched under
+*Building standalone products* below — use it as the worked template.
 
 ## The provenance kernel — the constraint surface (judge new layers as clients)
 

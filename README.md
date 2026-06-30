@@ -41,9 +41,9 @@ The renderer never discovers truth; it manages where its approximations fail. It
 **arbitrary boundaries require deterministic handling, and finite fidelity should be allocated by expected
 future failure cost, not present visual complexity.**
 
-## The index — five arcs, what each pioneered, what it is for
+## The index — six arcs, what each pioneered, what it is for
 
-The repository is not one program but five arcs sharing one discipline (`integrity ≠ truth`; every claim graded,
+The repository is not one program but six arcs sharing one discipline (`integrity ≠ truth`; every claim graded,
 every result falsifiable, every boundary stated). They are listed in order of how the work grew; none is "the
 center" — the honest, per-component graded index with a `does_not_show` for each is [`method.md`](method.md).
 
@@ -54,10 +54,13 @@ center" — the honest, per-component graded index with a `does_not_show` for ea
 | **weltwerk — the verification kernel** — `weltwerk/` | A model-checker-turned-**verification kernel** with a Proof-Obligations ledger and a **judge→compiler** epistemic runtime: `Grounded[T]` (an action fires only behind a verifier proof) + an orchestrator with two chokepoints; plus a deflationary, **bounded** RSI result. | Verified-config/policy checking, signal-vs-confounder-leak auditing (`residual_channel`), grounded-action gates for autonomous agents — each answer an `AnalysisResult`, each action `Grounded`. |
 | **The empirical phase** — `experiments/` | That the provenance discipline **survives learning**, and a **fair, sealed-observer GPU metrology harness** that *falsified the project's own* spatial allocation hypothesis on silicon (then supported its conditional temporal form); a RealityKernel **Rust CORE verified under concurrency**. | A falsification-grade perf A/B harness (equal *measured* budget, Pareto-vector error); a provenance kernel for any stateful system; auditing self-improving / auto-tuning AI loops. |
 | **Sibling-kernel hardening** — `DVSM/`, `Rust/`, `GATEWAY_SPEC.md` | The same discipline pointed **outward** at an external research kernel, collapsed into a single dependency-free **fail-closed integrity gateway** (`ursprung-gateway`) with two **type-level** honesty invariants and a streaming, bounded-memory reader. | Auditing third-party deterministic kernels (reference-relative); a proof-gated claims/compliance layer (infrastructure VERIFIED, financial value SPECULATIVE); a single-binary integrity monitor. |
+| **The Channel Profiler** — `channel_profiler/` (released **`v0.2.1-alpha`**) | The QIF measurement discipline extracted into a **standalone, shipped instrument**: mutual-information leakage **in bits with error bars that survive autocorrelation** — the two-part temporal fix (effective-`n` Miller–Madow for the point + stationary bootstrap for the CI; coverage **0.23→0.95** on a known-MI ground truth). | Measuring `I(secret;observation)` per step on a *real* (autocorrelated) interactive loop with honest CIs (or `UNDERDETERMINED`); an advisory closed loop that lowers fidelity under a leakage budget. A measurement instrument, **not** a verification oracle (`declared ≠ verified`, `tested ≠ safe`). |
 
 Honest framing for the whole table: every bench number is **constructed and expires on real silicon** unless it
 says otherwise; the renderer/firewall/empirical arcs are the developed line, the sibling-kernel arc is
-**adjacent, not an advancement** of the renderer thesis (`adjacent ≠ on-mission`). Grades are re-checkable by
+**adjacent, not an advancement** of the renderer thesis (`adjacent ≠ on-mission`), and the **Channel Profiler** is
+the newest arc and the **first packaged for outside use** (`v0.2.1-alpha`) — its numbers are *validated against
+analytic / known-MI ground truth* (reproducible), not constructed-and-expiring. Grades are re-checkable by
 re-running the gates.
 
 > **Status (current).** The conceptual arc is complete (a deterministic stdlib suite — `tests/test_ursprung.py`
@@ -178,6 +181,49 @@ and a `does_not_show` — is [`method.md`](method.md) at the repo root; read it 
   host-specific (run it; nothing hardcoded), and it is a
   technical conformity check, **not** regulatory compliance. `parts ≠ whole`;
   `integrity ≠ truth`.
+
+## The Channel Profiler — the first shipped product (`v0.2.1-alpha`)
+
+[`channel_profiler/`](channel_profiler/) is the measurement-discipline arc (the QIF firewall) extracted into a
+**standalone, pure-Python instrument** and **released for outside use** (git tag `v0.2.1-alpha`) — the first
+piece of this repository packaged as a *versioned product* rather than an internal research artifact. It measures
+the mutual information `I(secret; observation)` an observer gains per step, reports it **in bits with a confidence
+interval** (or refuses with `UNDERDETERMINED` below sample sufficiency), and — if the host opts in — drives an
+advisory closed loop that lowers fidelity until leakage falls under a declared budget. It depends only on
+numpy + matplotlib and does **not** import the renderer or the sealed workbench (it lives in its own package on
+purpose).
+
+**It is a measurement instrument, not a verification oracle** — the framing is load-bearing and stated up front,
+not buried: it is **tag-dependent** (it measures the channels you *declare* via `secret_tags` / `observation_tags`;
+a covert channel through an *un*tagged variable reads as zero — `declared ≠ verified`, it cannot find what you
+didn't think to tag) and **statistical, not formal** (a CI with a coverage rate, not a type-checker's certainty —
+`measured ≠ guaranteed`, `tested ≠ safe`, `repeatable ≠ immutable`).
+
+**Two estimators; choose by whether your stream is autocorrelated.**
+
+- `MillerMadowEstimator` (v0.1) — i.i.d. bias-corrected MI + bootstrap CIs + a joint-support sufficiency gate.
+  Valid **only when samples are independent** (the toy scene, genuine i.i.d. draws).
+- `BlockBootstrapEstimator` (v0.2.1) — the temporal-correlation fix for **real interactive loops**, where
+  consecutive frames share state so the i.i.d. CIs are *silently wrong*. The fix is **two-part, both necessary,
+  neither sufficient alone**: (1) the Miller–Madow correction is scaled by **effective `n`** (`n/τ`, the
+  integrated autocorrelation time of the pointwise-MI series) — fixing the *point*; (2) a **stationary bootstrap**
+  (Politis & Romano 1994) — fixing the *CI width*; plus a sufficiency gate on effective `n`. Validated against a
+  discrete Markov-chain ground truth with known MI: the i.i.d. estimator covers the truth **0.23** of the time,
+  the block estimator **0.95**.
+
+The exact validated numbers, the precise two-part claim, and the three declared sensitivity limits are banked in
+[`docs/V0_2_1_CANONICAL_REFERENCE.md`](docs/V0_2_1_CANONICAL_REFERENCE.md) (commit `70d0aaf`). Honest roadmap
+(`channel_profiler/README.md`): a **continuous estimator (KSG) is next, not built** — and the effective-`n`
+correction must ride onto it, validated against a continuous AR(1) anchor; automatic channel **discovery** (so a
+developer needn't know what to tag) is **scoped v0.3, not built**. `estimate ≠ capacity`; `bootstrap-CI ≠
+valid-under-autocorrelation`; `necessary ≠ sufficient`.
+
+```bash
+pip install -r channel_profiler/requirements.txt
+python tests/test_estimator.py          # v0.1: 5 checks vs analytic ground truth (CI coverage ~0.95)
+python tests/test_block_bootstrap.py    # v0.2.1: coverage 0.23→0.95 on a Markov-chain ground truth (4/4)
+python demo_closed_loop.py              # advisory loop: over budget → shrink fidelity → re-measure → converge
+```
 
 ## What is proven, what you get, and where it goes next
 
