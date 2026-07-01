@@ -42,3 +42,8 @@ repe_harness/orchestrator.py :: from epistemic_types import Grounded, ChannelEst
 # --- repe_harness/epistemic_monad.py (a LAW-CHECKED grounding monad; the adapter layer) ---
 repe_harness/epistemic_monad.py :: class EM :: def unit( :: def lift(
 repe_harness/epistemic_monad.py :: def value_of( :: def channel_arrow( :: def bind
+
+# --- repe_harness/ingest_activations.py (Lever A: real activations -> probe AUROC -> real audit) ---
+repe_harness/ingest_activations.py :: def extract_activations( :: def ingest( :: def build_samples(
+repe_harness/ingest_activations.py :: def pick_device( :: from phase1_probe import
+repe_harness/ingest_activations.py :: from residual_channel import audit

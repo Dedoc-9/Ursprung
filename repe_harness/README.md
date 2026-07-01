@@ -79,6 +79,12 @@ Run Phase 1 `--extract` on your weights, feed real `(label, score, confounder)` 
 The claim earns MEASURED only from `phase4_falsify.grade()=="MEASURED"` with `neutral_ruler_ok(tune, eval)`, and
 it carries a permanent `does_not_show`: robustness to *adaptive* attacks (Phases 5–6 show the arms race defeats it).
 
+**Lever A — `ingest_activations.py`** turns real activations into this path: `--extract` (CPU or the AMD 890M
+iGPU via ROCm-on-Windows; no CUDA needed; use a small 1–3B instruct model) → held-out **probe AUROC** (your
+first real-model number) → the real `residual_channel.audit` verdict on your direction; a `RESIDUAL_MISSPEC_STABLE`
+one grounds a steer. Its `--selftest` verifies the ingestion+audit chain GPU-free, including that a length-style
+confounder is **rejected even when raw AUROC is fooled high** — `AUROC != channel`.
+
 > **This tree contains no real-model number.** The `--selftest` numbers are apparatus on synthetic ground truth.
 > Producing a real number needs a GPU + weights + a held-out attack set; it is intentionally left to you rather
 > than faked here. `apparatus != safety`.
@@ -86,7 +92,7 @@ it carries a permanent `does_not_show`: robustness to *adaptive* attacks (Phases
 ## Run all gates
 `PYTHONHASHSEED=0` on every run; on Windows with redirected output also `PYTHONUTF8=1`. Point the
 `engineering-rigor` runner at this folder's `gates.txt` — which now includes `selftest-orch`, `selftest-monad`,
-and the `session-symbols` manifest check alongside the ten phase selftests.
+`selftest-ingest`, and the `session-symbols` manifest check alongside the ten phase selftests.
 
 ## References
 RepE (arXiv:2310.01405) · Circuit Breakers, Zou et al. 2024 · *No Red Lines* (impossibility of formal LLM safety
