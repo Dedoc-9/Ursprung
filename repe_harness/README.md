@@ -24,6 +24,7 @@ The safety **claim** ("this makes the model safer") is **SPECULATIVE** until Pha
 | 4 falsify | `phase4_falsify.py` | MEASURED 6/6 — grades success/null/regression, Wilson CIs, neutral-ruler | ASR reduction ± CI on held-out attacks |
 | 5 governor | `phase5_closed_loop.py` | MEASURED 6/6 — damping = f(live CUSUM), 0 benign tax; simulator maps caught-vs-evaded | real-attack evasion boundary |
 | 6 coherent-negative | `phase6_coherent_negative.py` | MEASURED 6/6 — space-pooled 0.89 vs trajectory 0.00, gap surfaced | the gap on real adaptive attacks |
+| 7 regression-filter | `phase7_regression_filter.py` | MEASURED 8/8 — promotes genuine, rejects overfit/lucky/no-gain, drift flag | real vector regression / drift on your evals |
 
 Run one gate: `PYTHONHASHSEED=0 python phaseN_*.py --selftest` (Windows + redirected output: `$env:PYTHONUTF8="1"`).
 Run all: point the `engineering-rigor` runner at this folder's `gates.txt`.
@@ -40,6 +41,12 @@ Run all: point the `engineering-rigor` runner at this folder's `gates.txt`.
   **supercritical space-pooled / subcritical along the trajectory** — so the harness reports **both views and
   refuses to average: the disagreement is the finding.** Structural analogy **DEMONSTRATED**; not a claim that
   the governor is an RSI system or that detection == `m_novel`.
+- **Maintenance (Phase 7) — an Automated Regression Filter, explicitly NOT an RSI engine.** Reuses
+  `rsi_engine`'s promotion gate (external + replicated + calibrated) so a re-fit steering vector replaces the
+  incumbent only if it verifiably beats it on held-out; it catches proxy-overfit and flags drift. Its promotion
+  rate is a **bounded** acceptance fraction (`m_verified`-style ≤ 1), not open-ended improvement.
+  `regression-filter != self-improvement`. The repo's own `self_improvement_witness.py` marks "stamping an
+  artifact 'proves RSI'" as the inflation this stack rejects — so this layer measures and bounds, it does not claim.
 
 ## What would earn MEASURED for the safety claim
 Run Phase 1 `--extract` on your weights, then Phases 2–6 with a **held-out** adversarial benchmark
