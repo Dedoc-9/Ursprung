@@ -27,6 +27,7 @@ The safety **claim** ("this makes the model safer") is **SPECULATIVE** until Pha
 | 7 regression-filter | `phase7_regression_filter.py` | MEASURED 8/8 — promotes genuine, rejects overfit/lucky/no-gain, drift flag | real vector regression / drift on your evals |
 | 8 confounder-firewall | `phase8_confounder_firewall.py` | MEASURED 5/5 — real→HEALTHY, confounded→CONFOUNDED, noise→NO_SIGNAL | which of your probe directions survive conditioning |
 | 9 grounded-steer | `phase9_grounded_steer.py` | MEASURED 5/5 — healthy+tight→applied; confounded/loose→UngroundedError before any effect | structural guard (composes P8 audit + P1 CI) |
+| 10 air-gap | `phase10_airgap.py` | MEASURED 5/5 — no-write-back, grounded-only commit, tamper→fail-closed, deterministic replay | tamper/drift on your deployed run |
 
 Run one gate: `PYTHONHASHSEED=0 python phaseN_*.py --selftest` (Windows + redirected output: `$env:PYTHONUTF8="1"`).
 Run all: point the `engineering-rigor` runner at this folder's `gates.txt`.
@@ -61,6 +62,12 @@ Run all: point the `engineering-rigor` runner at this folder's `gates.txt`.
   composes the honest gates into the steering path so a confounded/uncertain direction can't reach the hook.
   Honest scope: a **runtime pre-effect guard**, not a compile-time or cryptographic check — `grounded != true`,
   but `ungrounded != allowed`.
+- **Hardening (Phase 10) — the air-gap layer, from `AetherPulse/snapshot.py`.** The gated decision record
+  (input digest, applied α) is **no-write-back**: observers (probe/monitor/audit) read a deep-copied snapshot and
+  cannot mutate it; only a Grounded steer (Phase 9) commits, re-sealing a content hash. Out-of-band tampering,
+  bit-flips, or nondeterministic drift shift the hash → `verify()` **fails closed**. `observation != authority`.
+  Honest bound (the core's own): tamper-**evident** and replay-verifiable, **not** immutable — it detects, it
+  does not prevent an attacker who recomputes the hash consistently.
 
 ## What would earn MEASURED for the safety claim
 Run Phase 1 `--extract` on your weights, then Phases 2–6 with a **held-out** adversarial benchmark
