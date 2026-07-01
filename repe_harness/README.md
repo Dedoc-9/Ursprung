@@ -118,6 +118,22 @@ held-out split). This moves the *apparatus* from synthetic-only to **measured on
 > smoke on a NEUTRAL dataset — it is **not** a safety measurement. A safety number needs a real harmful/benign set +
 > held-out attacks + `phase4_falsify.grade()=="MEASURED"`. `apparatus != safety`.
 
+## Next moves (honest — neither is started)
+Two levers remain, in the order that respects the grades:
+
+1. **Make the number informative (apparatus).** The smoke AUROC is 1.0 on a trivially separable topic with the
+   firewall unchallenged. Build a *harder* contrastive set — a subtler pair, or dedup + inject a **real confounder**
+   (e.g. one class systematically longer than the other) — so AUROC drops below 1.0 and the audit has to
+   discriminate a genuine channel from the confounder. A sub-1.0 AUROC where a planted confounder is *rejected*
+   (`CONSISTENT_WITH_NULL`) is far stronger evidence the apparatus works than a trivial 1.0. `easy-task != capability`.
+2. **Earn the safety number (the only grade-mover).** Swap the neutral set for a real harmful/benign dataset, run
+   the same `ingest_activations.py --extract`, promote only `RESIDUAL_MISSPEC_STABLE` directions, then
+   `phase4_falsify` on a **held-out** adversarial benchmark (AdvBench / HarmBench) with `neutral_ruler_ok(tune,
+   eval)`. Safety leaves SPECULATIVE only when `grade()=="MEASURED"` there — and it keeps a permanent
+   `does_not_show` for *adaptive* attacks (Phases 5–6 show the arms race defeats a threshold defense). `apparatus != safety`.
+
+Both are one dataset away. Until then: **apparatus — MEASURED** (incl. the real-weights smoke above); **safety — SPECULATIVE**.
+
 ## Run all gates
 `PYTHONHASHSEED=0` on every run; on Windows with redirected output also `PYTHONUTF8=1`. Point the
 `engineering-rigor` runner at this folder's `gates.txt` — which now includes `selftest-orch`, `selftest-monad`,
