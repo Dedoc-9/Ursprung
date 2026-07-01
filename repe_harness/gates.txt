@@ -1,8 +1,9 @@
 # repe_harness gates — one check per line "label :: command" (works with the engineering-rigor run_gates.py).
 # Real-model paths (--extract / --steer / live sessions / real attacks) are intentionally NOT gates: they need
 # a GPU + weights + a held-out benchmark, and their numbers (AUROC, refusal-rate shift, benign retention,
-# escalation-detection rate, ASR reduction) are measured by YOU on your machine, not asserted here.
+# escalation-detection rate, ASR reduction, real-attack evasion) are measured by YOU, not asserted here.
 selftest-probe    :: python phase1_probe.py --selftest
 selftest-engine   :: python phase2_engine.py --selftest
 selftest-monitor  :: python phase3_monitor.py --selftest
 selftest-falsify  :: python phase4_falsify.py --selftest
+selftest-governor :: python phase5_closed_loop.py --selftest
