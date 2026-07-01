@@ -25,6 +25,7 @@ The safety **claim** ("this makes the model safer") is **SPECULATIVE** until Pha
 | 5 governor | `phase5_closed_loop.py` | MEASURED 6/6 — damping = f(live CUSUM), 0 benign tax; simulator maps caught-vs-evaded | real-attack evasion boundary |
 | 6 coherent-negative | `phase6_coherent_negative.py` | MEASURED 6/6 — space-pooled 0.89 vs trajectory 0.00, gap surfaced | the gap on real adaptive attacks |
 | 7 regression-filter | `phase7_regression_filter.py` | MEASURED 8/8 — promotes genuine, rejects overfit/lucky/no-gain, drift flag | real vector regression / drift on your evals |
+| 8 confounder-firewall | `phase8_confounder_firewall.py` | MEASURED 5/5 — real→HEALTHY, confounded→CONFOUNDED, noise→NO_SIGNAL | which of your probe directions survive conditioning |
 
 Run one gate: `PYTHONHASHSEED=0 python phaseN_*.py --selftest` (Windows + redirected output: `$env:PYTHONUTF8="1"`).
 Run all: point the `engineering-rigor` runner at this folder's `gates.txt`.
@@ -47,6 +48,12 @@ Run all: point the `engineering-rigor` runner at this folder's `gates.txt`.
   rate is a **bounded** acceptance fraction (`m_verified`-style ≤ 1), not open-ended improvement.
   `regression-filter != self-improvement`. The repo's own `self_improvement_witness.py` marks "stamping an
   artifact 'proves RSI'" as the inflation this stack rejects — so this layer measures and bounds, it does not claim.
+- **Hardening (Phase 8) — a confounder firewall for the probe, from the sealed core.** Reviewing
+  `weltwerk/verify/residual_channel` (the confounder-conditioned-CMI firewall) surfaced the RepE failure standard
+  repos don't guard: a probe can score a great AUROC by separating on a **confounder** (length, topic, formatting),
+  not the harm concept. Phase 8 gates a direction with `I(label;score) > 0` **vs** `I(label;score | Z)` above a
+  within-Z shuffle null — promote only a **HEALTHY** direction, reject a **CONFOUNDED** one. `confounded-MI != channel`.
+  This is the honest gate Phase 1's AUROC alone cannot give; it makes Layer 1's MEASURED grade mean the right thing.
 
 ## What would earn MEASURED for the safety claim
 Run Phase 1 `--extract` on your weights, then Phases 2–6 with a **held-out** adversarial benchmark
