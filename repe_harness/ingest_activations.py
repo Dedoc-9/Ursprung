@@ -73,14 +73,16 @@ def extract_activations(model_name, texts, layers, device="auto", batch_size=8, 
     tok = AutoTokenizer.from_pretrained(model_name)
     if tok.pad_token is None:
         tok.pad_token = tok.eos_token
-    model = AutoModelForCausalLM.from_pretrained(model_name, output_hidden_states=True,
-                                                 torch_dtype=torch.float32).to(dev).eval()
+    # transformers 4.x/5.x-safe: no `torch_dtype`/`dtype` kwarg (renamed across versions); force float32 on CPU.
+    model = AutoModelForCausalLM.from_pretrained(model_name).to(dev).eval()
+    if dev == "cpu":
+        model = model.float()
     out = {int(L): [] for L in layers}
     with torch.no_grad():
         for i in range(0, len(texts), batch_size):
             enc = tok(texts[i:i + batch_size], return_tensors="pt", padding=True,
                       truncation=True, max_length=max_tokens).to(dev)
-            hs = model(**enc).hidden_states                       # (n_layers+1) x (B, T, d)
+            hs = model(**enc, output_hidden_states=True).hidden_states   # (n_layers+1) x (B, T, d)
             last = enc["attention_mask"].sum(1) - 1               # last non-pad index per row
             for L in layers:
                 h = hs[int(L)]
