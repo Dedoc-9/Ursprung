@@ -12,3 +12,6 @@ selftest-regfilter :: python phase7_regression_filter.py --selftest
 selftest-conffw    :: python phase8_confounder_firewall.py --selftest
 selftest-grounded  :: python phase9_grounded_steer.py --selftest
 selftest-airgap    :: python phase10_airgap.py --selftest
+selftest-index     :: python gen_index.py --selftest
+# after `python gen_index.py --root . --out index.json` (commit it), add the drift gate:
+# index-sync       :: python gen_index.py --root . --check index.json
