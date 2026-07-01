@@ -36,5 +36,9 @@ repe_harness/phase10_airgap.py :: def state_hash :: class AirGap :: TAMPERED_FAI
 
 # --- repe_harness/orchestrator.py (this session's coordinator — real weltwerk-typed bridge) ---
 repe_harness/orchestrator.py :: def firewall( :: def ground_steer( :: def orchestrate(
-repe_harness/orchestrator.py :: class _Getable :: from residual_channel import audit
+repe_harness/orchestrator.py :: from residual_channel import audit
 repe_harness/orchestrator.py :: from epistemic_types import Grounded, ChannelEstablished, UngroundedError
+
+# --- repe_harness/epistemic_monad.py (a LAW-CHECKED grounding monad; the adapter layer) ---
+repe_harness/epistemic_monad.py :: class EM :: def unit( :: def lift(
+repe_harness/epistemic_monad.py :: def value_of( :: def channel_arrow( :: def bind

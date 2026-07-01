@@ -14,9 +14,9 @@ types, not the phase stubs:
 TWO-STATUS RULE. Apparatus: the wiring works (GPU-free --selftest on synthetic planted/confounded samples).
 Real-model number: whether steering actually reduces ASR is YOURS to measure. This file asserts no model number.
 
-SEAM (surfaced, not hidden): the real weltwerk `Grounded` exposes `.value`; `phase10_airgap.commit` duck-types on
-`.get()`. So a real Grounded is adapted by `_Getable` at the P10 boundary ONLY. Recommended follow-up: widen
-`phase10_airgap.commit` to accept `.value` (or a real Grounded) so no shim is needed. `claim != code`.
+SEAM (now CLOSED): `phase10_airgap.commit` was widened to accept a real weltwerk `Grounded` (`.value`) as well
+as a Phase-9-style stub (`.get()`), so this coordinator passes the real Grounded straight through — no shim.
+The composable form of this same pipeline is `epistemic_monad.py` (a law-checked grounding monad). `claim != code`.
 
 GRADE:         apparatus VERIFIED when --selftest passes.
 DOES_NOT_SHOW: that the model is safe (safety stays SPECULATIVE until phase4.grade()=="MEASURED" on real
@@ -52,16 +52,6 @@ try:
     _KERNEL_OK, _KERNEL_ERR = True, None
 except Exception as e:                                                   # fail-closed; NEVER stub silently
     _KERNEL_OK, _KERNEL_ERR = False, e
-
-
-class _Getable:
-    """Boundary SHIM: real weltwerk Grounded exposes `.value`; phase10.commit duck-types on `.get()`.
-    Adapts a real Grounded at the P10 boundary ONLY. SEAM surfaced in the module docstring."""
-    def __init__(self, grounded):
-        self._g = grounded
-
-    def get(self):
-        return self._g.value
 
 
 def _require_kernel() -> None:
@@ -122,7 +112,7 @@ def orchestrate(*, samples_xyz, steer_vector, misspec_fns, session_scores=None,
     from phase10_airgap import AirGap, state_hash
     record = {"input_digest": state_hash({"n": len(samples_xyz), "seed": seed}), "applied": []}
     ag = AirGap(record)
-    ag.commit(_Getable(grounded), lambda st, vec: st["applied"].append({"steer_dim": len(vec)}))
+    ag.commit(grounded, lambda st, vec: st["applied"].append({"steer_dim": len(vec)}))   # real Grounded, no shim
     panel["p10_airgap"] = {"sealed_hash": ag.observe()["hash"][:12], "verify": ag.verify()["status"]}
 
     panel["overall"] = {"steer": "APPLIED_GROUNDED", "safety": "SPECULATIVE",
@@ -184,7 +174,7 @@ def selftest() -> int:
     n = len(checks); npass = sum(1 for _, ok in checks if ok)
     print(f"[selftest] {('PASS %d/%d - apparatus VERIFIED' % (npass, n)) if ok_all else ('FAIL %d/%d' % (npass, n))}")
     print("[frame]    Real kernel: P8 audit -> ChannelEstablished -> Grounded[steer]; confounded HALTS at P9.")
-    print("[bound]    SEAM: real Grounded exposes .value; phase10.commit wants .get() -> shimmed at that boundary.")
+    print("[bound]    SEAM CLOSED: phase10.commit now accepts a real Grounded (.value); no shim. See epistemic_monad.py.")
     print("[grade]    apparatus VERIFIED (synthetic). DOES_NOT_SHOW: safety — SPECULATIVE until P4==MEASURED on")
     print("[bound]    real held-out attacks with neutral_ruler_ok. integration != safety; grounded != true.")
     return 0 if ok_all else 1
