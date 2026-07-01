@@ -1,8 +1,6 @@
 # repe_harness gates — one check per line "label :: command" (works with the engineering-rigor run_gates.py).
 # Real-model paths (--extract / --steer / live sessions / real attacks / real vector eval / real confounder audit)
-# are intentionally NOT gates: they need a GPU + weights + held-out data, and their numbers (AUROC, refusal-rate
-# shift, benign retention, escalation-detection rate, ASR reduction, real-attack evasion, real vector regression,
-# real probe-confound verdict) are measured by YOU on your machine, not asserted here.
+# are intentionally NOT gates: they need a GPU + weights + held-out data, and their numbers are measured by YOU.
 selftest-probe     :: python phase1_probe.py --selftest
 selftest-engine    :: python phase2_engine.py --selftest
 selftest-monitor   :: python phase3_monitor.py --selftest
@@ -11,3 +9,4 @@ selftest-governor  :: python phase5_closed_loop.py --selftest
 selftest-cohneg    :: python phase6_coherent_negative.py --selftest
 selftest-regfilter :: python phase7_regression_filter.py --selftest
 selftest-conffw    :: python phase8_confounder_firewall.py --selftest
+selftest-grounded  :: python phase9_grounded_steer.py --selftest

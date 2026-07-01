@@ -26,6 +26,7 @@ The safety **claim** ("this makes the model safer") is **SPECULATIVE** until Pha
 | 6 coherent-negative | `phase6_coherent_negative.py` | MEASURED 6/6 — space-pooled 0.89 vs trajectory 0.00, gap surfaced | the gap on real adaptive attacks |
 | 7 regression-filter | `phase7_regression_filter.py` | MEASURED 8/8 — promotes genuine, rejects overfit/lucky/no-gain, drift flag | real vector regression / drift on your evals |
 | 8 confounder-firewall | `phase8_confounder_firewall.py` | MEASURED 5/5 — real→HEALTHY, confounded→CONFOUNDED, noise→NO_SIGNAL | which of your probe directions survive conditioning |
+| 9 grounded-steer | `phase9_grounded_steer.py` | MEASURED 5/5 — healthy+tight→applied; confounded/loose→UngroundedError before any effect | structural guard (composes P8 audit + P1 CI) |
 
 Run one gate: `PYTHONHASHSEED=0 python phaseN_*.py --selftest` (Windows + redirected output: `$env:PYTHONUTF8="1"`).
 Run all: point the `engineering-rigor` runner at this folder's `gates.txt`.
@@ -54,6 +55,12 @@ Run all: point the `engineering-rigor` runner at this folder's `gates.txt`.
   not the harm concept. Phase 8 gates a direction with `I(label;score) > 0` **vs** `I(label;score | Z)` above a
   within-Z shuffle null — promote only a **HEALTHY** direction, reject a **CONFOUNDED** one. `confounded-MI != channel`.
   This is the honest gate Phase 1's AUROC alone cannot give; it makes Layer 1's MEASURED grade mean the right thing.
+- **Hardening (Phase 9) — a type-gated steering chokepoint, from `epistemic_types.Grounded[T]`.** A steer is
+  **unconstructable** unless it carries a proof that the probe passed the Phase-8 firewall (HEALTHY) *and* its
+  Phase-1 CI is tight; an ungrounded steer raises `UngroundedError` **before any activation is touched**. This
+  composes the honest gates into the steering path so a confounded/uncertain direction can't reach the hook.
+  Honest scope: a **runtime pre-effect guard**, not a compile-time or cryptographic check — `grounded != true`,
+  but `ungrounded != allowed`.
 
 ## What would earn MEASURED for the safety claim
 Run Phase 1 `--extract` on your weights, then Phases 2–6 with a **held-out** adversarial benchmark
