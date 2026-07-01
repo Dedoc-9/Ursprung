@@ -1,0 +1,688 @@
+[
+  {
+    "file": "phase10_airgap.py",
+    "name": "state_hash",
+    "signature": "state_hash(state)",
+    "lineno": 30,
+    "doc": "Content-addressed hash of the gated state (the harness analogue of AetherPulse's l1_hash)."
+  },
+  {
+    "file": "phase10_airgap.py",
+    "name": "class AirGap",
+    "signature": "class AirGap",
+    "lineno": 35,
+    "doc": "No-write-back gated state + content-addressed hash. Observers read a deep copy; only Grounded commits mutate."
+  },
+  {
+    "file": "phase10_airgap.py",
+    "name": "AirGap.__init__",
+    "signature": "AirGap.__init__(self, gated_state)",
+    "lineno": 38,
+    "doc": ""
+  },
+  {
+    "file": "phase10_airgap.py",
+    "name": "AirGap.observe",
+    "signature": "AirGap.observe(self)",
+    "lineno": 42,
+    "doc": "Read-only snapshot for observers: a deep copy + the gate hash. Mutating it cannot reach gated state."
+  },
+  {
+    "file": "phase10_airgap.py",
+    "name": "AirGap.verify",
+    "signature": "AirGap.verify(self)",
+    "lineno": 46,
+    "doc": "Fail-closed tamper/drift check: recompute the hash and compare to the sealed one."
+  },
+  {
+    "file": "phase10_airgap.py",
+    "name": "AirGap.commit",
+    "signature": "AirGap.commit(self, grounded, mutate_fn)",
+    "lineno": 51,
+    "doc": "Only a Grounded action (Phase 9, duck-typed `.get()`) may mutate the gated state; re-seal after."
+  },
+  {
+    "file": "phase10_airgap.py",
+    "name": "AirGap._tamper",
+    "signature": "AirGap._tamper(self, mutate_fn)",
+    "lineno": 59,
+    "doc": ""
+  },
+  {
+    "file": "phase10_airgap.py",
+    "name": "class _G",
+    "signature": "class _G",
+    "lineno": 63,
+    "doc": ""
+  },
+  {
+    "file": "phase10_airgap.py",
+    "name": "_G.__init__",
+    "signature": "_G.__init__(self, v)",
+    "lineno": 64,
+    "doc": ""
+  },
+  {
+    "file": "phase10_airgap.py",
+    "name": "_G.get",
+    "signature": "_G.get(self)",
+    "lineno": 65,
+    "doc": ""
+  },
+  {
+    "file": "phase10_airgap.py",
+    "name": "selftest",
+    "signature": "selftest()",
+    "lineno": 68,
+    "doc": ""
+  },
+  {
+    "file": "phase10_airgap.py",
+    "name": "main",
+    "signature": "main()",
+    "lineno": 109,
+    "doc": ""
+  },
+  {
+    "file": "phase1_probe.py",
+    "name": "auroc",
+    "signature": "auroc(scores, labels)",
+    "lineno": 22,
+    "doc": "Mann-Whitney AUROC (rank-based). scores: floats; labels: {0,1}."
+  },
+  {
+    "file": "phase1_probe.py",
+    "name": "fit_probe",
+    "signature": "fit_probe(X, y, epochs, lr, l2)",
+    "lineno": 35,
+    "doc": "Logistic-regression probe by numpy gradient descent. Standardizes X. Returns (w, b, mu, sd)."
+  },
+  {
+    "file": "phase1_probe.py",
+    "name": "probe_scores",
+    "signature": "probe_scores(X, w, b, mu, sd)",
+    "lineno": 46,
+    "doc": ""
+  },
+  {
+    "file": "phase1_probe.py",
+    "name": "steering_vector",
+    "signature": "steering_vector(X, y)",
+    "lineno": 50,
+    "doc": ""
+  },
+  {
+    "file": "phase1_probe.py",
+    "name": "split",
+    "signature": "split(n, frac, seed)",
+    "lineno": 55,
+    "doc": ""
+  },
+  {
+    "file": "phase1_probe.py",
+    "name": "load_dataset",
+    "signature": "load_dataset(path)",
+    "lineno": 60,
+    "doc": ""
+  },
+  {
+    "file": "phase1_probe.py",
+    "name": "extract_activations",
+    "signature": "extract_activations(model_name, texts, layers, device)",
+    "lineno": 69,
+    "doc": "Last-token hidden state per requested decoder layer. Needs torch + transformers (lazy import)."
+  },
+  {
+    "file": "phase1_probe.py",
+    "name": "run_extract",
+    "signature": "run_extract(a)",
+    "lineno": 85,
+    "doc": ""
+  },
+  {
+    "file": "phase1_probe.py",
+    "name": "selftest",
+    "signature": "selftest()",
+    "lineno": 107,
+    "doc": "Validity-not-outcome: the math must recover a KNOWN-separable synthetic signal, align the steering"
+  },
+  {
+    "file": "phase1_probe.py",
+    "name": "main",
+    "signature": "main()",
+    "lineno": 130,
+    "doc": ""
+  },
+  {
+    "file": "phase2_engine.py",
+    "name": "_to_np",
+    "signature": "_to_np(a)",
+    "lineno": 34,
+    "doc": ""
+  },
+  {
+    "file": "phase2_engine.py",
+    "name": "class SteeringEngine",
+    "signature": "class SteeringEngine",
+    "lineno": 38,
+    "doc": "Context manager. layers[i] gets steer_vectors[i] (optional) and probes[i] (optional, (w, b, mu, sd))."
+  },
+  {
+    "file": "phase2_engine.py",
+    "name": "SteeringEngine.__init__",
+    "signature": "SteeringEngine.__init__(self, layers, steer_vectors, probes, alpha, mode, threshold)",
+    "lineno": 41,
+    "doc": ""
+  },
+  {
+    "file": "phase2_engine.py",
+    "name": "SteeringEngine._probe_score",
+    "signature": "SteeringEngine._probe_score(self, act_np, probe)",
+    "lineno": 49,
+    "doc": ""
+  },
+  {
+    "file": "phase2_engine.py",
+    "name": "SteeringEngine._make_hook",
+    "signature": "SteeringEngine._make_hook(self, i)",
+    "lineno": 55,
+    "doc": ""
+  },
+  {
+    "file": "phase2_engine.py",
+    "name": "SteeringEngine.__enter__",
+    "signature": "SteeringEngine.__enter__(self)",
+    "lineno": 76,
+    "doc": ""
+  },
+  {
+    "file": "phase2_engine.py",
+    "name": "SteeringEngine.__exit__",
+    "signature": "SteeringEngine.__exit__(self)",
+    "lineno": 82,
+    "doc": ""
+  },
+  {
+    "file": "phase2_engine.py",
+    "name": "SteeringEngine.n_hooks",
+    "signature": "SteeringEngine.n_hooks(self)",
+    "lineno": 89,
+    "doc": ""
+  },
+  {
+    "file": "phase2_engine.py",
+    "name": "SteeringEngine.last_scores",
+    "signature": "SteeringEngine.last_scores(self)",
+    "lineno": 92,
+    "doc": ""
+  },
+  {
+    "file": "phase2_engine.py",
+    "name": "dual_metric",
+    "signature": "dual_metric(harmful_flagged, harmful_total, benign_kept, benign_total)",
+    "lineno": 96,
+    "doc": "Report the two axes SIDE BY SIDE \u2014 never fuse into one 'safety score'. `panel != scalar`."
+  },
+  {
+    "file": "phase2_engine.py",
+    "name": "class _Handle",
+    "signature": "class _Handle",
+    "lineno": 103,
+    "doc": ""
+  },
+  {
+    "file": "phase2_engine.py",
+    "name": "_Handle.__init__",
+    "signature": "_Handle.__init__(self, store, k)",
+    "lineno": 104,
+    "doc": ""
+  },
+  {
+    "file": "phase2_engine.py",
+    "name": "_Handle.remove",
+    "signature": "_Handle.remove(self)",
+    "lineno": 105,
+    "doc": ""
+  },
+  {
+    "file": "phase2_engine.py",
+    "name": "class MockLayer",
+    "signature": "class MockLayer",
+    "lineno": 108,
+    "doc": ""
+  },
+  {
+    "file": "phase2_engine.py",
+    "name": "MockLayer.__init__",
+    "signature": "MockLayer.__init__(self, W)",
+    "lineno": 109,
+    "doc": ""
+  },
+  {
+    "file": "phase2_engine.py",
+    "name": "MockLayer.register_forward_hook",
+    "signature": "MockLayer.register_forward_hook(self, fn)",
+    "lineno": 110,
+    "doc": ""
+  },
+  {
+    "file": "phase2_engine.py",
+    "name": "MockLayer.__call__",
+    "signature": "MockLayer.__call__(self, x)",
+    "lineno": 112,
+    "doc": ""
+  },
+  {
+    "file": "phase2_engine.py",
+    "name": "class MockModel",
+    "signature": "class MockModel",
+    "lineno": 121,
+    "doc": ""
+  },
+  {
+    "file": "phase2_engine.py",
+    "name": "MockModel.__init__",
+    "signature": "MockModel.__init__(self, layers)",
+    "lineno": 122,
+    "doc": ""
+  },
+  {
+    "file": "phase2_engine.py",
+    "name": "MockModel.forward",
+    "signature": "MockModel.forward(self, x)",
+    "lineno": 123,
+    "doc": ""
+  },
+  {
+    "file": "phase2_engine.py",
+    "name": "selftest",
+    "signature": "selftest()",
+    "lineno": 129,
+    "doc": ""
+  },
+  {
+    "file": "phase2_engine.py",
+    "name": "main",
+    "signature": "main()",
+    "lineno": 164,
+    "doc": ""
+  },
+  {
+    "file": "phase3_monitor.py",
+    "name": "auroc",
+    "signature": "auroc(scores, labels)",
+    "lineno": 25,
+    "doc": ""
+  },
+  {
+    "file": "phase3_monitor.py",
+    "name": "class SessionMonitor",
+    "signature": "class SessionMonitor",
+    "lineno": 34,
+    "doc": "Streaming CUSUM monitor over per-turn probe scores; flags sustained UPWARD drift (escalation)."
+  },
+  {
+    "file": "phase3_monitor.py",
+    "name": "SessionMonitor.__init__",
+    "signature": "SessionMonitor.__init__(self, k, h, ewma_lambda)",
+    "lineno": 37,
+    "doc": ""
+  },
+  {
+    "file": "phase3_monitor.py",
+    "name": "SessionMonitor.reset",
+    "signature": "SessionMonitor.reset(self)",
+    "lineno": 40,
+    "doc": ""
+  },
+  {
+    "file": "phase3_monitor.py",
+    "name": "SessionMonitor.update",
+    "signature": "SessionMonitor.update(self, score)",
+    "lineno": 43,
+    "doc": ""
+  },
+  {
+    "file": "phase3_monitor.py",
+    "name": "SessionMonitor.slope",
+    "signature": "SessionMonitor.slope(self)",
+    "lineno": 51,
+    "doc": ""
+  },
+  {
+    "file": "phase3_monitor.py",
+    "name": "SessionMonitor.report",
+    "signature": "SessionMonitor.report(self)",
+    "lineno": 55,
+    "doc": ""
+  },
+  {
+    "file": "phase3_monitor.py",
+    "name": "selftest",
+    "signature": "selftest()",
+    "lineno": 61,
+    "doc": ""
+  },
+  {
+    "file": "phase3_monitor.py",
+    "name": "main",
+    "signature": "main()",
+    "lineno": 95,
+    "doc": ""
+  },
+  {
+    "file": "phase4_falsify.py",
+    "name": "wilson",
+    "signature": "wilson(k, n, z)",
+    "lineno": 28,
+    "doc": "Wilson score interval for a binomial proportion. Returns (point, lo, hi)."
+  },
+  {
+    "file": "phase4_falsify.py",
+    "name": "compare_asr",
+    "signature": "compare_asr(succ_before, succ_after)",
+    "lineno": 38,
+    "doc": "Attack-success-rate before vs after the defense. succ_*: 0/1 per attack trial."
+  },
+  {
+    "file": "phase4_falsify.py",
+    "name": "benign_false_refusal",
+    "signature": "benign_false_refusal(refused_flags)",
+    "lineno": 49,
+    "doc": ""
+  },
+  {
+    "file": "phase4_falsify.py",
+    "name": "neutral_ruler_ok",
+    "signature": "neutral_ruler_ok(tune_ids, eval_ids)",
+    "lineno": 53,
+    "doc": "Refuse to score if the eval attack set overlaps the tuning set (held-out / anti-Goodhart)."
+  },
+  {
+    "file": "phase4_falsify.py",
+    "name": "grade",
+    "signature": "grade(cmp)",
+    "lineno": 61,
+    "doc": ""
+  },
+  {
+    "file": "phase4_falsify.py",
+    "name": "report",
+    "signature": "report(cmp, benign)",
+    "lineno": 70,
+    "doc": ""
+  },
+  {
+    "file": "phase4_falsify.py",
+    "name": "_trials",
+    "signature": "_trials(p, n, rng)",
+    "lineno": 81,
+    "doc": ""
+  },
+  {
+    "file": "phase4_falsify.py",
+    "name": "selftest",
+    "signature": "selftest()",
+    "lineno": 85,
+    "doc": ""
+  },
+  {
+    "file": "phase4_falsify.py",
+    "name": "main",
+    "signature": "main()",
+    "lineno": 108,
+    "doc": ""
+  },
+  {
+    "file": "phase5_closed_loop.py",
+    "name": "damping",
+    "signature": "damping(S, alpha_max, s0, s1)",
+    "lineno": 30,
+    "doc": "Proportional feedback: |alpha| is 0 below s0, ramps to alpha_max at s1, saturates above. Returns a"
+  },
+  {
+    "file": "phase5_closed_loop.py",
+    "name": "refusal_route",
+    "signature": "refusal_route(entropies, settled_refusal, thresh)",
+    "lineno": 37,
+    "doc": "HEURISTIC anti-garble guard (not a validated detector): if mean generation entropy stays high AND the"
+  },
+  {
+    "file": "phase5_closed_loop.py",
+    "name": "run_governor",
+    "signature": "run_governor(scores, alpha_max, s0, s1, k, h)",
+    "lineno": 43,
+    "doc": "Drive the closed loop over a per-turn probe-score trajectory. Returns whether it flagged + the peak force."
+  },
+  {
+    "file": "phase5_closed_loop.py",
+    "name": "adversaries",
+    "signature": "adversaries(rng, T)",
+    "lineno": 53,
+    "doc": "Synthetic per-turn probe-score trajectories, incl. strategies that EXPLOIT the governor's known weakness."
+  },
+  {
+    "file": "phase5_closed_loop.py",
+    "name": "selftest",
+    "signature": "selftest()",
+    "lineno": 63,
+    "doc": ""
+  },
+  {
+    "file": "phase5_closed_loop.py",
+    "name": "main",
+    "signature": "main()",
+    "lineno": 94,
+    "doc": ""
+  },
+  {
+    "file": "phase6_coherent_negative.py",
+    "name": "_caught",
+    "signature": "_caught(scores, k, h)",
+    "lineno": 27,
+    "doc": "1 if the upward CUSUM (same rule as phase3_monitor) crosses h anywhere along the trajectory, else 0."
+  },
+  {
+    "file": "phase6_coherent_negative.py",
+    "name": "random_attack",
+    "signature": "random_attack(rng, T)",
+    "lineno": 37,
+    "doc": ""
+  },
+  {
+    "file": "phase6_coherent_negative.py",
+    "name": "adaptive_trajectory",
+    "signature": "adaptive_trajectory(rng, T, k)",
+    "lineno": 41,
+    "doc": ""
+  },
+  {
+    "file": "phase6_coherent_negative.py",
+    "name": "_rate",
+    "signature": "_rate(gen, rng, n, k, h)",
+    "lineno": 45,
+    "doc": ""
+  },
+  {
+    "file": "phase6_coherent_negative.py",
+    "name": "coherent_negative_report",
+    "signature": "coherent_negative_report(rng, n, k, h)",
+    "lineno": 49,
+    "doc": ""
+  },
+  {
+    "file": "phase6_coherent_negative.py",
+    "name": "selftest",
+    "signature": "selftest()",
+    "lineno": 57,
+    "doc": ""
+  },
+  {
+    "file": "phase6_coherent_negative.py",
+    "name": "main",
+    "signature": "main()",
+    "lineno": 81,
+    "doc": ""
+  },
+  {
+    "file": "phase7_regression_filter.py",
+    "name": "promotion_gate",
+    "signature": "promotion_gate(incumbent_ext, cand_ext, incumbent_proxy, cand_proxy, rep_frac, cal_tol)",
+    "lineno": 31,
+    "doc": "*_ext: per-seed HELD-OUT scores (higher=better). *_proxy: scalar train/dev score. Promote iff external"
+  },
+  {
+    "file": "phase7_regression_filter.py",
+    "name": "drift_flag",
+    "signature": "drift_flag(held_out_series, floor)",
+    "lineno": 48,
+    "doc": "Flag when the incumbent's latest held-out score falls below the safety floor (drift -> needs refresh)."
+  },
+  {
+    "file": "phase7_regression_filter.py",
+    "name": "promotion_rate",
+    "signature": "promotion_rate(gate_results)",
+    "lineno": 54,
+    "doc": "Bounded acceptance fraction in [0,1] \u2014 a FILTER'S selectivity, NOT a branching multiplier (never > 1)."
+  },
+  {
+    "file": "phase7_regression_filter.py",
+    "name": "selftest",
+    "signature": "selftest()",
+    "lineno": 59,
+    "doc": ""
+  },
+  {
+    "file": "phase7_regression_filter.py",
+    "name": "main",
+    "signature": "main()",
+    "lineno": 92,
+    "doc": ""
+  },
+  {
+    "file": "phase8_confounder_firewall.py",
+    "name": "_mi",
+    "signature": "_mi(xs, ys)",
+    "lineno": 31,
+    "doc": ""
+  },
+  {
+    "file": "phase8_confounder_firewall.py",
+    "name": "_cmi",
+    "signature": "_cmi(xs, ys, zs)",
+    "lineno": 43,
+    "doc": ""
+  },
+  {
+    "file": "phase8_confounder_firewall.py",
+    "name": "_shuffle_null",
+    "signature": "_shuffle_null(xs, ys, zs, reps, rng)",
+    "lineno": 52,
+    "doc": ""
+  },
+  {
+    "file": "phase8_confounder_firewall.py",
+    "name": "_bin",
+    "signature": "_bin(v, k)",
+    "lineno": 64,
+    "doc": ""
+  },
+  {
+    "file": "phase8_confounder_firewall.py",
+    "name": "audit_probe",
+    "signature": "audit_probe(labels, scores, confound, n_bins, n_z, reps, rng)",
+    "lineno": 69,
+    "doc": "residual_channel discipline on a probe: is the harm<->score dependence real, or explained by confounder Z?"
+  },
+  {
+    "file": "phase8_confounder_firewall.py",
+    "name": "selftest",
+    "signature": "selftest()",
+    "lineno": 86,
+    "doc": ""
+  },
+  {
+    "file": "phase8_confounder_firewall.py",
+    "name": "main",
+    "signature": "main()",
+    "lineno": 111,
+    "doc": ""
+  },
+  {
+    "file": "phase9_grounded_steer.py",
+    "name": "class UngroundedError",
+    "signature": "class UngroundedError",
+    "lineno": 25,
+    "doc": "Raised when a steer would be constructed/used without a valid grounding proof \u2014 BEFORE any effect."
+  },
+  {
+    "file": "phase9_grounded_steer.py",
+    "name": "class SteerProof",
+    "signature": "class SteerProof",
+    "lineno": 29,
+    "doc": "A Grounding: grounded iff the probe passed the Phase-8 audit (HEALTHY) AND the Phase-1 CI is tight."
+  },
+  {
+    "file": "phase9_grounded_steer.py",
+    "name": "SteerProof.__init__",
+    "signature": "SteerProof.__init__(self, audit_verdict, ci_width, ci_tol)",
+    "lineno": 32,
+    "doc": ""
+  },
+  {
+    "file": "phase9_grounded_steer.py",
+    "name": "SteerProof.is_grounded",
+    "signature": "SteerProof.is_grounded(self)",
+    "lineno": 35,
+    "doc": ""
+  },
+  {
+    "file": "phase9_grounded_steer.py",
+    "name": "SteerProof.label",
+    "signature": "SteerProof.label(self)",
+    "lineno": 38,
+    "doc": ""
+  },
+  {
+    "file": "phase9_grounded_steer.py",
+    "name": "class Grounded",
+    "signature": "class Grounded",
+    "lineno": 42,
+    "doc": "Grounded[SteerVector]: cannot be constructed unless `proof.is_grounded()` \u2014 the chokepoint itself."
+  },
+  {
+    "file": "phase9_grounded_steer.py",
+    "name": "Grounded.__init__",
+    "signature": "Grounded.__init__(self, value, proof)",
+    "lineno": 45,
+    "doc": ""
+  },
+  {
+    "file": "phase9_grounded_steer.py",
+    "name": "Grounded.get",
+    "signature": "Grounded.get(self)",
+    "lineno": 51,
+    "doc": ""
+  },
+  {
+    "file": "phase9_grounded_steer.py",
+    "name": "enact_steer",
+    "signature": "enact_steer(grounded, apply_fn)",
+    "lineno": 55,
+    "doc": "Apply the steer ONLY through a Grounded value. An ungrounded steer never reaches here (it raised earlier)."
+  },
+  {
+    "file": "phase9_grounded_steer.py",
+    "name": "selftest",
+    "signature": "selftest()",
+    "lineno": 62,
+    "doc": ""
+  },
+  {
+    "file": "phase9_grounded_steer.py",
+    "name": "main",
+    "signature": "main()",
+    "lineno": 99,
+    "doc": ""
+  }
+]
