@@ -1,0 +1,3 @@
+# repe_harness gates — one check per line "label :: command" (works with the engineering-rigor run_gates.py).
+# The real-model --extract is intentionally NOT a gate: it needs a GPU + weights and its AUROC is measured by you.
+selftest :: python phase1_probe.py --selftest
