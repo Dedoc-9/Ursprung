@@ -1,0 +1,35 @@
+# session_symbols.txt — the OPERATING CONTRACT's "KEY EXACT SIGNATURES", as a re-runnable gate.
+# Re-verify every symbol against source in one run:
+#     python session_verifier.py --manifest session_symbols.txt      # exit 0  == every line VERIFIED
+# Format: <root-relative-path> :: <symbol> [:: <symbol> ...]         # blank lines and #comments ignored
+# Paths are root-relative and DISAMBIGUATED on purpose: claim_ledger.py and world.py are NON-unique
+# basenames in this tree, so a bare name is UNREADABLE(ambiguous) by design — the full path pins the file.
+#
+# GRADE per green line: VERIFIED (verbatim presence at the printed line).
+# DOES_NOT_SHOW: that the symbol is semantically correct / defined / reachable / imported / used as intended
+#                — only that the exact characters appear on that line. verbatim-match != semantics.
+
+# --- residual_channel.audit: entry point + ResidualChannelResult fields + the ONLY four verdict strings ---
+weltwerk/verify/residual_channel.py :: def audit( :: k_sigma: float = 4.0 :: abs_floor: float = 0.005
+weltwerk/verify/residual_channel.py :: class ResidualChannelResult
+weltwerk/verify/residual_channel.py :: null_mean :: null_std :: null_max :: z_score :: misspec_cmis
+weltwerk/verify/residual_channel.py :: "CONSISTENT_WITH_NULL" :: "RESIDUAL_DEPENDENCE"
+weltwerk/verify/residual_channel.py :: "RESIDUAL_MISSPEC_STABLE" :: "RESIDUAL_MISSPEC_FRAGILE"
+
+# --- epistemic_types: the five grounding adapters + Grounded[T] + the gate helpers ---
+weltwerk/verify/epistemic_types.py :: class EngineClosed :: class SupportedClaim :: class ChannelEstablished
+weltwerk/verify/epistemic_types.py :: class NoHiddenChannel :: class Attested
+weltwerk/verify/epistemic_types.py :: class Grounding :: class Grounded :: class UngroundedError
+weltwerk/verify/epistemic_types.py :: def require_grounded :: def synthesize_gate :: def _safe_label
+weltwerk/verify/epistemic_types.py :: from claim_ledger import SUPPORTED
+# adapter conditions (ChannelEstablished != NoHiddenChannel — different verdicts):
+weltwerk/verify/epistemic_types.py :: "RESIDUAL_MISSPEC_STABLE" :: "CONSISTENT_WITH_NULL"
+
+# --- claim_ledger: the SUPPORTED grade set (the canonical copy imported by epistemic_types.py:34) ---
+weltwerk/verify/claim_ledger.py :: SUPPORTED = {"ESTABLISHED", "MEASURED"}
+
+# --- repe_harness (ADJACENT arc; apparatus only) — phase verdict / grade vocabularies ---
+repe_harness/phase4_falsify.py :: "MEASURED" :: "UNDERDETERMINED" :: "VIOLATED"
+repe_harness/phase8_confounder_firewall.py :: "HEALTHY" :: "CONFOUNDED" :: "NO_SIGNAL"
+repe_harness/phase9_grounded_steer.py :: class SteerProof :: def enact_steer
+repe_harness/phase10_airgap.py :: def state_hash :: class AirGap :: TAMPERED_FAIL_CLOSED
