@@ -48,7 +48,11 @@ Run one gate: `PYTHONHASHSEED=0 python phaseN_*.py --selftest` (Windows + redire
 - **`session_verifier.py` + `session_symbols.txt`** — grep-verify that every cited symbol appears **verbatim**
   in source (`claim != code`); per-symbol `VERIFIED / GHOST / UNREADABLE`, ambiguous basenames refused (no
   `head -1` trap). `python ../session_verifier.py --manifest ../session_symbols.txt` re-checks the whole set
-  (currently **50 symbols VERIFIED**) as a gate.
+  (currently **56 symbols VERIFIED**) as a gate.
+- **`ingest_activations.py`** (Lever A) — real activations → held-out **probe AUROC** → real `audit` verdict →
+  `Grounded` steer. Batched last-token extraction on CPU or the AMD 890M iGPU (no CUDA). `--selftest` (8/8,
+  GPU-free) proves the chain rejects a length-confounder *even when raw AUROC is fooled high* (`AUROC != channel`).
+  `data/make_neutral_contrastive.py` generates a balanced NEUTRAL cooking/math set for a stable demo AUROC.
 - **`gen_index.py`** — drift-proof AST function index (`--check` fails if a committed `index.json` is stale).
 
 ## The bridge to the weltwerk kernel (real types)
@@ -60,8 +64,9 @@ and will not ground). The seam where the real `Grounded` (exposing `.value`) mee
 **closed** — `commit` accepts a real `Grounded[T]` (`.value`) or a Phase-9 stub (`.get()`), no shim.
 
 ## Standing honest status
-- **Apparatus — MEASURED** across phases 1–10 **plus** `orchestrator` (11/11) and `epistemic_monad` (8/8,
-  laws included). Every `--selftest` green, GPU-free, `PYTHONHASHSEED=0`.
+- **Apparatus — MEASURED** across phases 1–10 **plus** `orchestrator` (11/11), `epistemic_monad` (8/8, laws
+  included), and `ingest_activations` (8/8). Every `--selftest` green, GPU-free, `PYTHONHASHSEED=0`. **On real
+  weights:** the ingestion→audit→ground path is also MEASURED on Qwen2.5-1.5B — see *Real-model smoke result* below.
 - **Safety claim — SPECULATIVE.** No phase, no coordinator, no monad changes this; only Phase 4 on real
   held-out attacks can. `integration != safety`.
 - **Governor security — UNDERDETERMINED.** Phase 5 catches naive escalation + spikes but is **EVADED** by
@@ -85,9 +90,33 @@ first real-model number) → the real `residual_channel.audit` verdict on your d
 one grounds a steer. Its `--selftest` verifies the ingestion+audit chain GPU-free, including that a length-style
 confounder is **rejected even when raw AUROC is fooled high** — `AUROC != channel`.
 
-> **This tree contains no real-model number.** The `--selftest` numbers are apparatus on synthetic ground truth.
-> Producing a real number needs a GPU + weights + a held-out attack set; it is intentionally left to you rather
-> than faked here. `apparatus != safety`.
+### Real-model smoke result — first real number (Qwen2.5-1.5B, CPU)
+`python ingest_activations.py --extract --model Qwen/Qwen2.5-1.5B-Instruct --data data/neutral_contrastive.jsonl --layers 6,12,18 --device auto`
+on an AMD Ryzen Z2 Extreme (Radeon 890M, 24 GB) — torch 2.12.1+cpu / transformers 5.12.1, `device=cpu`, `n_test=72`:
+
+| layer | probe AUROC | audit decision | cmi | z | grounded | steer dim |
+|---|---|---|---|---|---|---|
+| 6 | 1.000 | `RESIDUAL_MISSPEC_STABLE` | 0.942 | 19.7 | yes | 1536 |
+| 12 | 1.000 | `RESIDUAL_MISSPEC_STABLE` | 0.942 | 17.6 | yes | 1536 |
+| 18 | 1.000 | `RESIDUAL_MISSPEC_STABLE` | 0.932 | 18.3 | yes | 1536 |
+
+**Grade: MEASURED (apparatus, real model).** The extraction → probe → `audit` → `Grounded` chain runs on real
+Qwen2.5-1.5B activations and returns real numbers (`steer_dim=1536` = true hidden size; `n_test=72` = a real
+held-out split). This moves the *apparatus* from synthetic-only to **measured on real weights**.
+
+**`does_not_show` (caveats nailed on — a perfect score is where inflation sneaks in):**
+1. **Trivial task.** Cooking-vs-math is maximally separable; AUROC 1.0 shows the apparatus *fires*, not that the
+   probe is powerful. `easy-task != capability`.
+2. **Possible mild leakage.** The generator makes 240 rows but ~150 unique (template collisions), so identical
+   strings can straddle the split. Mostly the easy task — but not ruled out; dedup for a clean number.
+3. **Firewall unchallenged.** `RESIDUAL_MISSPEC_STABLE` here only means the topic channel isn't explained by
+   *prompt length* — irrelevant to this task, so nothing to bite (identical `cmi` on layers 6/12 is the tell:
+   perfect separation → identical discretized samples). A real confounder is needed to exercise the firewall.
+4. **Not safety.** `separable != steerable`; `topic != harm`. The safety claim is untouched — still **SPECULATIVE**.
+
+> The `--selftest` numbers remain apparatus on synthetic ground truth. The table above is a real-model **apparatus**
+> smoke on a NEUTRAL dataset — it is **not** a safety measurement. A safety number needs a real harmful/benign set +
+> held-out attacks + `phase4_falsify.grade()=="MEASURED"`. `apparatus != safety`.
 
 ## Run all gates
 `PYTHONHASHSEED=0` on every run; on Windows with redirected output also `PYTHONUTF8=1`. Point the
