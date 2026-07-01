@@ -33,3 +33,8 @@ repe_harness/phase4_falsify.py :: "MEASURED" :: "UNDERDETERMINED" :: "VIOLATED"
 repe_harness/phase8_confounder_firewall.py :: "HEALTHY" :: "CONFOUNDED" :: "NO_SIGNAL"
 repe_harness/phase9_grounded_steer.py :: class SteerProof :: def enact_steer
 repe_harness/phase10_airgap.py :: def state_hash :: class AirGap :: TAMPERED_FAIL_CLOSED
+
+# --- repe_harness/orchestrator.py (this session's coordinator — real weltwerk-typed bridge) ---
+repe_harness/orchestrator.py :: def firewall( :: def ground_steer( :: def orchestrate(
+repe_harness/orchestrator.py :: class _Getable :: from residual_channel import audit
+repe_harness/orchestrator.py :: from epistemic_types import Grounded, ChannelEstablished, UngroundedError
